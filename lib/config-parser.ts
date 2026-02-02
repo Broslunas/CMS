@@ -167,13 +167,7 @@ export function validateAgainstSchema(
   for (const [fieldName, fieldDef] of Object.entries(schema.fields)) {
     const value = metadata[fieldName];
 
-    // Campo requerido pero faltante
-    if (!fieldDef.optional && (value === undefined || value === null)) {
-      errors.push(`Campo requerido faltante: ${fieldName}`);
-      continue;
-    }
-
-    // Campo opcional y no presente
+    // Campo faltante (ya sea opcional o requerido, lo permitimos para editar luego)
     if (value === undefined || value === null) {
       continue;
     }

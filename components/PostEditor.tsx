@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
+import Modal from "./Modal";
 
 interface PostMetadata {
   [key: string]: any;
@@ -36,6 +40,10 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
   const [content, setContent] = useState(post.content);
   const [saving, setSaving] = useState(false);
   const [committing, setCommitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"edit" | "preview" | "split">("edit");
+  const [showPermissionError, setShowPermissionError] = useState(false);
+  const [showConflictError, setShowConflictError] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
   const handleSave = async (commitToGitHub: boolean = false) => {
@@ -44,6 +52,8 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
     } else {
       setSaving(true);
     }
+
+    const toastId = toast.loading(commitToGitHub ? "Guardando y commiteando..." : "Guardando...");
 
     try {
       const response = await fetch("/api/posts/update", {
@@ -60,33 +70,28 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
       if (response.ok) {
         const result = await response.json();
         if (result.committed) {
-          alert("✅ Cambios guardados y commiteados a GitHub");
+          toast.success("Cambios guardados y commiteados a GitHub", { id: toastId });
         } else {
-          alert("✅ Cambios guardados localmente");
+          toast.success("Cambios guardados localmente", { id: toastId });
         }
         router.refresh();
       } else {
         const error = await response.json();
+        
+        // Descartar toast de loading
+        toast.dismiss(toastId);
+
         if (error.code === "CONFLICT") {
-          alert("⚠️ Conflicto: El archivo ha sido modificado externamente. Refresca los datos.");
+          setShowConflictError(true);
         } else if (error.code === "PERMISSION_ERROR") {
-          alert(
-            "❌ Error de Permisos\n\n" +
-            "Tu GitHub OAuth App no tiene permisos para hacer commits.\n\n" +
-            "Solución:\n" +
-            "1. Ve a GitHub Settings > Developer Settings\n" +
-            "2. Crea una GitHub App (no OAuth App)\n" +
-            "3. Dale permisos de 'Contents: Read & Write'\n" +
-            "4. Actualiza las credenciales en .env.local\n\n" +
-            "Ver GITHUB_PERMISSIONS.md para más detalles"
-          );
+          setShowPermissionError(true);
         } else {
-          alert(`❌ Error: ${error.error}`);
+          toast.error(`Error: ${error.error}`);
         }
       }
     } catch (error) {
       console.error("Save error:", error);
-      alert("❌ Error al guardar");
+      toast.error("Error al guardar cambios", { id: toastId });
     } finally {
       setSaving(false);
       setCommitting(false);
@@ -97,7 +102,35 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
     setMetadata({ ...metadata, [key]: value });
   };
 
+  const insertText = (before: string, after: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const previousText = textarea.value;
+    const selectedText = previousText.substring(start, end);
+
+    const newText =
+      previousText.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      previousText.substring(end);
+
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        end + before.length
+      );
+    }, 0);
+  };
+
   const renderField = (key: string, value: any) => {
+    // ... misma lógica de render ...
     // Arrays especiales (como transcription)
     if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object") {
       return (
@@ -220,6 +253,24 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
     return null;
   };
 
+  const ToolbarButton = ({ 
+    icon, 
+    label, 
+    onClick 
+  }: { 
+    icon: React.ReactNode, 
+    label: string, 
+    onClick: () => void 
+  }) => (
+    <button
+      onClick={onClick}
+      title={label}
+      className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded transition-colors"
+    >
+      {icon}
+    </button>
+  );
+
   return (
 <>
       {/* Header */}
@@ -229,18 +280,8 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
             href={`/dashboard/repos?repo=${encodeURIComponent(post.repoId)}`}
             className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Volver a Posts
           </Link>
@@ -290,31 +331,246 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
           </div>
         </div>
 
-        {/* Metadata Fields - DINÁMICO */}
+        {/* Metadata Fields */}
         <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-5">
           <h2 className="text-xl font-semibold text-white">Metadata</h2>
-
           <div className="space-y-4">
             {Object.entries(metadata).map(([key, value]) => renderField(key, value))}
           </div>
-
           {Object.keys(metadata).length === 0 && (
             <p className="text-zinc-500 text-sm">No hay campos de metadata</p>
           )}
         </div>
 
-        {/* Content Editor */}
-        <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
-          <h2 className="text-xl font-semibold text-white">Contenido</h2>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={24}
-            className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 font-mono text-sm resize-none"
-            placeholder="Escribe tu contenido en Markdown aquí..."
-          />
+        {/* Content Editor - DARK MODE + TOOLBAR */}
+        <div className="bg-zinc-900 rounded-lg shadow-sm border border-zinc-800 flex flex-col min-h-[800px]">
+          {/* Tabs & Toolbar */}
+          <div className="border-b border-zinc-800 bg-zinc-900">
+            <div className="flex items-center justify-between px-4 py-2">
+              {/* Tabs */}
+              <div className="flex gap-1 bg-zinc-950/50 p-1 rounded-lg">
+                <button
+                  onClick={() => setActiveTab("edit")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    activeTab === "edit"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  }`}
+                >
+                  Editor
+                </button>
+                <button
+                  onClick={() => setActiveTab("preview")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    activeTab === "preview"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  }`}
+                >
+                  Preview
+                </button>
+                <button
+                  onClick={() => setActiveTab("split")}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    activeTab === "split"
+                      ? "bg-zinc-800 text-white shadow-sm"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  }`}
+                >
+                  Split
+                </button>
+              </div>
+
+              {/* Formatting Toolbar */}
+              {(activeTab === "edit" || activeTab === "split") && (
+                <div className="flex items-center gap-1 border-l border-zinc-800 pl-4 ml-4">
+                   <ToolbarButton 
+                    label="Negrita (Ctrl+B)" 
+                    onClick={() => insertText("**", "**")}
+                    icon={<span className="font-bold">B</span>}
+                  />
+                  <ToolbarButton 
+                    label="Cursiva (Ctrl+I)" 
+                    onClick={() => insertText("*", "*")}
+                    icon={<span className="italic">I</span>}
+                  />
+                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <ToolbarButton 
+                    label="Título 1" 
+                    onClick={() => insertText("# ", "")}
+                    icon={<span className="font-bold text-sm">H1</span>}
+                  />
+                  <ToolbarButton 
+                    label="Título 2" 
+                    onClick={() => insertText("## ", "")}
+                    icon={<span className="font-bold text-sm">H2</span>}
+                  />
+                  <ToolbarButton 
+                    label="Título 3" 
+                    onClick={() => insertText("### ", "")}
+                    icon={<span className="font-bold text-sm">H3</span>}
+                  />
+                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <ToolbarButton 
+                    label="Lista" 
+                    onClick={() => insertText("- ", "")}
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    }
+                  />
+                  <ToolbarButton 
+                    label="Cita" 
+                    onClick={() => insertText("> ", "")}
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                      </svg>
+                    }
+                  />
+                  <ToolbarButton 
+                    label="Código" 
+                    onClick={() => insertText("```\n", "\n```")}
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    }
+                  />
+                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <ToolbarButton 
+                    label="Link" 
+                    onClick={() => insertText("[", "](url)")}
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    }
+                  />
+                  <ToolbarButton 
+                    label="Imagen" 
+                    onClick={() => insertText("![Alt text](", ")")}
+                    icon={
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Editor Area */}
+          <div className="flex-1 flex flex-col relative">
+            {activeTab === "edit" && (
+              <div className="flex-1 flex flex-col">
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="flex-1 w-full p-8 bg-zinc-900 text-zinc-100 placeholder-zinc-700 outline-none font-mono text-sm leading-relaxed resize-none"
+                  placeholder="Empieza a escribir..."
+                />
+              </div>
+            )}
+
+            {activeTab === "preview" && (
+              <div className="flex-1 p-8 bg-zinc-900 overflow-y-auto">
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content || "*No hay contenido para previsualizar*"}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "split" && (
+              <div className="flex-1 grid grid-cols-2 divide-x divide-zinc-800">
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full h-full p-6 bg-zinc-900 text-zinc-100 placeholder-zinc-700 outline-none font-mono text-sm leading-relaxed resize-none"
+                  placeholder="Escribe aquí..."
+                />
+                <div className="h-full p-6 bg-zinc-900 overflow-y-auto">
+                   <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {content || "*Previsualización*"}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Status Bar */}
+            <div className="border-t border-zinc-800 bg-zinc-950 px-4 py-2 flex items-center justify-between text-xs text-zinc-500">
+               <div className="flex gap-4">
+                  <span>{content.length} caracteres</span>
+                  <span>{content.split(/\s+/).filter(w => w.length > 0).length} palabras</span>
+                  <span>{content.split("\n").length} líneas</span>
+               </div>
+               <div>
+                  Markdown Compatible
+               </div>
+            </div>
+          </div>
         </div>
       </main>
+
+      {/* MODALS */}
+      <Modal
+        isOpen={showConflictError}
+        onClose={() => setShowConflictError(false)}
+        title="⚠️ Conflicto Detectado"
+        description="El archivo ha sido modificado externamente (probablemente en GitHub). Tus cambios no pueden guardarse automáticamente."
+        footer={
+          <button
+            onClick={() => {
+              setShowConflictError(false);
+              router.refresh();
+            }}
+            className="px-4 py-2 text-sm font-medium bg-white text-black hover:bg-zinc-200 rounded-md transition-colors"
+          >
+            Refrescar y perder mis cambios
+          </button>
+        }
+      >
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-3 mb-4 text-sm text-yellow-200">
+          Recomendación: Copia tu contenido actual localmente antes de refrescar.
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showPermissionError}
+        onClose={() => setShowPermissionError(false)}
+        title="❌ Error de Permisos"
+        description="Tu aplicación no tiene permisos de escritura en este repositorio."
+        footer={
+          <button
+            onClick={() => setShowPermissionError(false)}
+            className="px-4 py-2 text-sm font-medium bg-white text-black hover:bg-zinc-200 rounded-md transition-colors"
+          >
+            Entendido
+          </button>
+        }
+      >
+        <div className="space-y-3 text-sm text-zinc-400">
+          <p>Tu GitHub OAuth App no tiene permisos para hacer commits.</p>
+          <div className="bg-zinc-800/50 p-3 rounded border border-zinc-700">
+            <h4 className="font-semibold text-white mb-1">Solución:</h4>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Ve a Settings &gt; Developer Settings en GitHub</li>
+              <li>Crea una <strong>GitHub App</strong> (no OAuth App)</li>
+              <li>Dale permisos de <code>Contents: Read & Write</code></li>
+              <li>Actualiza las credenciales en <code>.env.local</code></li>
+            </ol>
+          </div>
+          <p>Consulta <code>GITHUB_PERMISSIONS.md</code> para más detalles.</p>
+        </div>
+      </Modal>
     </>
   );
 }

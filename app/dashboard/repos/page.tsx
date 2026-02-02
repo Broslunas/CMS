@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
+import SyncButton from "@/components/SyncButton";
 
 export default async function ReposPage({
   searchParams,
@@ -35,16 +36,20 @@ export default async function ReposPage({
     <div className="min-h-screen bg-black">
       {/* Header */}
       <header className="border-b border-zinc-800 bg-zinc-950">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Volver al Dashboard
-          </Link>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Volver al Dashboard
+            </Link>
+          </div>
+
+          <SyncButton repoId={repoId} />
         </div>
       </header>
 
@@ -75,7 +80,10 @@ export default async function ReposPage({
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-white truncate">
-                        {post.metadata.title || "Sin título"}
+                        {post.metadata.title || 
+                         (Object.keys(post.metadata).length > 0 
+                           ? String(Object.values(post.metadata)[0]) 
+                           : "Sin título")}
                       </h3>
                       <p className="text-sm text-zinc-500 mt-1">
                         {post.filePath}
