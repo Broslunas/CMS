@@ -179,17 +179,61 @@ export default function PostEditor({ post, schema }: PostEditorProps) {
 
     // Strings
     if (typeof value === "string") {
+      const trimmedValue = value.trim();
+      
+      const isImage = 
+        // 1. Detección por extensión (soportando query params y espacios)
+        trimmedValue.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif|tiff|tif)(\?.*)?$/i) || 
+        // 2. Detección por nombre de campo + URL
+        ((trimmedValue.startsWith("http") || trimmedValue.startsWith("/")) && 
+         (key.toLowerCase().includes("image") || 
+          key.toLowerCase().includes("img") || 
+          key.toLowerCase().includes("cover") || 
+          key.toLowerCase().includes("avatar") ||
+          key.toLowerCase().includes("thumbnail") ||
+          key.toLowerCase().includes("banner") ||
+          key.toLowerCase().includes("poster") ||
+          key.toLowerCase().includes("logo") ||
+          key.toLowerCase().includes("icon") ||
+          key.toLowerCase().includes("bg")));
+
       return (
         <div key={key}>
           <label className="block text-sm font-medium text-zinc-300 mb-2 capitalize">
             {key}
           </label>
-          <input
-            type="text"
-            value={value}
-            onChange={(e) => updateMetadata(key, e.target.value)}
-            className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 text-sm"
-          />
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => updateMetadata(key, e.target.value)}
+              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 text-sm"
+            />
+            {isImage && trimmedValue.length > 0 && (
+              <div className="relative group w-fit">
+                <div className="rounded-lg overflow-hidden border border-zinc-700 bg-zinc-950/50 max-w-xs">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    key={trimmedValue} // Forzar re-render si cambia la URL
+                    src={trimmedValue} 
+                    alt={`Preview of ${key}`}
+                    className="max-h-48 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                    onLoad={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'block';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <span className="text-xs text-white bg-black/70 px-2 py-1 rounded">
+                      Vista Previa
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       );
     }

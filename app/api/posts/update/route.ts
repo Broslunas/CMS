@@ -20,14 +20,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
     }
 
-    // Validar metadata
-    const validationResult = PostMetadataSchema.safeParse(metadata);
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { error: "Invalid metadata", details: validationResult.error.issues },
-        { status: 400 }
-      );
-    }
+    // Ya no validamos estrictamente con PostMetadataSchema para permitir borradores
+    // y edición de posts antiguos o incompletos.
+    // La validación de tipos se maneja en el frontend.
 
     const client = await clientPromise;
     const db = client.db(DB_NAME);
