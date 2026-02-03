@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
 import Link from "next/link";
 import ImportButton from "@/components/ImportButton";
+import DeleteRepoButton from "@/components/DeleteRepoButton";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, RefreshCw, FolderGit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -92,8 +93,11 @@ export default async function DashboardPage() {
                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                          <FolderGit2 className="h-5 w-5" />
                        </div>
-                       <div className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md border border-primary/10">
-                         Active
+                       <div className="flex items-center gap-2">
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md border border-primary/10">
+                            Active
+                          </div>
+                          <DeleteRepoButton projectId={project._id} repoName={project.name} />
                        </div>
                     </div>
                     <div className="space-y-1">
