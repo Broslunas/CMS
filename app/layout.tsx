@@ -86,7 +86,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans text-foreground selection:bg-primary/20 selection:text-primary`}
       >
         <ThemeProvider
             attribute="class"
@@ -95,8 +95,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <div className="relative flex min-h-screen flex-col">
+              {/* Global background decorations */}
+              <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+              </div>
+              
               <SiteHeader />
-              <div className="flex-1">{children}</div>
+              <div className="flex-1 relative">{children}</div>
             </div>
             <Toaster theme="system" position="bottom-right" />
             
