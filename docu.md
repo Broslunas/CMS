@@ -1,8 +1,8 @@
-Documentación Técnica: Astro-Git CMS
+Documentación Técnica: Broslunas CMS
 
 1. Resumen Ejecutivo
 
-Astro-Git CMS es una plataforma de gestión de contenidos (CMS) basada en Git diseñada específicamente para el ecosistema Astro. Permite a los usuarios gestionar sus Content Collections mediante una interfaz visual intuitiva, sincronizando los datos directamente con sus repositorios de GitHub sin necesidad de bases de datos externas de contenido, pero utilizando MongoDB como capa de caché y persistencia de estado intermedio.
+Broslunas CMS es una plataforma de gestión de contenidos (CMS) basada en Git diseñada específicamente para el ecosistema Astro. Permite a los usuarios gestionar sus Content Collections mediante una interfaz visual intuitiva, sincronizando los datos directamente con sus repositorios de GitHub sin necesidad de bases de datos externas de contenido, pero utilizando MongoDB como capa de caché y persistencia de estado intermedio.
 
 2. Arquitectura del Sistema
 

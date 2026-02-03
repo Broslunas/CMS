@@ -1,8 +1,8 @@
-# 🚀 Astro-Git CMS
+# 🚀 Broslunas CMS
 
 Un sistema de gestión de contenidos (CMS) basado en Git diseñado específicamente para el ecosistema Astro. Permite gestionar tus Content Collections mediante una interfaz visual intuitiva, sincronizando los datos directamente con tus repositorios de GitHub.
 
-![Astro-Git CMS](https://img.shields.io/badge/Status-MVP-green)
+![Broslunas CMS](https://img.shields.io/badge/Status-MVP-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green)
 
@@ -55,7 +55,7 @@ npm install
 1. Ve a [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click en "New OAuth App"
 3. Configura:
-   - **Application name**: Astro-Git CMS
+   - **Application name**: Broslunas CMS
    - **Homepage URL**: `http://localhost:3000`
    - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
 4. Guarda el **Client ID** y **Client Secret**

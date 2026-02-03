@@ -1,4 +1,4 @@
-# 🎯 Guía de Configuración Rápida - Astro-Git CMS
+# 🎯 Guía de Configuración Rápida - Broslunas CMS
 
 ## Paso 1: MongoDB Atlas
 
@@ -27,7 +27,7 @@
 2. Click en "OAuth Apps" → "New OAuth App"
 3. Rellena el formulario:
    ```
-   Application name: Astro-Git CMS Local
+   Application name: Broslunas CMS Local
    Homepage URL: http://localhost:3000
    Authorization callback URL: http://localhost:3000/api/auth/callback/github
    ```

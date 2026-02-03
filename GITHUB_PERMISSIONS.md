@@ -20,7 +20,7 @@ Status: 403
 2. **Configura los campos:**
 
 ```
-GitHub App name: Astro-Git-CMS-App
+GitHub App name: Broslunas CMS-CMS-App
 Description: CMS para gestionar contenido Astro mediante Git
 Homepage URL: http://localhost:3000
 ```

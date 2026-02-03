@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import LoginButton from "@/components/LoginButton";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Zap, Layout, RefreshCw } from "lucide-react";
 
 export default async function Home() {
   const session = await auth();
@@ -11,53 +13,67 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="max-w-5xl w-full">
+    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center p-4 md:p-24">
+      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
+        {/* Abstract background elements if desired, or keep clean */}
+      </div>
+
+      <article className="max-w-5xl w-full space-y-20">
         {/* Hero */}
-        <div className="text-center space-y-6 mb-16">
-          <h1 className="text-7xl md:text-8xl font-bold text-white tracking-tight">
-            Astro-Git <span className="text-zinc-400">CMS</span>
+        <header className="text-center space-y-6">
+          <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+            Beta Pública disponible
+          </div>
+          <h1 className="text-4xl md:text-7xl font-bold tracking-tighter sm:text-5xl bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent pb-3">
+            Broslunas CMS
           </h1>
-          <p className="text-xl md:text-2xl text-zinc-400 font-light max-w-2xl mx-auto">
-            Gestiona tus Content Collections de Astro con el poder de Git
+          <p className="text-xl text-muted-foreground md:text-2xl max-w-[42rem] mx-auto leading-normal">
+            Gestiona tus Content Collections de Astro con el poder de Git.
+            <br className="hidden md:inline" /> Sin bases de datos, solo tu repositorio.
           </p>
-        </div>
+          <div className="pt-4">
+             <LoginButton />
+          </div>
+        </header>
 
         {/* Features */}
-        <div className="grid md:grid-cols-3 gap-4 mb-16">
-          <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800 hover:border-zinc-700 transition-colors">
-            <div className="text-3xl mb-4">⚡</div>
-            <h3 className="text-lg font-semibold text-white mb-3">Rápido y Ligero</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Sin bases de datos de contenido. Todo se sincroniza directamente con GitHub.
-            </p>
-          </div>
+        <section aria-label="Características Principales" className="grid md:grid-cols-3 gap-6">
+          <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <CardHeader>
+              <Zap className="h-10 w-10 mb-2 opacity-80" />
+              <CardTitle>Rápido y Ligero</CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground">
+              Sin bases de datos de contenido. Todo se sincroniza directamente con GitHub mediante Git nativo.
+            </CardContent>
+          </Card>
 
-          <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800 hover:border-zinc-700 transition-colors">
-            <div className="text-3xl mb-4">📝</div>
-            <h3 className="text-lg font-semibold text-white mb-3">Interfaz Intuitiva</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Edita tu contenido con una UI moderna y fluida, sin tocar código.
-            </p>
-          </div>
+          <Card className="bg-card/50 backdrop-blur-sm border-border">
+            <CardHeader>
+              <Layout className="h-10 w-10 mb-2 opacity-80" />
+              <CardTitle>Interfaz Intuitiva</CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground">
+              Edita tu contenido Markdown y JSON con una UI moderna, limpia y fluida. WYSIWYG real.
+            </CardContent>
+          </Card>
 
-          <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800 hover:border-zinc-700 transition-colors">
-            <div className="text-3xl mb-4">🔄</div>
-            <h3 className="text-lg font-semibold text-white mb-3">Sincronización Total</h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Cada cambio se guarda en MongoDB y se commitea a tu repositorio.
-            </p>
-          </div>
-        </div>
+          <Card className="bg-card/50 backdrop-blur-sm border-border">
+             <CardHeader>
+              <RefreshCw className="h-10 w-10 mb-2 opacity-80" />
+              <CardTitle>Sincronización Total</CardTitle>
+            </CardHeader>
+            <CardContent className="text-muted-foreground">
+              Cada cambio es un commit. Tu contenido vive en tu repositorio, siempre versionado y seguro.
+            </CardContent>
+          </Card>
+        </section>
 
-        {/* CTA */}
-        <div className="text-center space-y-4">
-          <LoginButton />
-          <p className="text-zinc-500 text-sm">
-            Conecta con GitHub para comenzar
-          </p>
-        </div>
-      </div>
-    </div>
+        {/* Footer Text */}
+        <footer className="text-center text-sm text-muted-foreground pb-8">
+          <p>Potenciado por Vercel, Next.js y GitHub API.</p>
+        </footer>
+      </article>
+    </main>
   );
 }

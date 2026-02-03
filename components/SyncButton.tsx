@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Modal from "./Modal";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface SyncButtonProps {
   repoId: string;
@@ -52,31 +54,15 @@ export default function SyncButton({ repoId }: SyncButtonProps) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setShowConfirm(true)}
         disabled={syncing}
-        className={`
-          inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors
-          ${syncing 
-            ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" 
-            : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700 hover:text-white border border-zinc-700"}
-        `}
+        variant="outline"
+        className="gap-2"
       >
-        <svg
-          className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
+        <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
         {syncing ? "Sincronizando..." : "Sincronizar"}
-      </button>
+      </Button>
 
       <Modal
         isOpen={showConfirm}
@@ -85,18 +71,17 @@ export default function SyncButton({ repoId }: SyncButtonProps) {
         description="Esta acción buscará archivos nuevos y actualizados en GitHub. Si hay cambios locales no guardados, podrían sobrescribirse."
         footer={
           <>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setShowConfirm(false)}
-              className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleSync}
-              className="px-4 py-2 text-sm font-medium bg-white text-black hover:bg-zinc-200 rounded-md transition-colors"
             >
               Confirmar Sincronización
-            </button>
+            </Button>
           </>
         }
       />

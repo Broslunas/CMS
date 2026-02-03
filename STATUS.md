@@ -1,4 +1,4 @@
-# 📊 Estado del Proyecto - Astro-Git CMS MVP
+# 📊 Estado del Proyecto - Broslunas CMS MVP
 
 ## ✅ Completado - Fase 1: MVP
 

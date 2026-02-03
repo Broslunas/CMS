@@ -38,6 +38,422 @@ interface PostEditorProps {
   isNew?: boolean;
 }
 
+function JsonFieldEditor({ fieldKey, value, onChange, onDelete, isComplexArray = false }: { fieldKey: string, value: any, onChange: (val: any) => void, onDelete: () => void, isComplexArray?: boolean }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [text, setText] = useState(JSON.stringify(value, null, 2));
+  const [error, setError] = useState("");
+
+  const handleSave = () => {
+    try {
+      const parsed = JSON.parse(text);
+      onChange(parsed);
+      setIsEditing(false);
+      setError("");
+    } catch (e) {
+      setError("JSON inválido: " + (e as Error).message);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setText(JSON.stringify(value, null, 2));
+    setError("");
+  };
+
+  if (isEditing) {
+    return (
+        <div key={fieldKey} className="w-full">
+            <div className="bg-card border border-border rounded-md p-3">
+                <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    className="w-full h-48 bg-muted/50 text-foreground font-mono text-xs p-2 rounded border border-border focus:outline-none focus:border-ring resize-y"
+                    spellCheck={false}
+                />
+                {error && <p className="text-destructive text-xs mt-2">{error}</p>}
+                <div className="flex justify-end gap-2 mt-3">
+                    <button onClick={handleCancel} className="text-xs text-muted-foreground hover:text-foreground px-3 py-1">Cancelar</button>
+                    <button onClick={handleSave} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90">Guardar JSON</button>
+                </div>
+            </div>
+        </div>
+    )
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-md p-4">
+        <div className="flex justify-between items-start mb-2">
+             <p className="text-sm text-muted-foreground">
+               {isComplexArray 
+                 ? `Campo complejo con ${value.length} elementos`
+                 : "Campo objeto complejo"}
+             </p>
+             <button
+                onClick={() => { setText(JSON.stringify(value, null, 2)); setIsEditing(true); }}
+                className="text-xs flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
+                title="Editar JSON"
+             >
+                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                 Editar JSON
+             </button>
+        </div>
+        <details className="mt-2">
+            <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground select-none">
+            Ver JSON Actual
+            </summary>
+            <pre className="mt-2 text-xs text-muted-foreground overflow-auto max-h-40 bg-muted/50 p-2 rounded border border-border">
+            {JSON.stringify(value, null, 2)}
+            </pre>
+        </details>
+    </div>
+  )
+}
+
+
+
+function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: string, value: any[], onChange: (val: any[]) => void, onDelete: () => void }) {
+  // Verificación de seguridad
+  if (!Array.isArray(value)) return null;
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isJsonMode, setIsJsonMode] = useState(false);
+  const [jsonText, setJsonText] = useState("");
+  const [jsonError, setJsonError] = useState("");
+
+  const handleUpdate = (index: number, field: string, newValue: string) => {
+    const updated = [...value];
+    updated[index] = { ...updated[index], [field]: newValue };
+    onChange(updated);
+  };
+
+  const handleAdd = () => {
+    onChange([...value, { time: "00:00", text: "" }]);
+    setIsExpanded(true); // Auto-expand when adding
+  };
+
+  const handleRemove = (index: number) => {
+    const updated = value.filter((_, i) => i !== index);
+    onChange(updated);
+  };
+
+  const toggleJsonMode = () => {
+      if (!isJsonMode) {
+          setJsonText(JSON.stringify(value, null, 2));
+          setIsJsonMode(true);
+      } else {
+          setIsJsonMode(false);
+          setJsonError("");
+      }
+  };
+
+  const handleImport = () => {
+      // Intentar primero como JSON
+      try {
+          const parsed = JSON.parse(jsonText);
+          if (Array.isArray(parsed)) {
+            onChange(parsed);
+            setIsJsonMode(false);
+            setJsonError("");
+            return;
+          }
+      } catch (e) {
+         // Silently fail JSON parse, try text parse
+      }
+
+      // Intentar Parseo de Texto ([00:00] Speaker: Text)
+      try {
+          const lines = jsonText.split('\n');
+          const transcription: any[] = [];
+          const regex = /^\[(\d{1,2}:\d{2})\]\s*(?:[^:]+:\s*)?(.*)/;
+
+          let hasMatches = false;
+
+          lines.forEach(line => {
+              const cleanLine = line.trim();
+              if (!cleanLine) return;
+
+              const match = cleanLine.match(regex);
+              if (match) {
+                  hasMatches = true;
+                  const time = match[1];
+                  const textContent = match[2] ? match[2].trim() : "";
+                  
+                  // Simple unescape if user pasted stringified text by mistake, otherwise keep distinct
+                  transcription.push({
+                      time: time,
+                      text: textContent
+                  });
+              }
+          });
+
+          if (hasMatches && transcription.length > 0) {
+              onChange(transcription);
+              setIsJsonMode(false);
+              setJsonError("");
+              return;
+          }
+
+          throw new Error("No se pudo detectar formato JSON ni Texto válido ([00:00] ...)");
+      } catch (e) {
+          setJsonError((e as Error).message);
+      }
+  };
+
+  return (
+    <div key={fieldKey} className="w-full">
+      <div className="bg-muted/30 border border-border rounded-lg overflow-hidden transition-all">
+        {/* Header - Always visible & clickable to toggle */}
+        <div 
+            className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => setIsExpanded(!isExpanded)}
+        >
+            <div className="flex items-center gap-3">
+                 <button 
+                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                 >
+                    <svg className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                 </button>
+                 <div>
+                    <p className="text-sm font-medium text-foreground">Editor de Transcripción</p>
+                    <p className="text-xs text-muted-foreground">{value.length} segmentos</p>
+                 </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+                 {isExpanded && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
+                        className={`text-xs px-2 py-1 rounded border transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
+                    >
+                        {isJsonMode ? 'Cancelar Importación' : 'Importar JSON/Texto'}
+                    </button>
+                 )}
+            </div>
+        </div>
+        
+        {/* Content Body */}
+        {isExpanded && (
+            <div className="p-4 border-t border-border bg-card/30">
+                {isJsonMode ? (
+                    <div className="space-y-3">
+                        <textarea
+                            value={jsonText}
+                            onChange={(e) => setJsonText(e.target.value)}
+                            className="w-full h-64 bg-background text-foreground font-mono text-xs p-3 rounded border border-input focus:outline-none focus:border-ring resize-y"
+                            placeholder="Pega tu JSON o Texto con formato [00:00] Speaker: ... aquí..."
+                            spellCheck={false}
+                        />
+                        {jsonError && <p className="text-destructive text-xs">{jsonError}</p>}
+                        <div className="flex justify-end gap-2">
+                            <button onClick={toggleJsonMode} className="text-xs text-muted-foreground hover:text-foreground px-3 py-1">Cancelar</button>
+                            <button onClick={handleImport} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90">Procesar e Importar</button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                        {value.map((item, index) => (
+                            <div key={index} className="flex gap-3 bg-card border border-border p-3 rounded-md group hover:border-input transition-colors">
+                            <div className="w-24 shrink-0">
+                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Tiempo</label>
+                                <input
+                                type="text"
+                                value={item.time || ""}
+                                onChange={(e) => handleUpdate(index, "time", e.target.value)}
+                                placeholder="00:00"
+                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs text-foreground font-mono focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Texto</label>
+                                <textarea
+                                value={item.text || ""}
+                                onChange={(e) => handleUpdate(index, "text", e.target.value)}
+                                placeholder="Escribe la transcripción..."
+                                rows={2}
+                                className="w-full bg-background border border-input rounded px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[60px]"
+                                />
+                            </div>
+                            <button
+                                onClick={() => handleRemove(index)}
+                                className="self-start mt-6 text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                                title="Eliminar segmento"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                            </div>
+                        ))}
+                        </div>
+
+                        <button
+                        onClick={handleAdd}
+                        className="mt-4 w-full py-2 border border-dashed border-border rounded-md text-xs text-muted-foreground hover:text-foreground hover:border-input hover:bg-muted/50 transition-all flex items-center justify-center gap-2"
+                        >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Añadir Nuevo Segmento
+                        </button>
+                    </>
+                )}
+            </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: string, value: any[], onChange: (val: any[]) => void, onDelete: () => void }) {
+    // Verificación de seguridad
+    if (!Array.isArray(value)) return null;
+
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isJsonMode, setIsJsonMode] = useState(false);
+    const [jsonText, setJsonText] = useState("");
+    const [jsonError, setJsonError] = useState("");
+  
+    const handleUpdate = (index: number, field: string, newValue: string) => {
+      const updated = [...value];
+      updated[index] = { ...updated[index], [field]: newValue };
+      onChange(updated);
+    };
+  
+    const handleAdd = () => {
+      onChange([...value, { time: "00:00", title: "" }]);
+      setIsExpanded(true);
+    };
+  
+    const handleRemove = (index: number) => {
+      const updated = value.filter((_, i) => i !== index);
+      onChange(updated);
+    };
+
+    const toggleJsonMode = () => {
+        if (!isJsonMode) {
+            setJsonText(JSON.stringify(value, null, 2));
+            setIsJsonMode(true);
+        } else {
+            setIsJsonMode(false);
+            setJsonError("");
+        }
+    };
+
+    const handleJsonSave = () => {
+        try {
+            const parsed = JSON.parse(jsonText);
+            if (!Array.isArray(parsed)) throw new Error("Debe ser un array");
+            onChange(parsed);
+            setIsJsonMode(false);
+            setJsonError("");
+        } catch (e) {
+            setJsonError("JSON inválido: " + (e as Error).message);
+        }
+    };
+  
+    return (
+      <div key={fieldKey} className="w-full">
+        <div className="bg-muted/30 border border-border rounded-lg overflow-hidden transition-all">
+          {/* Header */}
+          <div 
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+              <div className="flex items-center gap-3">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <svg className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    <div>
+                         <p className="text-sm font-medium text-foreground">Editor de Secciones</p>
+                         <p className="text-xs text-muted-foreground">{value.length} secciones</p>
+                    </div>
+              </div>
+              <div className="flex items-center gap-2">
+                 {isExpanded && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
+                        className={`text-xs px-2 py-1 rounded border transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
+                    >
+                        {isJsonMode ? 'Cancelar JSON' : 'Importar/Editar JSON'}
+                    </button>
+                 )}
+            </div>
+          </div>
+          
+          {isExpanded && (
+            <div className="p-4 border-t border-border bg-card/30">
+                 {isJsonMode ? (
+                    <div className="space-y-3">
+                        <textarea
+                            value={jsonText}
+                            onChange={(e) => setJsonText(e.target.value)}
+                            className="w-full h-64 bg-background text-foreground font-mono text-xs p-3 rounded border border-input focus:outline-none focus:border-ring resize-y"
+                            placeholder="Pega tu JSON aquí..."
+                            spellCheck={false}
+                        />
+                        {jsonError && <p className="text-destructive text-xs">{jsonError}</p>}
+                        <div className="flex justify-end gap-2">
+                            <button onClick={toggleJsonMode} className="text-xs text-muted-foreground hover:text-foreground px-3 py-1">Cancelar</button>
+                            <button onClick={handleJsonSave} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90">Guardar Cambios</button>
+                        </div>
+                    </div>
+                 ) : (
+                    <>
+                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                            {value.map((item, index) => (
+                            <div key={index} className="flex gap-3 bg-card border border-border p-3 rounded-md group hover:border-input transition-colors items-center">
+                                <div className="w-24 shrink-0">
+                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Tiempo</label>
+                                <input
+                                    type="text"
+                                    value={item.time || ""}
+                                    onChange={(e) => handleUpdate(index, "time", e.target.value)}
+                                    placeholder="00:00"
+                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs text-foreground font-mono focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                                </div>
+                                <div className="flex-1">
+                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Título</label>
+                                <input
+                                    type="text"
+                                    value={item.title || ""}
+                                    onChange={(e) => handleUpdate(index, "title", e.target.value)}
+                                    placeholder="Título de la sección..."
+                                    className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                                </div>
+                                <button
+                                onClick={() => handleRemove(index)}
+                                className="mt-4 text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                                title="Eliminar sección"
+                                >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                            ))}
+                        </div>
+                
+                        <button
+                            onClick={handleAdd}
+                            className="mt-4 w-full py-2 border border-dashed border-border rounded-md text-xs text-muted-foreground hover:text-foreground hover:border-input hover:bg-muted/50 transition-all flex items-center justify-center gap-2"
+                        >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            Añadir Nueva Sección
+                        </button>
+                    </>
+                 )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
 export default function PostEditor({ post, schema, isNew = false }: PostEditorProps) {
   const [metadata, setMetadata] = useState<PostMetadata>(post.metadata);
   const [content, setContent] = useState(post.content);
@@ -274,18 +690,75 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
   };
 
   const renderField = (key: string, value: any) => {
-    // ... misma lógica de render ...
     // Arrays especiales (como transcription)
     if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object") {
+      // Check for Transcription format (time + text)
+      const isTranscription = value.every(item => 'time' in item && 'text' in item);
+      if (isTranscription) {
+          return (
+             <div key={key}>
+                <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-foreground capitalize">
+                    {key}
+                    </label>
+                    <button 
+                    onClick={() => handleDeleteField(key)} 
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                    title={`Eliminar campo ${key}`}
+                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    </button>
+                </div>
+                <TranscriptionEditor 
+                    fieldKey={key}
+                    value={value}
+                    onChange={(val) => updateMetadata(key, val)}
+                    onDelete={() => handleDeleteField(key)}
+                />
+             </div>
+          )
+      }
+
+      // Check for Sections format (time + title)
+      const isSections = value.every(item => 'time' in item && 'title' in item);
+        if (isSections) {
+        return (
+           <div key={key}>
+              <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-foreground capitalize">
+                  {key}
+                  </label>
+                  <button 
+                  onClick={() => handleDeleteField(key)} 
+                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                  title={`Eliminar campo ${key}`}
+                  >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  </button>
+              </div>
+              <SectionsEditor 
+                  fieldKey={key}
+                  value={value}
+                  onChange={(val) => updateMetadata(key, val)}
+                  onDelete={() => handleDeleteField(key)}
+              />
+           </div>
+        )
+    }
+
       return (
         <div key={key}>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-zinc-300 capitalize">
+            <label className="text-sm font-medium text-foreground capitalize">
               {key}
             </label>
             <button 
               onClick={() => handleDeleteField(key)} 
-              className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
               title={`Eliminar campo ${key}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,19 +766,13 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
               </svg>
             </button>
           </div>
-          <div className="bg-zinc-800 border border-zinc-700 rounded-md p-4">
-            <p className="text-sm text-zinc-400">
-              Campo complejo con {value.length} elementos
-            </p>
-            <details className="mt-2">
-              <summary className="text-sm text-zinc-500 cursor-pointer hover:text-zinc-300">
-                Ver JSON
-              </summary>
-              <pre className="mt-2 text-xs text-zinc-400 overflow-auto max-h-40">
-                {JSON.stringify(value, null, 2)}
-              </pre>
-            </details>
-          </div>
+          <JsonFieldEditor 
+            fieldKey={key} 
+            value={value} 
+            onChange={(val: any) => updateMetadata(key, val)}
+            onDelete={() => handleDeleteField(key)}
+            isComplexArray={true}
+          />
         </div>
       );
     }
@@ -315,12 +782,12 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       return (
         <div key={key}>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-zinc-300 capitalize">
+            <label className="text-sm font-medium text-foreground capitalize">
               {key} (separados por coma)
             </label>
             <button 
               onClick={() => handleDeleteField(key)} 
-              className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
               title={`Eliminar campo ${key}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,7 +804,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                 e.target.value.split(",").map((t) => t.trim())
               )
             }
-            className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 text-sm"
+            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
         </div>
       );
@@ -347,6 +814,50 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
     if (typeof value === "string") {
       const trimmedValue = value.trim();
       
+      // Detección de fecha ISO
+      // Regex flexible para ISO 8601
+      const isDate = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(trimmedValue);
+
+      if (isDate) {
+         try {
+            const dateObj = new Date(trimmedValue);
+            // Convertir a formato datetime-local (YYYY-MM-DDThh:mm)
+            // Usamos getTimezoneOffset para ajustar a la hora local para el input
+            const localISOTime = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            
+            return (
+                <div key={key}>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-foreground capitalize">
+                      {key} <span className="text-muted-foreground text-xs font-normal">(Fecha)</span>
+                    </label>
+                    <button 
+                      onClick={() => handleDeleteField(key)} 
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                      title={`Eliminar campo ${key}`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                  <input
+                    type="datetime-local"
+                    value={localISOTime}
+                    onChange={(e) => {
+                        const newDate = new Date(e.target.value);
+                        updateMetadata(key, newDate.toISOString());
+                    }}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm [color-scheme:dark]"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1 font-mono">{trimmedValue}</p>
+                </div>
+            );
+         } catch (e) {
+            // Si falla el parseo, mostrar como string normal
+         }
+      }
+
       const isImage = 
         // 1. Detección por extensión (soportando query params y espacios)
         trimmedValue.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif|tiff|tif)(\?.*)?$/i) || 
@@ -366,12 +877,12 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       return (
         <div key={key}>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-zinc-300 capitalize">
+            <label className="text-sm font-medium text-foreground capitalize">
               {key}
             </label>
             <button 
               onClick={() => handleDeleteField(key)} 
-              className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
               title={`Eliminar campo ${key}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -384,11 +895,11 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
               type="text"
               value={value}
               onChange={(e) => updateMetadata(key, e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 text-sm"
+              className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
             />
             {isImage && trimmedValue.length > 0 && (
               <div className="relative group w-fit">
-                <div className="rounded-lg overflow-hidden border border-zinc-700 bg-zinc-950/50 max-w-xs">
+                <div className="rounded-lg overflow-hidden border border-border bg-muted/50 max-w-xs">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     key={trimmedValue} // Forzar re-render si cambia la URL
@@ -420,12 +931,12 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       return (
         <div key={key}>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-zinc-300 capitalize">
+            <label className="text-sm font-medium text-foreground capitalize">
               {key}
             </label>
             <button 
               onClick={() => handleDeleteField(key)} 
-              className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
               title={`Eliminar campo ${key}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -437,7 +948,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
             type="number"
             value={value}
             onChange={(e) => updateMetadata(key, parseFloat(e.target.value))}
-            className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 text-sm"
+            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           />
         </div>
       );
@@ -454,13 +965,13 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                   type="checkbox"
                   checked={value}
                   onChange={(e) => updateMetadata(key, e.target.checked)}
-                  className="w-4 h-4 bg-zinc-800 border-zinc-700 rounded"
+                  className="w-4 h-4 bg-background border-input rounded"
                 />
-                <span className="text-sm font-medium text-zinc-300 capitalize">{key}</span>
+                <span className="text-sm font-medium text-foreground capitalize">{key}</span>
              </label>
              <button 
                 onClick={() => handleDeleteField(key)} 
-                className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                className="text-muted-foreground hover:text-destructive transition-colors p-1"
                 title={`Eliminar campo ${key}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -477,12 +988,12 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       return (
         <div key={key}>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-zinc-300 capitalize">
+            <label className="text-sm font-medium text-foreground capitalize">
               {key}
             </label>
             <button 
               onClick={() => handleDeleteField(key)} 
-              className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+              className="text-muted-foreground hover:text-destructive transition-colors p-1"
               title={`Eliminar campo ${key}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -490,17 +1001,12 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
               </svg>
             </button>
           </div>
-          <div className="bg-zinc-800 border border-zinc-700 rounded-md p-4">
-            <p className="text-sm text-zinc-400">Campo objeto complejo</p>
-            <details className="mt-2">
-              <summary className="text-sm text-zinc-500 cursor-pointer hover:text-zinc-300">
-                Ver JSON
-              </summary>
-              <pre className="mt-2 text-xs text-zinc-400 overflow-auto max-h-40">
-                {JSON.stringify(value, null, 2)}
-              </pre>
-            </details>
-          </div>
+          <JsonFieldEditor 
+             fieldKey={key} 
+             value={value} 
+             onChange={(val: any) => updateMetadata(key, val)}
+             onDelete={() => handleDeleteField(key)}
+          />
         </div>
       );
     }
@@ -520,7 +1026,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
     <button
       onClick={onClick}
       title={label}
-      className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded transition-colors"
+      className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
     >
       {icon}
     </button>
@@ -529,11 +1035,11 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
   return (
 <>
       {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-950 sticky top-0 z-10">
+      <header className="border-b border-border bg-background sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link
             href={`/dashboard/repos?repo=${encodeURIComponent(post.repoId)}`}
-            className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -545,7 +1051,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
             <button
               onClick={() => handleSave(false)}
               disabled={saving || committing}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
             >
               {saving ? "Guardando..." : "Guardar"}
             </button>
@@ -553,20 +1059,20 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
             <button
               onClick={() => handleSave(true)}
               disabled={saving || committing}
-              className="px-4 py-2 bg-white hover:bg-zinc-100 text-black rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
             >
               {committing ? "Commiteando..." : "Guardar y Commitear"}
             </button>
 
             {!isNew && (
-              <div className="hidden md:block w-px h-6 bg-zinc-800 mx-1" />
+              <div className="hidden md:block w-px h-6 bg-border mx-1" />
             )}
 
             {!isNew && (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 title="Eliminar Post"
-                className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -578,37 +1084,37 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       </header>
 
       {/* Main Editor */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6 bg-black min-h-screen">
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-6 bg-background min-h-screen">
         {/* Meta Info */}
-        <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
+        <div className="bg-card rounded-lg p-4 border border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
 
-              <p className="text-sm text-zinc-400">
-                <span className="text-zinc-500">Repositorio:</span> {post.repoId}
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground/60">Repositorio:</span> {post.repoId}
               </p>
               
               {isNew ? (
                 <div className="mt-2">
-                    <label className="block text-xs font-medium text-zinc-500 mb-1">Path del archivo</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Path del archivo</label>
                     <input 
                         type="text" 
                         value={createFilePath}
                         onChange={(e) => setCreateFilePath(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-700 rounded px-2 py-1 text-sm text-zinc-200 font-mono focus:border-blue-500 focus:outline-none"
+                        className="w-full bg-background border border-input rounded px-2 py-1 text-sm text-foreground font-mono focus:border-ring focus:outline-none"
                     />
                 </div>
               ) : (
-                <p className="text-sm text-zinc-400">
-                    <span className="text-zinc-500">Archivo:</span> {post.filePath}
+                <p className="text-sm text-muted-foreground">
+                    <span className="text-foreground/60">Archivo:</span> {post.filePath}
                 </p>
               )}
             </div>
             <span
               className={`px-3 py-1 rounded text-xs font-medium ${
                 post.status === "synced"
-                  ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                  : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                  ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                  : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20"
               }`}
             >
               {post.status}
@@ -617,13 +1123,13 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
         </div>
 
         {/* Metadata Fields */}
-        <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-5">
+        <div className="bg-card rounded-lg p-6 border border-border space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">Metadata</h2>
+            <h2 className="text-xl font-semibold text-foreground">Metadata</h2>
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowImportModal(true); loadImportablePosts(); }}
-                className="px-3 py-1.5 text-xs font-medium bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 rounded border border-zinc-700 transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded border border-border transition-colors flex items-center gap-2"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z" />
@@ -632,7 +1138,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
               </button>
               <button
                 onClick={() => setShowAddField(true)}
-                className="px-3 py-1.5 text-xs font-medium bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 border border-blue-500/20 rounded transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded transition-colors flex items-center gap-2"
               >
                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -642,7 +1148,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
               {!isNew && (
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="px-3 py-1.5 text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded transition-colors flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 rounded transition-colors flex items-center gap-2"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -656,23 +1162,23 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
             {Object.entries(metadata).map(([key, value]) => renderField(key, value))}
           </div>
           {Object.keys(metadata).length === 0 && (
-            <p className="text-zinc-500 text-sm">No hay campos de metadata</p>
+            <p className="text-muted-foreground text-sm">No hay campos de metadata</p>
           )}
         </div>
 
-        {/* Content Editor - DARK MODE + TOOLBAR */}
-        <div className="bg-zinc-900 rounded-lg shadow-sm border border-zinc-800 flex flex-col min-h-[600px]">
+        {/* Content Editor - THEMED + TOOLBAR */}
+        <div className="bg-card rounded-lg shadow-sm border border-border flex flex-col min-h-[600px]">
           {/* Tabs & Toolbar */}
-          <div className="border-b border-zinc-800 bg-zinc-900">
+          <div className="border-b border-border bg-card">
             <div className="flex items-center justify-between px-4 py-2">
               {/* Tabs */}
-              <div className="flex gap-1 bg-zinc-950/50 p-1 rounded-lg">
+              <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
                 <button
                   onClick={() => setActiveTab("edit")}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                     activeTab === "edit"
-                      ? "bg-zinc-800 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   }`}
                 >
                   Editor
@@ -681,8 +1187,8 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                   onClick={() => setActiveTab("preview")}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                     activeTab === "preview"
-                      ? "bg-zinc-800 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   }`}
                 >
                   Preview
@@ -691,8 +1197,8 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                   onClick={() => setActiveTab("split")}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                     activeTab === "split"
-                      ? "bg-zinc-800 text-white shadow-sm"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   }`}
                 >
                   Split
@@ -701,7 +1207,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
 
               {/* Formatting Toolbar */}
               {(activeTab === "edit" || activeTab === "split") && (
-                <div className="flex items-center gap-1 border-l border-zinc-800 pl-4 ml-4">
+                <div className="flex items-center gap-1 border-l border-border pl-4 ml-4">
                    <ToolbarButton 
                     label="Negrita (Ctrl+B)" 
                     onClick={() => insertText("**", "**")}
@@ -712,7 +1218,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                     onClick={() => insertText("*", "*")}
                     icon={<span className="italic">I</span>}
                   />
-                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <div className="w-px h-4 bg-border mx-1" />
                   <ToolbarButton 
                     label="Título 1" 
                     onClick={() => insertText("# ", "")}
@@ -728,7 +1234,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                     onClick={() => insertText("### ", "")}
                     icon={<span className="font-bold text-sm">H3</span>}
                   />
-                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <div className="w-px h-4 bg-border mx-1" />
                   <ToolbarButton 
                     label="Lista" 
                     onClick={() => insertText("- ", "")}
@@ -756,7 +1262,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                       </svg>
                     }
                   />
-                  <div className="w-px h-4 bg-zinc-800 mx-1" />
+                  <div className="w-px h-4 bg-border mx-1" />
                   <ToolbarButton 
                     label="Link" 
                     onClick={() => insertText("[", "](url)")}
@@ -788,15 +1294,15 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                   ref={textareaRef}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="flex-1 w-full p-8 bg-zinc-900 text-zinc-100 placeholder-zinc-700 outline-none font-mono text-sm leading-relaxed resize-none"
+                  className="flex-1 w-full p-8 bg-background text-foreground placeholder-muted-foreground outline-none font-mono text-sm leading-relaxed resize-none"
                   placeholder="Empieza a escribir..."
                 />
               </div>
             )}
 
             {activeTab === "preview" && (
-              <div className="flex-1 p-8 bg-zinc-900 overflow-y-auto">
-                <div className="prose prose-invert max-w-none">
+              <div className="flex-1 p-8 bg-background overflow-y-auto">
+                <div className="prose dark:prose-invert max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {content || "*No hay contenido para previsualizar*"}
                   </ReactMarkdown>
@@ -805,16 +1311,16 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
             )}
 
             {activeTab === "split" && (
-              <div className="flex-1 grid grid-cols-2 divide-x divide-zinc-800">
+              <div className="flex-1 grid grid-cols-2 divide-x divide-border">
                 <textarea
                   ref={textareaRef}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full h-full p-6 bg-zinc-900 text-zinc-100 placeholder-zinc-700 outline-none font-mono text-sm leading-relaxed resize-none"
+                  className="w-full h-full p-6 bg-background text-foreground placeholder-muted-foreground outline-none font-mono text-sm leading-relaxed resize-none"
                   placeholder="Escribe aquí..."
                 />
-                <div className="h-full p-6 bg-zinc-900 overflow-y-auto">
-                   <div className="prose prose-invert prose-sm max-w-none">
+                <div className="h-full p-6 bg-background overflow-y-auto">
+                   <div className="prose dark:prose-invert prose-sm max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {content || "*Previsualización*"}
                     </ReactMarkdown>
@@ -824,7 +1330,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
             )}
             
             {/* Status Bar */}
-            <div className="border-t border-zinc-800 bg-zinc-950 px-4 py-2 flex items-center justify-between text-xs text-zinc-500">
+            <div className="border-t border-border bg-muted/30 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
                <div className="flex gap-4">
                   <span>{content.length} caracteres</span>
                   <span>{content.split(/\s+/).filter(w => w.length > 0).length} palabras</span>
@@ -839,24 +1345,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
 
 
         {/* Danger Zone */}
-        {!isNew && (
-          <div className="bg-red-500/5 rounded-lg p-6 border border-red-500/20">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-red-400">Zona de Peligro</h3>
-                <p className="text-zinc-400 text-sm">
-                  Esta acción eliminará el post permanentemente. No se puede deshacer.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white border border-red-500/50 rounded-md transition-all text-sm font-medium"
-              >
-                Eliminar Post
-              </button>
-            </div>
-          </div>
-        )}
+
       </main>
 
       {/* Modal Definitions */}
@@ -870,13 +1359,13 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
           <div className="flex justify-end gap-2">
             <button
                onClick={() => setShowAddField(false)}
-               className="px-4 py-2 text-sm text-zinc-400 hover:text-white"
+               className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
             >
               Cancelar
             </button>
             <button
                onClick={handleAddField}
-               className="px-4 py-2 text-sm bg-white text-black rounded font-medium hover:bg-zinc-200"
+               className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded font-medium hover:bg-primary/90"
             >
               Añadir
             </button>
@@ -885,21 +1374,21 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Nombre del Campo (Key)</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Nombre del Campo (Key)</label>
             <input
               type="text"
               value={newFieldName}
               onChange={(e) => setNewFieldName(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-sm text-white focus:border-white outline-none"
+              className="w-full bg-background border border-input rounded p-2 text-sm text-foreground focus:border-ring outline-none"
               placeholder="Ej: author, category, date..."
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">Tipo de Dato</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Tipo de Dato</label>
             <select
               value={newFieldType}
               onChange={(e) => setNewFieldType(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-sm text-white focus:border-white outline-none"
+              className="w-full bg-background border border-input rounded p-2 text-sm text-foreground focus:border-ring outline-none"
             >
               <option value="string">Texto</option>
               <option value="number">Número</option>
@@ -920,7 +1409,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
         footer={
            <button
              onClick={() => setShowImportModal(false)}
-             className="px-4 py-2 text-sm text-zinc-400 hover:text-white"
+             className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
            >
              Cancelar
            </button>
@@ -933,13 +1422,13 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
              placeholder="Buscar posts..."
              value={searchTerm}
              onChange={(e) => setSearchTerm(e.target.value)}
-             className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-sm text-white focus:border-white outline-none"
+             className="w-full bg-background border border-input rounded p-2 text-sm text-foreground focus:border-ring outline-none"
            />
            
            {/* List */}
-           <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+           <div className="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
              {loadingPosts ? (
-               <div className="text-center py-4 text-zinc-500">Cargando posts...</div>
+               <div className="text-center py-4 text-muted-foreground">Cargando posts...</div>
              ) : (
                importablePosts
                   .filter(p => 
@@ -950,22 +1439,22 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
                  <button
                    key={post._id}
                    onClick={() => handleImportMetadata(post)}
-                   className="w-full text-left p-3 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800 transition-all group"
+                   className="w-full text-left p-3 rounded bg-card border border-border hover:border-ring hover:bg-muted transition-all group"
                  >
-                   <div className="font-medium text-white group-hover:text-blue-400 transition-colors">
+                   <div className="font-medium text-foreground group-hover:text-primary transition-colors">
                      {post.metadata.title || "Sin título"}
                    </div>
-                   <div className="text-xs text-zinc-500 font-mono truncate">
+                   <div className="text-xs text-muted-foreground font-mono truncate">
                      {post.filePath}
                    </div>
                  </button>
                ))
              )}
              {!loadingPosts && importablePosts.length > 0 && importablePosts.filter(p => p.metadata.title?.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                <div className="text-center py-4 text-zinc-500">No se encontraron posts</div>
+                <div className="text-center py-4 text-muted-foreground">No se encontraron posts</div>
              )}
              {!loadingPosts && importablePosts.length === 0 && (
-               <div className="text-center py-4 text-zinc-500">No hay otros posts disponibles</div>
+               <div className="text-center py-4 text-muted-foreground">No hay otros posts disponibles</div>
              )}
            </div>
         </div>
@@ -981,7 +1470,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
               setShowConflictError(false);
               router.refresh();
             }}
-            className="px-4 py-2 text-sm font-medium bg-white text-black hover:bg-zinc-200 rounded-md transition-colors"
+            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
           >
             Refrescar y perder mis cambios
           </button>
@@ -1000,16 +1489,16 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
         footer={
           <button
             onClick={() => setShowPermissionError(false)}
-            className="px-4 py-2 text-sm font-medium bg-white text-black hover:bg-zinc-200 rounded-md transition-colors"
+            className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
           >
             Entendido
           </button>
         }
       >
-        <div className="space-y-3 text-sm text-zinc-400">
+        <div className="space-y-3 text-sm text-muted-foreground">
           <p>Tu GitHub OAuth App no tiene permisos para hacer commits.</p>
-          <div className="bg-zinc-800/50 p-3 rounded border border-zinc-700">
-            <h4 className="font-semibold text-white mb-1">Solución:</h4>
+          <div className="bg-muted p-3 rounded border border-border">
+            <h4 className="font-semibold text-foreground mb-1">Solución:</h4>
             <ol className="list-decimal list-inside space-y-1">
               <li>Ve a Settings &gt; Developer Settings en GitHub</li>
               <li>Crea una <strong>GitHub App</strong> (no OAuth App)</li>
@@ -1030,7 +1519,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
            <div className="flex justify-end gap-2">
              <button
                onClick={() => setShowDeleteConfirm(false)}
-               className="px-4 py-2 text-sm text-zinc-400 hover:text-white"
+               className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
                disabled={deleting}
              >
                Cancelar
@@ -1038,7 +1527,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
              <button
                onClick={handleDelete}
                disabled={deleting}
-               className="px-4 py-2 text-sm bg-red-600 text-white rounded font-medium hover:bg-red-700 disabled:opacity-50"
+               className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded font-medium hover:bg-destructive/90 disabled:opacity-50"
              >
                {deleting ? "Eliminando..." : "Sí, Eliminar"}
              </button>
@@ -1047,23 +1536,23 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
       >
          <div className="space-y-4">
            {post.sha && (
-            <div className="flex items-start gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-md">
+            <div className="flex items-start gap-3 p-3 bg-card border border-border rounded-md">
                 <input
                   type="checkbox"
                   id="deleteFromGithub"
                   checked={deleteFromGitHub}
                   onChange={(e) => setDeleteFromGitHub(e.target.checked)}
-                  className="mt-1 w-4 h-4 bg-zinc-800 border-zinc-700 rounded focus:ring-red-500 text-red-600"
+                  className="mt-1 w-4 h-4 bg-background border-input rounded focus:ring-destructive text-destructive"
                 />
-                <label htmlFor="deleteFromGithub" className="text-sm text-zinc-300 cursor-pointer select-none">
-                   <strong>También eliminar de GitHub</strong>
-                   <p className="text-zinc-500 text-xs mt-1">
+                <label htmlFor="deleteFromGithub" className="text-sm text-muted-foreground cursor-pointer select-none">
+                   <strong className="text-foreground">También eliminar de GitHub</strong>
+                   <p className="text-muted-foreground/80 text-xs mt-1">
                       Esto eliminará el archivo <code>{post.filePath}</code> del repositorio remoto.
                    </p>
                 </label>
             </div>
            )}
-           <div className="text-sm text-zinc-400">
+           <div className="text-sm text-muted-foreground">
               El post se eliminará permanentemente de la base de datos local.
            </div>
          </div>

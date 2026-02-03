@@ -4,6 +4,10 @@ import Link from "next/link";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
 import SyncButton from "@/components/SyncButton";
 import RepoFilters from "@/components/RepoFilters";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Plus } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
 
 export default async function ReposPage({
   searchParams,
@@ -69,58 +73,47 @@ export default async function ReposPage({
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-950">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Volver al Dashboard
-            </Link>
-          </div>
+    <main className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
+      <div className="space-y-6">
+        {/* Navigation & Actions */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+           <div className="flex items-center gap-4">
+             <Link href="/dashboard">
+                <Button variant="ghost" size="sm" className="gap-2">
+                   <ArrowLeft className="h-4 w-4" />
+                   Volver
+                </Button>
+             </Link>
+             <div className="h-4 w-px bg-border hidden md:block" />
+             <div>
+                <h1 className="text-xl font-bold tracking-tight">Contenido</h1>
+                <p className="text-sm text-muted-foreground font-mono">{repoId}</p>
+             </div>
+           </div>
 
-          <div className="flex items-center gap-3">
-             <Link
-              href={`/dashboard/editor/new?repo=${encodeURIComponent(repoId)}`}
-              className="px-4 py-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Crear Nuevo Post
-            </Link>
-            <SyncButton repoId={repoId} />
-          </div>
+           <div className="flex items-center gap-3">
+              <Link href={`/dashboard/editor/new?repo=${encodeURIComponent(repoId)}`}>
+                 <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Crear Nuevo Post
+                 </Button>
+              </Link>
+              <SyncButton repoId={repoId} />
+           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="space-y-6">
-          {/* Title & Stats */}
-          <div className="flex items-end justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-white">Contenido</h1>
-              <p className="text-zinc-400">{repoId}</p>
-            </div>
-            <div className="text-sm text-zinc-500 pb-1">
-              {posts.length} resultados
-            </div>
-          </div>
+        {/* Filtros */}
+        <RepoFilters collections={uniqueCollections} />
 
-          {/* Filtros */}
-          <RepoFilters collections={uniqueCollections} />
+        {/* Posts List */}
+        <div className="space-y-1">
+           <div className="text-sm text-muted-foreground pb-2 ml-1">
+              {posts.length} {posts.length === 1 ? "resultado" : "resultados"}
+           </div>
 
-          {/* Posts List */}
           {posts.length === 0 ? (
-            <div className="text-center p-12 bg-zinc-900 rounded-lg border border-zinc-800">
-              <p className="text-zinc-400">
+            <div className="text-center p-12 rounded-lg border border-dashed border-border">
+              <p className="text-muted-foreground">
                 No se encontraron posts con estos filtros
               </p>
             </div>
@@ -130,69 +123,71 @@ export default async function ReposPage({
                 <Link
                   key={post._id.toString()}
                   href={`/dashboard/editor/${post._id.toString()}`}
-                  className="block bg-zinc-900 rounded-lg p-6 border border-zinc-800 hover:border-zinc-700 transition-colors group"
+                  className="block group"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-zinc-500 bg-zinc-800/50 px-1.5 py-0.5 rounded border border-zinc-800">
-                          {post.collection || "blog"}
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
-                        {post.metadata.title || 
-                         (Object.keys(post.metadata).length > 0 
-                           ? String(Object.values(post.metadata)[0]) 
-                           : "Sin título")}
-                      </h3>
-                      <p className="text-sm text-zinc-500 mt-1 font-mono">
-                        {post.filePath}
-                      </p>
-                      {/* Tags */}
-                      {post.metadata.tags && post.metadata.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {post.metadata.tags.slice(0, 5).map((tag: string, i: number) => (
-                            <span
-                              key={`${tag}-${i}`}
-                              className="px-2 py-1 bg-zinc-800 text-zinc-400 rounded text-xs border border-zinc-700/50"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {post.metadata.tags.length > 5 && (
-                            <span className="px-2 py-1 text-zinc-500 text-xs">
-                              +{post.metadata.tags.length - 5} más
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                  <Card className="p-4 transition-all hover:bg-muted/50 hover:border-primary/50">
+                     <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-secondary-foreground/10">
+                                 {post.collection || "blog"}
+                              </span>
+                           </div>
+                           <h3 className="text-lg font-semibold group-hover:text-primary transition-colors truncate">
+                              {post.metadata.title || 
+                                (Object.keys(post.metadata).length > 0 
+                                  ? String(Object.values(post.metadata)[0]) 
+                                  : "Sin título")}
+                           </h3>
+                           <p className="text-sm text-muted-foreground mt-1 font-mono line-clamp-1">
+                              {post.filePath}
+                           </p>
 
-                    <div className="flex flex-col items-end gap-2">
-                       <span
-                        className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap ${
-                          post.status === "synced"
-                            ? "bg-green-950/30 text-green-400 border border-green-900/50"
-                            : post.status === "modified"
-                            ? "bg-yellow-950/30 text-yellow-400 border border-yellow-900/50"
-                            : "bg-zinc-800 text-zinc-400 border border-zinc-700"
-                        }`}
-                      >
-                        {post.status === "synced" && "✓ Sincronizado"}
-                        {post.status === "modified" && "⚠ Modificado"}
-                        {post.status === "draft" && "📝 Borrador"}
-                      </span>
-                      <span className="text-xs text-zinc-600">
-                        {new Date(post.updatedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                           {/* Tags */}
+                           {post.metadata.tags && post.metadata.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {post.metadata.tags.slice(0, 5).map((tag: string, i: number) => (
+                                <span
+                                  key={`${tag}-${i}`}
+                                  className="px-2 py-1 bg-secondary text-secondary-foreground rounded text-xs"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {post.metadata.tags.length > 5 && (
+                                <span className="px-2 py-1 text-muted-foreground text-xs">
+                                  +{post.metadata.tags.length - 5} más
+                                </span>
+                              )}
+                            </div>
+                           )}
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                           {/* Status Badge */}
+                           <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              post.status === "synced"
+                                ? "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400"
+                                : post.status === "modified"
+                                ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:text-yellow-400"
+                                : "bg-zinc-500/10 text-zinc-600 border-zinc-500/20 dark:text-zinc-400"
+                           }`}>
+                              {post.status === "synced" && "Sincronizado"}
+                              {post.status === "modified" && "Modificado"}
+                              {post.status === "draft" && "Borrador"}
+                           </div>
+                           <span className="text-xs text-muted-foreground">
+                              {new Date(post.updatedAt).toLocaleDateString()}
+                           </span>
+                        </div>
+                     </div>
+                  </Card>
                 </Link>
               ))}
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

@@ -1,0 +1,13 @@
+/* TEAM */
+  Name: Broslunas
+  Site: https://broslunas.com
+  Twitter: @broslunas
+  Location: World
+
+/* THANKS */
+  Thanks to: Next.js, Vercel, Astro, GitHub
+  
+/* SITE */
+  Standards: HTML5, CSS3, ES6+
+  Components: React, Tailwind CSS
+  Software: Next.js

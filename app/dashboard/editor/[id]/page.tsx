@@ -83,7 +83,7 @@ export default async function EditorPage({
     };
 
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-background text-foreground">
         <PostEditor 
             post={emptyPost} 
             schema={selectedSchema?.fields || null} 
@@ -128,7 +128,7 @@ export default async function EditorPage({
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background text-foreground">
       <PostEditor post={serializedPost} schema={schema?.fields || null} />
     </div>
   );
