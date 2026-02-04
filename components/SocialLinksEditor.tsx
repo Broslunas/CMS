@@ -4,6 +4,7 @@ import { useState } from "react";
 interface SocialLinksEditorProps {
   value: Record<string, string>;
   onChange: (value: Record<string, string>) => void;
+  allowedNetworks?: string[]; // If provided, only these keys are allowed
 }
 
 const COMMON_NETWORKS = [
@@ -15,7 +16,7 @@ const COMMON_NETWORKS = [
   { id: "youtube", label: "YouTube", icon: "M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" },
 ];
 
-export function SocialLinksEditor({ value, onChange }: SocialLinksEditorProps) {
+export function SocialLinksEditor({ value, onChange, allowedNetworks }: SocialLinksEditorProps) {
   // Ensure value is an object
   const cleanValue = typeof value === 'object' && value !== null ? value : {};
   const [newNetwork, setNewNetwork] = useState("");
@@ -63,7 +64,26 @@ export function SocialLinksEditor({ value, onChange }: SocialLinksEditorProps) {
   }
 
   const existingKeys = Object.keys(cleanValue);
-  const availableNetworks = COMMON_NETWORKS.filter(n => !existingKeys.includes(n.id));
+  
+  // Calculate available to add
+  let networksToAdd: { id: string, label: string, icon?: string }[] = [];
+
+  if (allowedNetworks !== undefined) {
+      // If we have a restriction (even empty), show only those allowed
+      if (allowedNetworks.length > 0) {
+        networksToAdd = allowedNetworks
+            .filter(k => !existingKeys.includes(k))
+            .map(k => {
+                const known = COMMON_NETWORKS.find(n => n.id === k);
+                return known || { id: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+            });
+      } else {
+        networksToAdd = [];
+      }
+  } else {
+      // If no restriction, show common ones not added + allow custom
+      networksToAdd = COMMON_NETWORKS.filter(n => !existingKeys.includes(n.id));
+  }
 
   return (
     <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
@@ -97,28 +117,32 @@ export function SocialLinksEditor({ value, onChange }: SocialLinksEditorProps) {
             ))}
         </div>
         
-        <div className="bg-card/50 p-2 border-t border-border flex items-center gap-2">
+        <div className="bg-card/50 p-2 border-t border-border flex items-center gap-2 overflow-x-auto custom-scrollbar">
             {!isAdding ? (
                 <>
-                {availableNetworks.map(network => (
+                {networksToAdd.map(network => (
                      <button
                         key={network.id}
                         onClick={() => handleChange(network.id, "")}
-                        className="flex items-center gap-1.5 px-2 py-1 text-xs bg-background border border-input rounded hover:bg-muted text-foreground transition-colors"
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs bg-background border border-input rounded hover:bg-muted text-foreground transition-colors shrink-0"
                      >
-                        <span className="w-3 h-3 fill-current opacity-70">
-                            <svg viewBox="0 0 24 24"><path d={network.icon} /></svg>
-                        </span>
+                        {network.icon && (
+                            <span className="w-3 h-3 fill-current opacity-70">
+                                <svg viewBox="0 0 24 24"><path d={network.icon} /></svg>
+                            </span>
+                        )}
                         {network.label}
                      </button>
                 ))}
                 
-                <button
-                    onClick={() => setIsAdding(true)}
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs bg-muted/50 border border-dashed border-border rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    + Otro
-                </button>
+                {(!allowedNetworks || allowedNetworks.length === 0) && (
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs bg-muted/50 border border-dashed border-border rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                    >
+                        + Otro
+                    </button>
+                )}
                 </>
             ) : (
                 <div className="flex items-center gap-2 w-full">

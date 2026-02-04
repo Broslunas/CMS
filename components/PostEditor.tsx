@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -497,7 +497,40 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPreview, setAiPreview] = useState<{ metadata: any, content: string } | null>(null);
   const [referencePost, setReferencePost] = useState<Post | null>(null);
+
   const [showRefSelector, setShowRefSelector] = useState(false);
+  
+  const [suggestedFields, setSuggestedFields] = useState<Record<string, { type: string; nestedFields?: Record<string, any> }>>({});
+
+  useEffect(() => {
+    if (post.repoId) {
+        // Only fetch when opening the modal or if not fetched yet
+        fetch(`/api/repo/config?repo=${encodeURIComponent(post.repoId)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.schemas) {
+                    // Try to match collection
+                    const collectionName = post.collection || 'blog';
+                    // The parser returns keys like 'episodios', 'blog'
+                    // We try exact match first
+                    let schema = data.schemas[collectionName];
+                    
+                    // If not found, maybe the collection name in URL doesn't match config variable
+                    // We could try to show aggregated fields or just fail gracefully.
+                    // For now, if exact match fails, try case insensitive?
+                    if (!schema) {
+                        const foundKey = Object.keys(data.schemas).find(k => k.toLowerCase() === collectionName.toLowerCase());
+                        if (foundKey) schema = data.schemas[foundKey];
+                    }
+
+                    if (schema) {
+                        setSuggestedFields(schema);
+                    }
+                }
+            })
+            .catch(err => console.error("Error fetching suggestions:", err));
+    }
+  }, [post.repoId, post.collection]);
 
   const [showTemplateModal, setShowTemplateModal] = useState(isNew && templatePosts.length > 0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -849,6 +882,13 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
                 <SocialLinksEditor 
                     value={value}
                     onChange={(val) => updateMetadata(key, val)}
+                    allowedNetworks={
+                         // Strict mode: if we have schema suggestions loaded, we enforce them.
+                         // If suggestedFields is empty (not loaded yet), we pass undefined to show defaults.
+                         Object.keys(suggestedFields).length > 0 
+                            ? (suggestedFields['social']?.nestedFields ? Object.keys(suggestedFields['social'].nestedFields) : [])
+                            : undefined
+                    }
                 />
             </div>
         );
@@ -1544,7 +1584,42 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
           </div>
         }
       >
+
         <div className="space-y-4">
+          
+          {/* Suggestions from config.ts */}
+          {Object.keys(suggestedFields).length > 0 && (
+            <div className="bg-muted/30 p-3 rounded-md border border-dashed border-border mb-4">
+                <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Sugerencias del repositorio (config.ts)
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {Object.entries(suggestedFields)
+                        .filter(([key]) => !metadata[key]) // Filter out already existing fields
+                        .map(([key, def]) => (
+                        <button
+                            key={key}
+                            onClick={() => {
+                                setNewFieldName(key);
+                                setNewFieldType(def.type);
+                            }}
+                            className={`px-2 py-1 text-xs border rounded transition-colors flex items-center gap-1 ${
+                                newFieldName === key 
+                                    ? "bg-primary/10 border-primary text-primary" 
+                                    : "bg-background border-border text-foreground hover:border-primary/50"
+                            }`}
+                        >
+                            {key} <span className="opacity-50 text-[10px]">({def.type})</span>
+                        </button>
+                    ))}
+                    {Object.entries(suggestedFields).filter(([key]) => !metadata[key]).length === 0 && (
+                        <p className="text-xs text-muted-foreground italic">Todos los campos sugeridos ya están añadidos.</p>
+                    )}
+                </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">Nombre del Campo (Key)</label>
             <input
