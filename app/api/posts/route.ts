@@ -19,12 +19,11 @@ export async function GET(request: Request) {
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
 
-    // Si se solicita un post específico por ID
+    // 1. Search by Post ID
     if (postId) {
       const post = await userCollection.findOne({
         _id: new ObjectId(postId),
         type: "post",
-        userId: session.user.id,
       });
 
       if (!post) {
@@ -34,10 +33,14 @@ export async function GET(request: Request) {
       return NextResponse.json(post);
     }
 
-    // Si se filtran por repositorio
-    const filter: any = { type: "post", userId: session.user.id };
+    // 2. Search by Repo ID (List posts)
+    const filter: any = { 
+        type: "post",
+        userId: session.user.id 
+    };
+    
     if (repoId) {
-      filter.repoId = repoId;
+        filter.repoId = repoId;
     }
 
     const posts = await userCollection

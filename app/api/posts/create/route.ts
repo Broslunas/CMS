@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
+    
+    // Check if repo is owned or shared
+    // First check if we have a project for it in our own collection
+    const ownProject = await userCollection.findOne({ type: "project", repoId });
+    
+    if (!ownProject) {
+        return NextResponse.json({ error: "Repository access denied" }, { status: 403 });
+    }
 
     // Verificar si ya existe un post con ese filePath en ese repo
     const existingPost = await userCollection.findOne({

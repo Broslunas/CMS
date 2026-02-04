@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 // GET - Listar proyectos importados del usuario
@@ -15,12 +16,13 @@ export async function GET() {
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
 
-    const projects = await userCollection
+    // 1. Fetch own projects
+    const ownProjects = await userCollection
       .find({ type: "project" })
       .sort({ updatedAt: -1 })
       .toArray();
 
-    return NextResponse.json(projects);
+    return NextResponse.json(ownProjects);
   } catch (error) {
     console.error("Error fetching projects:", error);
     return NextResponse.json(

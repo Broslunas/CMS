@@ -477,6 +477,11 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
   const [deleteFromGitHub, setDeleteFromGitHub] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Permissions
+  // const userPermissions = post.userPermissions;
+  // const canEdit = !userPermissions || userPermissions.includes("manage") || (isNew && userPermissions.includes("create"));
+  // const canDelete = !userPermissions || userPermissions.includes("manage");
+
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("string");
   const [showImportModal, setShowImportModal] = useState(false);
@@ -663,6 +668,11 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
   };
 
   const handleSave = async (commitToGitHub: boolean = false) => {
+    if (!canEdit) {
+        toast.error("No tienes permisos para editar este post");
+        return;
+    }
+
     if (commitToGitHub) {
       setCommitting(true);
     } else {
@@ -1197,7 +1207,7 @@ export default function PostEditor({ post, schema, isNew = false }: PostEditorPr
           <div className="flex items-center justify-between">
             <div className="space-y-1">
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <span className="text-foreground/60">Repositorio:</span> {post.repoId}
               </p>
               

@@ -7,6 +7,7 @@ import DeleteRepoButton from "@/components/DeleteRepoButton";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, RefreshCw, FolderGit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ObjectId } from "mongodb";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -20,18 +21,18 @@ export default async function DashboardPage() {
     redirect("/setup");
   }
 
-  // Obtener proyectos importados del usuario
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const userCollection = db.collection(getUserCollectionName(session.user.id));
   
-  const projects = await userCollection
+  // 1. Fetch own projects
+  const ownProjects = await userCollection
     .find({ type: "project" })
     .sort({ updatedAt: -1 })
     .toArray();
 
   // Serializar proyectos para pasar al cliente
-  const serializedProjects = projects.map((project) => ({
+  const serializedProjects = ownProjects.map((project: any) => ({
     _id: project._id.toString(),
     repoId: project.repoId,
     name: project.name,
@@ -50,9 +51,9 @@ export default async function DashboardPage() {
               Mis Proyectos
             </h2>
             <p className="text-muted-foreground mt-2 text-lg">
-              {projects.length === 0
+              {ownProjects.length === 0
                 ? "Comienza importando tu primer repositorio"
-                : `Gestionando ${projects.length} ${projects.length === 1 ? "proyecto activo" : "proyectos activos"}`}
+                : `Gestionando ${ownProjects.length} ${ownProjects.length === 1 ? "proyecto activo" : "proyectos activos"}`}
             </p>
           </div>
 
@@ -62,7 +63,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Projects Grid */}
-        {projects.length === 0 ? (
+        {ownProjects.length === 0 ? (
           <div className="text-center py-24 rounded-[2rem] border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm">
             <div className="max-w-md mx-auto space-y-6">
               <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -87,20 +88,23 @@ export default async function DashboardPage() {
                 href={`/dashboard/repos?repo=${encodeURIComponent(project.repoId)}`}
                 className="block group h-full"
               >
-                <Card className="h-full premium-card rounded-2xl overflow-hidden flex flex-col">
+                <Card className="h-full premium-card rounded-2xl overflow-hidden flex flex-col relative transition-all hover:shadow-lg border-muted/60">
                   <CardHeader className="space-y-3 pb-4">
                     <div className="flex items-center justify-between">
-                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                         <FolderGit2 className="h-5 w-5" />
+                       <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                <FolderGit2 className="h-5 w-5" />
+                            </div>
                        </div>
+                       
                        <div className="flex items-center gap-2">
                           <div className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-1 rounded-md border border-primary/10">
                             Active
                           </div>
-                          <DeleteRepoButton projectId={project._id} repoName={project.name} />
+                            <DeleteRepoButton projectId={project._id} repoName={project.name} />
                        </div>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 pt-1">
                       <CardTitle className="text-xl font-bold truncate group-hover:text-primary transition-colors">
                         {project.name}
                       </CardTitle>
@@ -127,7 +131,7 @@ export default async function DashboardPage() {
                      </div>
                      <div className="flex items-center gap-2.5">
                         <RefreshCw className="h-3.5 w-3.5" />
-                        <span>Sincronizado {new Date(project.lastSync).toLocaleDateString()}</span>
+                        <span>{new Date(project.lastSync).toLocaleDateString()}</span>
                      </div>
                   </CardFooter>
                 </Card>

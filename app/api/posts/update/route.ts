@@ -32,7 +32,6 @@ export async function PUT(request: NextRequest) {
     const post = await userCollection.findOne({
       _id: new ObjectId(postId),
       type: "post",
-      userId: session.user.id,
     });
 
     if (!post) {
@@ -109,12 +108,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Detectar errores de permisos de GitHub (403)
-    if (error.status === 403 || error.message?.includes("not accessible by integration")) {
+    if (error.status === 403 || error.message?.includes("Resource not accessible by integration") || error.message?.includes("not accessible by integration")) {
       return NextResponse.json(
         {
-          error: "No tienes permisos para hacer commits en GitHub",
+          error: "No tienes permisos para hacer commits en GitHub.",
           code: "PERMISSION_ERROR",
-          details: "Necesitas crear una GitHub App con permisos de Contents: Read & Write"
+          details: "Resource not accessible by integration. Verify that you have accepted the repository invitation on GitHub or that the GitHub App has permissions."
         },
         { status: 403 }
       );

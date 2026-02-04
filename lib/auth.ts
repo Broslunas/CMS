@@ -1,11 +1,11 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import clientPromise from "@/lib/mongodb";
+import clientPromise, { DB_NAME } from "@/lib/mongodb";
 import { checkAppInstalled } from "@/lib/github-app";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(clientPromise, { databaseName: DB_NAME }),
   providers: [
     GitHub({
       clientId: process.env.GITHUB_ID!,
@@ -14,6 +14,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         params: {
           scope: "repo user:email",
         },
+      },
+      profile(profile) {
+        return {
+          id: profile.id.toString(),
+          name: profile.name || profile.login,
+          email: profile.email,
+          image: profile.avatar_url,
+          username: profile.login, // Store GitHub username
+        };
       },
     }),
   ],
