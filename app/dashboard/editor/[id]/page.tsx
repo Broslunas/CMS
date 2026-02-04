@@ -37,13 +37,26 @@ export default async function EditorPage({
         repoId: repoId,
       })
       .toArray();
+
+    // Eliminar schemas sin nombre válido
+    schemas = schemas.filter(s => s.name && s.name.trim() !== "");
     
     // También buscar colecciones únicas usadas en los posts (para cuando no existen schemas explicítos)
-    const distinctCollections = await userCollection.distinct("collection", {
-      type: "post",
-      repoId: repoId,
-      userId: session.user.id
-    });
+    // Usamos aggregate en lugar de distinct porque distinct no está soportado en API Strict v1
+    const distinctCollectionsRaw = await userCollection.aggregate([
+      { 
+        $match: { 
+          type: "post", 
+          repoId: repoId, 
+          userId: session.user.id 
+        } 
+      },
+      {
+        $group: { _id: "$collection" }
+      }
+    ]).toArray();
+    
+    const distinctCollections = distinctCollectionsRaw.map(d => d._id);
 
     // Normalizar colecciones de posts (remover nulls y "blog" si ya existe)
     const postCollections = (distinctCollections as string[])
@@ -84,18 +97,11 @@ export default async function EditorPage({
         }
     }
 
-    // Si no hay schemas ni colecciones, usar el default
+    // Si no hay schemas ni colecciones, no añadimos nada por defecto
+    // para cumplir con la petición de "solo muestre los types que hayan".
     if (schemas.length === 0) {
-       schemas.push({
-         _id: new ObjectId(),
-         type: "schema",
-         userId: session.user.id,
-         repoId,
-         name: "blog",
-         fields: {},
-         createdAt: new Date(),
-         updatedAt: new Date()
-       });
+       // Opcional: Podríamos redirigir a una página de "crear schema" o mostrar mensaje de error
+       // Pero por ahora dejamos el array vacío para que el selector muestre estado vacío o la UI lo maneje.
     }
 
     // Determinar colección
@@ -143,7 +149,7 @@ export default async function EditorPage({
         if (templatePosts[0].metadata) {
              Object.keys(templatePosts[0].metadata).forEach(k => {
                  const value = templatePosts[0].metadata[k];
-                 let type = typeof value;
+                 let type: string = typeof value;
                  if (Array.isArray(value)) type = "array";
                  
                  inferredFields[k] = { type: type, optional: true };

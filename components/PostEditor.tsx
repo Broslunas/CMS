@@ -695,10 +695,20 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
       let response;
       let body;
 
+      let finalCollection = post.collection;
+      
+      // Inferir colección desde el path
+      // Formato esperado: src/content/<collection>/<filename>
+      const pathToCheck = isNew ? createFilePath : post.filePath;
+      const match = pathToCheck.match(/src\/content\/([^/]+)\//);
+      if (match && match[1]) {
+          finalCollection = match[1];
+      }
+
       if (isNew) {
          body = {
             repoId: post.repoId,
-            collection: post.collection,
+            collection: finalCollection,
             metadata,
             content,
             filePath: createFilePath,
