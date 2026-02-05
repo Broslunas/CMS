@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAppInstallUrl } from "@/lib/github-app";
 import { Download, CheckCircle2, Github, ArrowRight, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { InstallationChecker } from "@/components/InstallationChecker";

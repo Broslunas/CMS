@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ViewTransitions } from 'next-view-transitions';
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
@@ -84,60 +85,62 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans text-foreground selection:bg-primary/20 selection:text-primary`}
-      >
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <div className="relative flex min-h-screen flex-col">
-              {/* Global background decorations */}
-              <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+    <ViewTransitions>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background font-sans text-foreground selection:bg-primary/20 selection:text-primary`}
+        >
+          <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <div className="relative flex min-h-screen flex-col">
+                {/* Global background decorations */}
+                <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+                  <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+                  <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+                </div>
+                
+                <SiteHeader />
+                <div className="flex-1 relative">{children}</div>
               </div>
+              <Toaster theme="system" position="bottom-right" />
               
-              <SiteHeader />
-              <div className="flex-1 relative">{children}</div>
-            </div>
-            <Toaster theme="system" position="bottom-right" />
-            
-            {/* Google Analytics */}
-            <Script
-              src="https://www.googletagmanager.com/gtag/js?id=G-M6PHCZ54EF"
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
+              {/* Google Analytics */}
+              <Script
+                src="https://www.googletagmanager.com/gtag/js?id=G-M6PHCZ54EF"
+                strategy="afterInteractive"
+              />
+              <Script id="google-analytics" strategy="afterInteractive">
+                {`
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
 
-                gtag('config', 'G-M6PHCZ54EF');
-              `}
-            </Script>
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
-                  "@context": "https://schema.org",
-                  "@type": "Organization",
-                  name: "Broslunas CMS",
-                  url: process.env.NEXTAUTH_URL || "http://localhost:3000",
-                  logo: "https://cdn.broslunas.com/logo.png", // Placeholder
-                  sameAs: [
-                    "https://twitter.com/broslunas",
-                    "https://github.com/broslunas",
-                  ],
-                }),
-              }}
-            />
-        </ThemeProvider>
-      </body>
-    </html>
+                  gtag('config', 'G-M6PHCZ54EF');
+                `}
+              </Script>
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Organization",
+                    name: "Broslunas CMS",
+                    url: process.env.NEXTAUTH_URL || "http://localhost:3000",
+                    logo: "https://cdn.broslunas.com/logo.png", // Placeholder
+                    sameAs: [
+                      "https://twitter.com/broslunas",
+                      "https://github.com/broslunas",
+                    ],
+                  }),
+                }}
+              />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ViewTransitions>
   );
 }

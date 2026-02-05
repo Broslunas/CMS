@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Link } from "next-view-transitions"
 import { ChevronRight, ChevronLeft, PenTool } from "lucide-react"
 
 export default function EditorPage() {

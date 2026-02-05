@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import ImportButton from "@/components/ImportButton";
 import DeleteRepoButton from "@/components/DeleteRepoButton";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";

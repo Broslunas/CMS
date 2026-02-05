@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { Link } from "next-view-transitions";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
 import SyncButton from "@/components/SyncButton";
 import RepoFilters from "@/components/RepoFilters";
