@@ -26,8 +26,6 @@ Esta lista está diseñada para elevar la calidad, funcionalidad y experiencia d
 20. **Selector de Fecha/Hora Visual**: Calendario pop-up para campos de fecha.
 
 ## 🐙 Git & GitHub Integration (DevFlow)
-21. **Historial de Versiones Visual**: Ver lista de commits previos y poder restaurar con un click.
-22. **Visual Diff (Side-by-side)**: Ver qué cambió exactamente (antes vs después) antes de guardar/commitear.
 23. **Gestión de Ramas (Branches)**: Crear, cambiar y fusionar ramas desde el dashboard.
 24. **Estado de Pull Requests**: Ver si hay PRs abiertos y su estado (aprobado, fallido).
 25. **Resolución de Conflictos UI**: Interfaz gráfica para elegir "Mine" o "Theirs" si hay conflictos de edición.
