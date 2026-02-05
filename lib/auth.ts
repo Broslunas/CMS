@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GITHUB_SECRET!,
       authorization: {
         params: {
-          scope: "repo user:email",
+          scope: "repo user:email read:user",
         },
       },
       profile(profile) {
@@ -42,9 +42,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub;
       }
       
+      
       // Verificar si el usuario tiene la app instalada
       if (session.access_token) {
-        session.appInstalled = await checkAppInstalled(session.access_token);
+        try {
+          session.appInstalled = await checkAppInstalled(session.access_token);
+        } catch (error) {
+          console.error("Error checking app installation in session:", error);
+          session.appInstalled = false; // Asumir no instalado si hay error
+        }
       }
       
       return session;
