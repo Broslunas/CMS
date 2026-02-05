@@ -110,7 +110,8 @@ export async function getFileContent(
   accessToken: string,
   owner: string,
   repo: string,
-  path: string
+  path: string,
+  ref?: string
 ) {
   const octokit = getOctokit(accessToken);
   
@@ -119,6 +120,7 @@ export async function getFileContent(
       owner,
       repo,
       path,
+      ref,
     });
 
     // Verificar que sea un archivo y no un directorio
@@ -133,6 +135,38 @@ export async function getFileContent(
   } catch (error) {
     console.error(`Error getting file ${path}:`, error);
     return null;
+  }
+}
+
+/**
+ * Lista los commits de un archivo específico
+ */
+export async function listFileCommits(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  path: string
+) {
+  const octokit = getOctokit(accessToken);
+  
+  try {
+    const { data } = await octokit.repos.listCommits({
+      owner,
+      repo,
+      path,
+      per_page: 20, // Limitamos a los últimos 20 cambios
+    });
+
+    return data.map(commit => ({
+      sha: commit.sha,
+      message: commit.commit.message,
+      author: commit.commit.author?.name || "Desconocido",
+      date: commit.commit.author?.date,
+      html_url: commit.html_url,
+    }));
+  } catch (error) {
+    console.error(`Error listing commits for ${path}:`, error);
+    return [];
   }
 }
 

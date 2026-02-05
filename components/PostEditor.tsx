@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import Modal from "./Modal";
 import { SocialLinksEditor } from "./SocialLinksEditor";
+import { VersionHistory } from "./VersionHistory";
 
 interface PostMetadata {
   [key: string]: any;
@@ -464,6 +465,11 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
       ? `src/content/${post.collection || 'blog'}/untitled.md` 
       : post.filePath
   );
+  const [currentSha, setCurrentSha] = useState(post.sha);
+
+  useEffect(() => {
+    if (post.sha) setCurrentSha(post.sha);
+  }, [post.sha]);
   
   const [saving, setSaving] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -500,6 +506,8 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
 
   const [showRefSelector, setShowRefSelector] = useState(false);
   
+  const [showHistory, setShowHistory] = useState(false);
+
   const [suggestedFields, setSuggestedFields] = useState<Record<string, { type: string; nestedFields?: Record<string, any> }>>({});
 
   useEffect(() => {
@@ -618,7 +626,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId: post._id,
-          deleteFromGitHub: deleteFromGitHub && post.sha, 
+          deleteFromGitHub: deleteFromGitHub && currentSha, 
         }),
       });
 
@@ -714,6 +722,13 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     toast.success("¡Cambios aplicados correctamente!");
   };
 
+  const handleHistoryRestore = (newMetadata: any, newContent: string, newSha: string) => {
+    setMetadata(newMetadata);
+    setContent(newContent);
+    setCurrentSha(newSha);
+    router.refresh(); 
+  };
+
   const handleSave = async (commitToGitHub: boolean = false) => {
 
 
@@ -776,6 +791,10 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
           
           // Construir la URL del commit en GitHub
           const commitUrl = `https://github.com/${result.owner}/${result.repo}/commit/${result.commitSha}`;
+          
+          if (result.newSha) {
+            setCurrentSha(result.newSha);
+          }
           
           // Mostrar un toast personalizado con enlace al commit
           toast.success(
@@ -1268,6 +1287,18 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
             </button>
 
             {!isNew && (
+              <button
+                onClick={() => setShowHistory(true)}
+                className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                title="Historial de Versiones"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            )}
+
+            {!isNew && (
               <div className="hidden md:block w-px h-6 bg-border mx-1" />
             )}
 
@@ -1559,6 +1590,19 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
         {/* Danger Zone */}
 
       </main>
+
+      {/* History Modal */}
+      {post.repoId && (
+        <VersionHistory
+          owner={post.repoId.split('/')[0]}
+          repo={post.repoId.split('/')[1]}
+          path={post.filePath}
+          postId={post._id}
+          isOpen={showHistory}
+          onClose={() => setShowHistory(false)}
+          onRestore={handleHistoryRestore}
+        />
+      )}
 
       {/* Modal Definitions */}
       {/* Add Field Modal */}
