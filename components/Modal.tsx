@@ -8,6 +8,7 @@ interface ModalProps {
   description?: string;
   children?: React.ReactNode;
   footer?: React.ReactNode;
+  className?: string;
 }
 
 export default function Modal({
@@ -17,6 +18,7 @@ export default function Modal({
   description,
   children,
   footer,
+  className,
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -43,7 +45,7 @@ export default function Modal({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/60 backdrop-blur-sm transition-all duration-300">
       <div
-        className="premium-card bg-background border border-border rounded-2xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-300 overflow-hidden"
+        className={`premium-card bg-background border border-border rounded-2xl w-full shadow-2xl animate-in fade-in zoom-in-95 duration-300 overflow-hidden ${className || 'max-w-lg'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-8">

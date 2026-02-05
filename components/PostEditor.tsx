@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import Modal from "./Modal";
 import { SocialLinksEditor } from "./SocialLinksEditor";
 import { VersionHistory } from "./VersionHistory";
+import { DiffViewer } from "./DiffViewer";
 
 interface PostMetadata {
   [key: string]: any;
@@ -457,6 +458,26 @@ function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: str
     );
   }
 
+  function generateYaml(meta: any) {
+    let output = "---\n";
+    for(const [key, value] of Object.entries(meta)) {
+        if(value === undefined || value === null) continue;
+        if(Array.isArray(value)) {
+           output += `${key}:\n`;
+           value.forEach(v => {
+               if(typeof v === 'object') output += `  - ${JSON.stringify(v)}\n`;
+               else output += `  - ${v}\n`;
+           });
+        } else if (typeof value === 'object') {
+           output += `${key}: ${JSON.stringify(value)}\n`;
+        } else {
+           output += `${key}: ${value}\n`;
+        }
+    }
+    output += "---\n";
+    return output;
+  }
+
 export default function PostEditor({ post, schema, isNew = false, templatePosts = [] }: PostEditorProps) {
   const [metadata, setMetadata] = useState<PostMetadata>(post.metadata);
   const [content, setContent] = useState(post.content);
@@ -507,6 +528,9 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [showRefSelector, setShowRefSelector] = useState(false);
   
   const [showHistory, setShowHistory] = useState(false);
+  const [showDiffModal, setShowDiffModal] = useState(false);
+  const [diffOriginal, setDiffOriginal] = useState("");
+  const [diffCurrent, setDiffCurrent] = useState("");
 
   const [suggestedFields, setSuggestedFields] = useState<Record<string, { type: string; nestedFields?: Record<string, any> }>>({});
 
@@ -1236,7 +1260,23 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     return null;
   };
 
-  const ToolbarButton = ({ 
+  const handleShowDiff = () => {
+    // Construct original (Initial Load)
+    // Note: post.metadata is the initial metadata passed via props.
+    // If post.content is null, use empty string.
+    const oldYaml = generateYaml(post.metadata);
+    const oldFull = isNew ? "" : (oldYaml + (post.content || ""));
+
+    // Construct current (Draft)
+    const currentYaml = generateYaml(metadata);
+    const currentFull = currentYaml + (content || "");
+
+    setDiffOriginal(oldFull);
+    setDiffCurrent(currentFull);
+    setShowDiffModal(true);
+  };
+
+  const ToolbarButton = ({  
     icon, 
     label, 
     onClick 
@@ -1285,6 +1325,17 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
             >
               {committing ? "Commiteando..." : "Guardar y Commitear"}
             </button>
+
+            {!isNew && (
+              <button
+                 onClick={handleShowDiff}
+                 className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
+                 title="Ver Cambios (Diff)"
+              >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <span className="hidden sm:inline text-xs font-medium">Cambios</span>
+              </button>
+            )}
 
             {!isNew && (
               <button
@@ -2108,6 +2159,25 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
              )}
            </div>
         </div>
+      </Modal>
+
+      {/* Visual Diff Modal */}
+      <Modal
+        isOpen={showDiffModal}
+        onClose={() => setShowDiffModal(false)}
+        title="Cambios Visuales (Diff)"
+        description="Compara el contenido original con tu borrador actual antes de guardar."
+        className="max-w-4xl"
+        footer={
+           <button
+             onClick={() => setShowDiffModal(false)}
+             className="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded font-medium"
+           >
+             Cerrar
+           </button>
+        }
+      >
+        <DiffViewer oldValue={diffOriginal} newValue={diffCurrent} />
       </Modal>
     </>
   );
