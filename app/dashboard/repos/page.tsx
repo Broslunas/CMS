@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Link } from "next-view-transitions";
 import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
 import SyncButton from "@/components/SyncButton";
+import { VercelWidget } from "@/components/VercelIntegration";
 import RepoFilters from "@/components/RepoFilters";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -92,6 +93,7 @@ export default async function ReposPage({
            </div>
 
            <div className="flex items-center gap-3">
+              <VercelWidget repoId={repoId} />
               <Link href={`/dashboard/editor/new?repo=${encodeURIComponent(repoId)}`}>
                  <Button className="gap-2">
                     <Plus className="h-4 w-4" />

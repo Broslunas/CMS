@@ -4,7 +4,6 @@ Esta lista está diseñada para elevar la calidad, funcionalidad y experiencia d
 
 ## 🎨 UI/UX & Experiencia Visual (Premium Feel)
 1.  **Command Palette Global (`Cmd+K`)**: Navegación rápida por archivos, acciones y configuraciones sin usar el ratón.
-2.  **View Transitions API**: Transiciones animadas y fluidas entre navegaciones de página (sin parpadeos).
 3.  **Skeleton Loaders Inteligentes**: Reemplazar spinners con esqueletos pulsantes que imitan la estructura del contenido.
 4.  **Sistema Toast Avanzado**: Notificaciones apilables, con animaciones de entrada/salida y botón de "Deshacer" acción.
 5.  **Menús Contextuales (Click Derecho)**: Acciones rápidas (Renombrar, Borrar, Duplicar) en el explorador de archivos.

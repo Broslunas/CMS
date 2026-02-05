@@ -17,7 +17,6 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
     });
 
     const appName = process.env.GITHUB_APP_NAME;
-    console.log("[CheckApp] Searching for app slug:", appName);
 
     if (!appName) {
       console.error('GITHUB_APP_NAME no está definido en las variables de entorno');
@@ -26,8 +25,6 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
 
     // Verificar si nuestra app está en la lista
     const installedSlugs = installations.installations.map((i: any) => i.app_slug);
-    console.log("[CheckApp] User has these apps installed:", installedSlugs);
-
     const ourApp = installations.installations.find(
       (installation: any) => installation.app_slug === appName
     );
