@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { postId, deleteFromGitHub } = await request.json();
+    const { postId, repoId, deleteFromGitHub } = await request.json();
 
     if (!postId) {
       return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
@@ -21,12 +21,25 @@ export async function POST(request: NextRequest) {
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
+    
+    let targetCollection = userCollection;
+
+    // Resolve collection if repoId is provided (for shared repos)
+    if (repoId) {
+        const sharedRef = await userCollection.findOne({ 
+           type: "shared_project_reference", 
+           repoId 
+        });
+
+        if (sharedRef) {
+            targetCollection = db.collection(getUserCollectionName(sharedRef.ownerId));
+        }
+    }
 
     // Obtener el post actual
-    const post = await userCollection.findOne({
+    const post = await targetCollection.findOne({
       _id: new ObjectId(postId),
       type: "post",
-      userId: session.user.id,
     });
 
     if (!post) {
@@ -43,6 +56,7 @@ export async function POST(request: NextRequest) {
          return NextResponse.json({ error: "Cannot delete from GitHub: missing file SHA. Sync repo first?" }, { status: 400 });
       }
 
+      // Use current user's GitHub token (shared users commit with their own credentials)
       const accessToken = session.access_token as string;
       const [owner, repo] = post.repoId.split("/");
 
@@ -66,8 +80,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Borrar de MongoDB
-    await userCollection.deleteOne({ _id: new ObjectId(postId) });
+    // Borrar de MongoDB (from target collection)
+    await targetCollection.deleteOne({ _id: new ObjectId(postId) });
 
     return NextResponse.json({ success: true, deletedFromGitHub: deleteFromGitHub });
 

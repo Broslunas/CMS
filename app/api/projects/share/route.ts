@@ -98,7 +98,43 @@ export async function POST(req: Request) {
         { upsert: true }
     );
 
-    return NextResponse.json({ success: true, user: collaboratorInfo });
+    // 5. Invite to GitHub repository
+    let githubInviteStatus = null;
+    const targetGithubUsername = targetUser.username;
+    
+    if (targetGithubUsername && session.access_token) {
+      try {
+        const [owner, repo] = repoId.split("/");
+        const { inviteCollaborator } = await import("@/lib/octokit");
+        
+        await inviteCollaborator(
+          session.access_token as string,
+          owner,
+          repo,
+          targetGithubUsername,
+          "push" // Grant write access
+        );
+        
+        githubInviteStatus = {
+          success: true,
+          message: "GitHub invitation sent"
+        };
+      } catch (error: any) {
+        console.error("Error inviting to GitHub:", error);
+        // Don't fail the whole operation if GitHub invite fails
+        githubInviteStatus = {
+          success: false,
+          error: error.message || "Failed to send GitHub invitation",
+          code: error.status
+        };
+      }
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      user: collaboratorInfo,
+      githubInvite: githubInviteStatus 
+    });
 
   } catch (error) {
     console.error("Error sharing project:", error);

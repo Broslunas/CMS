@@ -270,3 +270,64 @@ export async function deleteFile(
 
   return data;
 }
+
+/**
+ * Invita a un colaborador a un repositorio de GitHub
+ */
+export async function inviteCollaborator(
+  accessToken: string,
+  owner: string,
+  repo: string,
+  username: string,
+  permission: "pull" | "push" | "admin" | "maintain" | "triage" = "push"
+) {
+  const octokit = getOctokit(accessToken);
+
+  try {
+    await octokit.repos.addCollaborator({
+      owner,
+      repo,
+      username,
+      permission,
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Error inviting collaborator ${username}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Lista las invitaciones pendientes de repositorios para el usuario autenticado
+ */
+export async function listUserRepoInvitations(accessToken: string) {
+  const octokit = getOctokit(accessToken);
+
+  try {
+    const { data } = await octokit.repos.listInvitationsForAuthenticatedUser();
+    return data;
+  } catch (error) {
+    console.error("Error listing repository invitations:", error);
+    return [];
+  }
+}
+
+/**
+ * Acepta una invitación de repositorio
+ */
+export async function acceptRepoInvitation(
+  accessToken: string,
+  invitationId: number
+) {
+  const octokit = getOctokit(accessToken);
+
+  try {
+    await octokit.repos.acceptInvitationForAuthenticatedUser({
+      invitation_id: invitationId,
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Error accepting invitation ${invitationId}:`, error);
+    throw error;
+  }
+}

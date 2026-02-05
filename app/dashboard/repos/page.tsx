@@ -8,6 +8,7 @@ import RepoFilters from "@/components/RepoFilters";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { RepoInvitationAlert } from "@/components/RepoInvitationAlert";
 
 
 export default async function ReposPage({
@@ -121,6 +122,9 @@ export default async function ReposPage({
               <SyncButton repoId={repoId} />
            </div>
         </div>
+
+        {/* Invitación de GitHub (solo se muestra si hay una pendiente para este repo) */}
+        <RepoInvitationAlert repoId={repoId} />
 
         {/* Filtros */}
         <RepoFilters collections={uniqueCollections} />
