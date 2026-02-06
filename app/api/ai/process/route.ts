@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash",
       generationConfig: {
-        responseMimeType: (type === 'seo' || type === 'tags') ? "application/json" : "text/plain",
+        responseMimeType: (type === 'seo' || type === 'tags' || type === 'sections') ? "application/json" : "text/plain",
       }
     });
 
@@ -90,6 +90,26 @@ export async function POST(req: Request) {
             `;
             break;
 
+        case 'sections':
+            userPrompt = `Analiza la siguiente transcripción de audio y divídela en secciones lógicas o capítulos.
+            Cada sección debe tener un tiempo de inicio (basado en la transcripción) y un título descriptivo y atractivo.
+            
+            TRANSCRIPCIÓN:
+            ${context}
+            
+            Genera un JSON que sea estrictamente un array de objetos con este formato:
+            [
+              { "time": "00:00", "title": "Introducción" },
+              { "time": "05:12", "title": "Tema Principal" },
+              ...
+            ]
+            
+            IMPORTANTE:
+            1. Los tiempos deben coincidir con momentos reales de la transcripción.
+            2. Los títulos deben ser breves (máx 50 caracteres).
+            3. Devuelve UNICAMENTE el JSON del array.`;
+            break;
+
         default:
             return NextResponse.json({ error: "Tipo de operación no válido" }, { status: 400 });
     }
@@ -101,7 +121,7 @@ export async function POST(req: Request) {
     const response = await result.response;
     const outputText = response.text();
 
-    if (type === 'seo' || type === 'tags') {
+    if (type === 'seo' || type === 'tags' || type === 'sections') {
         try {
             const json = JSON.parse(outputText);
             return NextResponse.json(json);

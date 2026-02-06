@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { Loader2, Wand2, Type, List } from "lucide-react";
 
-export function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: string, value: any[], onChange: (val: any[]) => void, onDelete: () => void }) {
+export function SectionsEditor({ 
+    fieldKey, 
+    value, 
+    onChange, 
+    onDelete,
+    metadata
+}: { 
+    fieldKey: string, 
+    value: any[], 
+    onChange: (val: any[]) => void, 
+    onDelete: () => void,
+    metadata?: any
+}) {
     // Verificación de seguridad
     if (!Array.isArray(value)) return null;
 
@@ -10,6 +24,7 @@ export function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldK
     const [isJsonMode, setIsJsonMode] = useState(false);
     const [jsonText, setJsonText] = useState("");
     const [jsonError, setJsonError] = useState("");
+    const [isGenerating, setIsGenerating] = useState(false);
   
     const handleUpdate = (index: number, field: string, newValue: string) => {
       const updated = [...value];
@@ -48,6 +63,66 @@ export function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldK
             setJsonError("JSON inválido: " + (e as Error).message);
         }
     };
+
+    const handleGenerateAI = async () => {
+        // Buscar transcripción en metadata
+        const transcriptionField = metadata 
+            ? Object.entries(metadata).find(([k, v]) => 
+                (k.toLowerCase().includes('transcription') || k.toLowerCase().includes('transcript')) && 
+                Array.isArray(v) && v.length > 0
+              )
+            : null;
+
+        if (!transcriptionField) {
+            toast.error("No se encontró una transcripción para generar secciones.");
+            return;
+        }
+
+        const transcriptionText = (transcriptionField[1] as any[])
+            .map(item => `[${item.time}] ${item.text}`)
+            .join("\n");
+
+        if (transcriptionText.length < 100) {
+            toast.error("La transcripción es demasiado corta para generar secciones.");
+            return;
+        }
+
+        setIsGenerating(true);
+        const toastId = toast.loading("Generando capítulos con IA...");
+
+        try {
+            const res = await fetch("/api/ai/process", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "sections",
+                    context: transcriptionText
+                })
+            });
+
+            if (!res.ok) throw new Error("Error en la respuesta de la IA");
+            const data = await res.json();
+            
+            if (Array.isArray(data)) {
+                if (value.length > 0) {
+                    if (confirm("Se reemplazarán las secciones actuales. ¿Continuar?")) {
+                        onChange(data);
+                        toast.success("Secciones generadas correctamente", { id: toastId });
+                    }
+                } else {
+                    onChange(data);
+                    toast.success("Secciones generadas correctamente", { id: toastId });
+                }
+            } else {
+                throw new Error("Formato de respuesta inválido");
+            }
+        } catch (error: any) {
+            console.error("AI Section generation error:", error);
+            toast.error(`Error: ${error.message}`, { id: toastId });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
   
     return (
       <div key={fieldKey} className="w-full">
@@ -73,12 +148,23 @@ export function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldK
               </div>
               <div className="flex items-center gap-2">
                  {isExpanded && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
-                        className={`text-xs px-2 py-1 rounded border transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
-                    >
-                        {isJsonMode ? 'Cancelar JSON' : 'Importar/Editar JSON'}
-                    </button>
+                    <>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleGenerateAI(); }}
+                            disabled={isGenerating}
+                            className={`text-xs px-2 py-1.5 rounded border flex items-center gap-1.5 transition-colors bg-indigo-500/10 text-indigo-500 border-indigo-500/20 hover:bg-indigo-500/20`}
+                        >
+                            {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+                            Auto-Generar (IA)
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
+                            className={`text-xs px-2 py-1.5 rounded border flex items-center gap-1.5 transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
+                        >
+                            <Type className="w-3 h-3" />
+                            {isJsonMode ? 'Cancelar JSON' : 'Editar JSON'}
+                        </button>
+                    </>
                  )}
             </div>
           </div>
@@ -103,6 +189,13 @@ export function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldK
                  ) : (
                     <>
                         <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                            {value.length === 0 && (
+                                <div className="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-lg bg-muted/20">
+                                    <List className="w-8 h-8 text-muted-foreground mb-3 opacity-20" />
+                                    <p className="text-sm text-muted-foreground">No hay secciones definidas.</p>
+                                    <p className="text-xs text-muted-foreground/60 mt-1">Usa la IA para generarlas desde la transcripción.</p>
+                                </div>
+                            )}
                             {value.map((item, index) => (
                             <div key={index} className="flex gap-3 bg-card border border-border p-3 rounded-md group hover:border-input transition-colors items-center">
                                 <div className="w-24 shrink-0">

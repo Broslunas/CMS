@@ -14,6 +14,7 @@ import { DiffViewer } from "./DiffViewer";
 import { EditorHeader } from "./post-editor/EditorHeader";
 import { MetadataEditor } from "./post-editor/MetadataEditor";
 import { ContentEditor } from "./post-editor/ContentEditor";
+import { Wand2 } from "lucide-react";
 
 
 interface PostMetadata {
@@ -339,6 +340,8 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     if (newFieldType === "boolean") initialValue = false;
     if (newFieldType === "array") initialValue = [];
     if (newFieldType === "date") initialValue = new Date().toISOString().split('T')[0];
+    if (newFieldType === "transcription") initialValue = [];
+    if (newFieldType === "sections") initialValue = [];
 
     updateMetadata(newFieldName, initialValue);
     setNewFieldName("");
@@ -865,6 +868,42 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
         }
       >
         <div className="space-y-4">
+          {/* Global Suggestions for new features */}
+          {(!metadata.transcription || !metadata.sections) && (
+            <div className="bg-indigo-500/5 p-3 rounded-md border border-indigo-500/20 mb-4">
+                <p className="text-xs font-medium text-indigo-500 mb-2 flex items-center gap-2">
+                    <Wand2 className="w-3 h-3" />
+                    Funciones Pro (IA & Audio)
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {!metadata.transcription && (
+                        <button
+                            onClick={() => { setNewFieldName("transcription"); setNewFieldType("transcription"); }}
+                            className={`px-2 py-1 text-xs border rounded transition-colors flex items-center gap-1 ${
+                                newFieldName === "transcription" 
+                                    ? "bg-indigo-500/10 border-indigo-500 text-indigo-500" 
+                                    : "bg-background border-border text-foreground hover:border-indigo-500/50"
+                            }`}
+                        >
+                            transcription <span className="opacity-50 text-[10px]">(audio)</span>
+                        </button>
+                    )}
+                    {!metadata.sections && (
+                        <button
+                            onClick={() => { setNewFieldName("sections"); setNewFieldType("sections"); }}
+                            className={`px-2 py-1 text-xs border rounded transition-colors flex items-center gap-1 ${
+                                newFieldName === "sections" 
+                                    ? "bg-indigo-500/10 border-indigo-500 text-indigo-500" 
+                                    : "bg-background border-border text-foreground hover:border-indigo-500/50"
+                            }`}
+                        >
+                            sections <span className="opacity-50 text-[10px]">(capítulos)</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+          )}
+
           {/* Suggestions from config.ts */}
           {Object.keys(suggestedFields).length > 0 && (
             <div className="bg-muted/30 p-3 rounded-md border border-dashed border-border mb-4">
@@ -920,6 +959,8 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
               <option value="boolean">Booleano (Si/No)</option>
               <option value="array">Lista (Tags)</option>
               <option value="date">Fecha</option>
+              <option value="transcription">Transcripción (Deepgram)</option>
+              <option value="sections">Secciones (Capítulos)</option>
             </select>
           </div>
         </div>
