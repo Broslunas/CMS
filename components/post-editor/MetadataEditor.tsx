@@ -85,6 +85,7 @@ export function MetadataEditor({
                     fieldKey={key}
                     value={value}
                     content={content} // Pass content down
+                    metadata={metadata} // Pass metadata down
                     onUpdate={onUpdate}
                     onDelete={onDeleteField}
                     triggerUpload={triggerUpload}

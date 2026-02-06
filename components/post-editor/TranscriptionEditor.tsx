@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Loader2, Music, Scissors, Type, Wand2 } from "lucide-react";
 
-export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: string, value: any[], onChange: (val: any[]) => void, onDelete: () => void }) {
+export function TranscriptionEditor({ 
+    fieldKey, 
+    value, 
+    onChange, 
+    onDelete, 
+    metadata 
+}: { 
+    fieldKey: string, 
+    value: any[], 
+    onChange: (val: any[]) => void, 
+    onDelete: () => void,
+    metadata?: any
+}) {
   // Verificación de seguridad
   if (!Array.isArray(value)) return null;
 
@@ -10,6 +24,24 @@ export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { f
   const [isJsonMode, setIsJsonMode] = useState(false);
   const [jsonText, setJsonText] = useState("");
   const [jsonError, setJsonError] = useState("");
+  
+  // Deepgram integration state
+  const [audioUrl, setAudioUrl] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [showDeepgramPanel, setShowDeepgramPanel] = useState(false);
+
+  // Auto-detect audio URL from metadata
+  useEffect(() => {
+    if (metadata) {
+        const possibleKeys = ['audio', 'audio_url', 'podcast_url', 'mp3', 'url', 'audioUrl'];
+        for (const k of possibleKeys) {
+            if (metadata[k] && typeof metadata[k] === 'string' && (metadata[k].startsWith('http') || metadata[k].startsWith('/'))) {
+                setAudioUrl(metadata[k]);
+                break;
+            }
+        }
+    }
+  }, [metadata]);
 
   const handleUpdate = (index: number, field: string, newValue: string) => {
     const updated = [...value];
@@ -31,10 +63,63 @@ export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { f
       if (!isJsonMode) {
           setJsonText(JSON.stringify(value, null, 2));
           setIsJsonMode(true);
+          setShowDeepgramPanel(false);
       } else {
           setIsJsonMode(false);
           setJsonError("");
       }
+  };
+
+  const toggleDeepgramPanel = () => {
+        if (!showDeepgramPanel) {
+            setShowDeepgramPanel(true);
+            setIsJsonMode(false);
+        } else {
+            setShowDeepgramPanel(false);
+        }
+  };
+
+  const handleTranscribe = async () => {
+    if (!audioUrl) {
+        toast.error("Por favor, introduce una URL de audio válida.");
+        return;
+    }
+
+    setIsTranscribing(true);
+    const toastId = toast.loading("Transcribiendo audio con Deepgram...");
+
+    try {
+        const res = await fetch("/api/ai/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: audioUrl })
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || "Error al transcribir");
+        }
+
+        const data = await res.json();
+        
+        if (value.length > 0) {
+            // Confirm overwrite if there's already content
+            if (confirm("Se reemplazará la transcripción actual. ¿Continuar?")) {
+                onChange(data);
+                toast.success("Transcripción completada", { id: toastId });
+                setShowDeepgramPanel(false);
+            }
+        } else {
+            onChange(data);
+            toast.success("Transcripción completada", { id: toastId });
+            setShowDeepgramPanel(false);
+        }
+    } catch (error: any) {
+        console.error("Transcription error:", error);
+        toast.error(`Error: ${error.message}`, { id: toastId });
+    } finally {
+        setIsTranscribing(false);
+    }
   };
 
   const handleImport = () => {
@@ -69,7 +154,6 @@ export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { f
                   const time = match[1];
                   const textContent = match[2] ? match[2].trim() : "";
                   
-                  // Simple unescape if user pasted stringified text by mistake, otherwise keep distinct
                   transcription.push({
                       time: time,
                       text: textContent
@@ -115,12 +199,22 @@ export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { f
             
             <div className="flex items-center gap-2">
                  {isExpanded && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
-                        className={`text-xs px-2 py-1 rounded border transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
-                    >
-                        {isJsonMode ? 'Cancelar Importación' : 'Importar JSON/Texto'}
-                    </button>
+                    <>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); toggleDeepgramPanel(); }}
+                            className={`text-xs px-2 py-1.5 rounded border flex items-center gap-1.5 transition-colors ${showDeepgramPanel ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
+                        >
+                            <Wand2 className="w-3 h-3" />
+                            {showDeepgramPanel ? 'Cerrar Deepgram' : 'Auto-Transcribir (Deepgram)'}
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
+                            className={`text-xs px-2 py-1.5 rounded border flex items-center gap-1.5 transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
+                        >
+                            <Type className="w-3 h-3" />
+                            {isJsonMode ? 'Cancelar Importación' : 'Importar JSON/Texto'}
+                        </button>
+                    </>
                  )}
             </div>
         </div>
@@ -128,6 +222,37 @@ export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { f
         {/* Content Body */}
         {isExpanded && (
             <div className="p-4 border-t border-border bg-card/30">
+                {showDeepgramPanel && (
+                    <div className="mb-6 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg space-y-3">
+                        <div className="flex items-center gap-2 text-indigo-500 mb-1">
+                            <Music className="w-4 h-4" />
+                            <h4 className="text-sm font-semibold uppercase tracking-wider">Generar con Deepgram</h4>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Introduce la URL de un archivo de audio (MP3, WAV, etc.) para generar la transcripción completa automáticamente.</p>
+                        
+                        <div className="flex gap-2">
+                            <input 
+                                type="text"
+                                value={audioUrl}
+                                onChange={(e) => setAudioUrl(e.target.value)}
+                                placeholder="https://ejemplo.com/audio.mp3"
+                                className="flex-1 bg-background border border-input rounded px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                            <button 
+                                onClick={handleTranscribe}
+                                disabled={isTranscribing || !audioUrl}
+                                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors whitespace-nowrap"
+                            >
+                                {isTranscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                                {isTranscribing ? 'Procesando...' : 'Transcribir'}
+                            </button>
+                        </div>
+                        {audioUrl && !audioUrl.startsWith('http') && !audioUrl.startsWith('/') && (
+                            <p className="text-[10px] text-destructive italic">La URL debe empezar por http:// o https://</p>
+                        )}
+                    </div>
+                )}
+
                 {isJsonMode ? (
                     <div className="space-y-3">
                         <textarea
@@ -145,18 +270,28 @@ export function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { f
                     </div>
                 ) : (
                     <>
-                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                        {value.length === 0 && (
+                            <div className="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-lg bg-muted/20">
+                                <Type className="w-8 h-8 text-muted-foreground mb-3 opacity-20" />
+                                <p className="text-sm text-muted-foreground">No hay segmentos de transcripción.</p>
+                                <p className="text-xs text-muted-foreground/60 mt-1">Añade uno manualmente o usa Deepgram.</p>
+                            </div>
+                        )}
                         {value.map((item, index) => (
                             <div key={index} className="flex gap-3 bg-card border border-border p-3 rounded-md group hover:border-input transition-colors">
                             <div className="w-24 shrink-0">
                                 <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Tiempo</label>
-                                <input
-                                type="text"
-                                value={item.time || ""}
-                                onChange={(e) => handleUpdate(index, "time", e.target.value)}
-                                placeholder="00:00"
-                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs text-foreground font-mono focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
+                                <div className="relative">
+                                    <input
+                                    type="text"
+                                    value={item.time || ""}
+                                    onChange={(e) => handleUpdate(index, "time", e.target.value)}
+                                    placeholder="00:00"
+                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs text-foreground font-mono focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                                    />
+                                    <Scissors className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/30" />
+                                </div>
                             </div>
                             <div className="flex-1">
                                 <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Texto</label>

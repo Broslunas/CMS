@@ -12,6 +12,7 @@
     "@auth/mongodb-adapter": "^3.11.1",
     "@aws-sdk/client-s3": "^3.984.0",
     "@aws-sdk/s3-request-presigner": "^3.984.0",
+    "@deepgram/sdk": "^4.11.3",
     "@google/generative-ai": "^0.24.1",
     "@octokit/rest": "^22.0.1",
     "@radix-ui/react-context-menu": "^2.2.16",

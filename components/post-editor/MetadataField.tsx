@@ -11,6 +11,7 @@ interface MetadataFieldProps {
     fieldKey: string;
     value: any;
     content: string; // Passed from parent
+    metadata: any; // Added
     onUpdate: (key: string, value: any) => void;
     onDelete: (key: string) => void;
     triggerUpload: (target: { type: 'content' | 'metadata', key?: string }) => void;
@@ -23,6 +24,7 @@ export function MetadataField({
     fieldKey,
     value,
     content,
+    metadata, // Added
     onUpdate,
     onDelete,
     triggerUpload,
@@ -130,8 +132,10 @@ export function MetadataField({
         );
     }
 
-    if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object") {
-      const isTranscription = value.every(item => 'time' in item && 'text' in item);
+    if (Array.isArray(value)) {
+      const isTranscription = (value.length > 0 && typeof value[0] === "object" && value[0] !== null && 'time' in value[0] && 'text' in value[0]) || 
+                              (['transcription', 'transcript', 'transcripcion'].includes(key.toLowerCase()));
+      
       if (isTranscription) {
           return (
              <div key={key}>
@@ -141,12 +145,15 @@ export function MetadataField({
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
-                <TranscriptionEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} />
+                <TranscriptionEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} metadata={metadata} />
              </div>
           )
       }
-      const isSections = value.every(item => 'time' in item && 'title' in item);
-        if (isSections) {
+
+      const isSections = value.length > 0 && 
+                         value.every(item => typeof item === 'object' && item !== null && 'time' in item && 'title' in item);
+      
+      if (isSections) {
         return (
            <div key={key}>
               <div className="flex items-center justify-between mb-2">
@@ -159,17 +166,22 @@ export function MetadataField({
            </div>
         )
       }
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize">{key}</label>
-            <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Eliminar campo ${key}`}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
+
+      const isComplexArray = value.length > 0 && typeof value[0] === 'object' && value[0] !== null;
+
+      if (isComplexArray) {
+        return (
+          <div key={key}>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+              <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Eliminar campo ${key}`}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </button>
+            </div>
+            <JsonFieldEditor fieldKey={key} value={value} onChange={(val: any) => onUpdate(key, val)} onDelete={() => onDelete(key)} isComplexArray={true} />
           </div>
-          <JsonFieldEditor fieldKey={key} value={value} onChange={(val: any) => onUpdate(key, val)} onDelete={() => onDelete(key)} isComplexArray={true} />
-        </div>
-      );
+        );
+      }
     }
 
     // --- Simple Arrays (Tags) ---
