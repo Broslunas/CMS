@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { RepoInvitationAlert } from "@/components/RepoInvitationAlert";
+import { PostItem } from "@/components/dashboard/PostItem";
 
 
 export default async function ReposPage({
@@ -93,6 +94,15 @@ export default async function ReposPage({
     posts = posts.filter(post => (post.collection || "blog") === collectionFilter);
   }
 
+  // Serialize posts for Client Component
+  posts = posts.map(post => ({
+    ...post,
+    _id: post._id.toString(),
+    createdAt: post.createdAt ? new Date(post.createdAt).toISOString() : null,
+    updatedAt: post.updatedAt ? new Date(post.updatedAt).toISOString() : null,
+    lastCommitAt: post.lastCommitAt ? new Date(post.lastCommitAt).toISOString() : null,
+  }));
+
   return (
     <main className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
       <div className="space-y-6">
@@ -146,69 +156,7 @@ export default async function ReposPage({
           ) : (
             <div className="space-y-3">
               {posts.map((post: any) => (
-                <Link
-                  key={post._id.toString()}
-                  href={`/dashboard/editor/${post._id.toString()}?repo=${encodeURIComponent(post.repoId)}`}
-                  className="block group"
-                >
-                  <Card className="p-4 transition-all hover:bg-muted/50 hover:border-primary/50">
-                     <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                           <div className="flex items-center gap-2 mb-1.5">
-                              <span className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded border border-secondary-foreground/10">
-                                 {post.collection || "blog"}
-                              </span>
-                           </div>
-                           <h3 className="text-lg font-semibold group-hover:text-primary transition-colors truncate">
-                              {post.metadata.title || 
-                                (Object.keys(post.metadata).length > 0 
-                                  ? String(Object.values(post.metadata)[0]) 
-                                  : "Sin título")}
-                           </h3>
-                           <p className="text-sm text-muted-foreground mt-1 font-mono line-clamp-1">
-                              {post.filePath}
-                           </p>
-
-                           {/* Tags */}
-                           {post.metadata.tags && post.metadata.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-3">
-                              {post.metadata.tags.slice(0, 5).map((tag: string, i: number) => (
-                                <span
-                                  key={`${tag}-${i}`}
-                                  className="px-2 py-1 bg-secondary text-secondary-foreground rounded text-xs"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                              {post.metadata.tags.length > 5 && (
-                                <span className="px-2 py-1 text-muted-foreground text-xs">
-                                  +{post.metadata.tags.length - 5} más
-                                </span>
-                              )}
-                            </div>
-                           )}
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                           {/* Status Badge */}
-                           <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                              post.status === "synced"
-                                ? "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400"
-                                : post.status === "modified"
-                                ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:text-yellow-400"
-                                : "bg-zinc-500/10 text-zinc-600 border-zinc-500/20 dark:text-zinc-400"
-                           }`}>
-                              {post.status === "synced" && "Sincronizado"}
-                              {post.status === "modified" && "Modificado"}
-                              {post.status === "draft" && "Borrador"}
-                           </div>
-                           <span className="text-xs text-muted-foreground">
-                              {new Date(post.updatedAt).toLocaleDateString()}
-                           </span>
-                        </div>
-                     </div>
-                  </Card>
-                </Link>
+                <PostItem key={post._id.toString()} post={post} />
               ))}
             </div>
           )}
