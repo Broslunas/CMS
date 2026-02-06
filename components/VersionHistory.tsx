@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import { parseMarkdown } from "@/lib/markdown";
 
@@ -53,23 +52,23 @@ export function VersionHistory({
         const data = await res.json();
         setCommits(data);
       } else {
-        toast.error("Error cargando historial");
+        toast.error("Error loading history");
       }
     } catch (e) {
       console.error(e);
-      toast.error("Error de conexión");
+      toast.error("Connection error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRestore = async (sha: string) => {
-    if (!confirm("¿Estás seguro de que quieres restaurar esta versión? Se creará un nuevo commit reemplazando el contenido actual.")) {
+    if (!confirm("Are you sure you want to restore this version? A new commit will be created replacing the current content.")) {
         return;
     }
 
     setRestoring(sha);
-    const toastId = toast.loading("Restaurando versión...");
+    const toastId = toast.loading("Restoring version...");
 
     try {
       const res = await fetch("/api/commits/restore", {
@@ -86,7 +85,7 @@ export function VersionHistory({
 
       if (res.ok) {
         const data = await res.json();
-        toast.success("Versión restaurada con éxito", { id: toastId });
+        toast.success("Version restored successfully", { id: toastId });
         onRestore(data.metadata, data.content, data.newSha); // Actualizar editor y SHA
         onClose(); // Cerrar modal
       } else {
@@ -95,7 +94,7 @@ export function VersionHistory({
       }
     } catch (e) {
       console.error(e);
-      toast.error("Error al restaurar", { id: toastId });
+      toast.error("Error restoring", { id: toastId });
     } finally {
       setRestoring(null);
     }
@@ -108,7 +107,7 @@ export function VersionHistory({
       <div className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-lg flex flex-col max-h-[80vh]">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
-            <h2 className="text-lg font-semibold">Historial de Versiones</h2>
+            <h2 className="text-lg font-semibold">Version History</h2>
             <p className="text-sm text-muted-foreground truncate">{path}</p>
           </div>
           <button
@@ -143,7 +142,7 @@ export function VersionHistory({
             </div>
           ) : commits.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No hay historial disponible para este archivo.
+              No history available for this file.
             </div>
           ) : (
             <div className="space-y-3">
@@ -160,7 +159,6 @@ export function VersionHistory({
                       <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(commit.date), {
                           addSuffix: true,
-                          locale: es,
                         })}
                       </span>
                       <span className="text-xs text-muted-foreground mx-1">
@@ -171,7 +169,7 @@ export function VersionHistory({
                       </span>
                     </div>
                     <p className="text-sm text-foreground/90 line-clamp-2">
-                      {commit.message}
+                       {commit.message}
                     </p>
                   </div>
 
@@ -181,7 +179,7 @@ export function VersionHistory({
                       disabled={restoring === commit.sha}
                       className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
                     >
-                      {restoring === commit.sha ? "Restaurando..." : "Restaurar"}
+                      {restoring === commit.sha ? "Restoring..." : "Restore"}
                     </button>
                     <a
                       href={commit.html_url}
@@ -189,7 +187,7 @@ export function VersionHistory({
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium border border-border text-muted-foreground rounded-md hover:text-foreground hover:bg-muted transition-colors"
                     >
-                      Ver en GitHub
+                      View on GitHub
                     </a>
                   </div>
                 </div>

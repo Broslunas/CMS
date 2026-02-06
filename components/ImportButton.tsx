@@ -11,7 +11,7 @@ export default function ImportButton() {
   return (
     <>
       <Button onClick={() => setIsModalOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" /> Importar Repositorio
+        <Plus className="mr-2 h-4 w-4" /> Import Repository
       </Button>
 
       <ImportModal

@@ -27,13 +27,13 @@ export async function SiteHeader() {
             href="/pricing"
             className="transition-colors hover:text-primary text-foreground/80"
           >
-            Precios
+            Pricing
           </Link>
           <Link
             href="/docs"
             className="transition-colors hover:text-primary text-foreground/80"
           >
-            Documentación
+            Documentation
           </Link>
           <Link
             href="https://github.com/broslunas/cms"
@@ -58,9 +58,9 @@ export async function SiteHeader() {
                     await signOut()
                   }}
                 >
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Cerrar sesión">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Sign out">
                     <LogOut className="h-4 w-4" />
-                    <span className="sr-only">Cerrar sesión</span>
+                    <span className="sr-only">Sign out</span>
                   </Button>
                 </form>
              </div>

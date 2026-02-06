@@ -66,16 +66,16 @@ export function RepoInvitationAlert({ repoId }: RepoInvitationAlertProps) {
               <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
             </div>
             <div className="flex-1 space-y-2">
-              <h3 className="font-semibold text-red-700 dark:text-red-400">Permisos de GitHub Insuficientes</h3>
+              <h3 className="font-semibold text-red-700 dark:text-red-400">Insufficient GitHub Permissions</h3>
               <p className="text-sm text-muted-foreground">
-                Para colaborar en este repositorio, el CMS necesita permisos para gestionar tus invitaciones. 
+                To collaborate on this repository, the CMS needs permissions to manage your invitations.
               </p>
               <Button 
                 variant="destructive" 
                 size="sm" 
                 onClick={() => signOut({ callbackUrl: "/" })}
               >
-                Cerrar sesión y volver a entrar
+                Sign out and sign in again
               </Button>
             </div>
           </div>
@@ -102,11 +102,11 @@ export function RepoInvitationAlert({ repoId }: RepoInvitationAlertProps) {
           <div className="flex-1 space-y-3">
             <div>
               <h3 className="font-bold text-amber-900 dark:text-amber-400 mb-1 text-lg">
-                Faltan permisos de edición
+                Missing edit permissions
               </h3>
               <p className="text-sm text-amber-800/80 dark:text-amber-400/80 max-w-2xl">
-                Parece que aún no has aceptado la invitación de GitHub para colaborar en <span className="font-mono font-bold">{repoId}</span>. 
-                Sin esto, no podrás guardar cambios ni publicar contenido.
+                It seems you haven't accepted the GitHub invitation to collaborate on <span className="font-mono font-bold">{repoId}</span>. 
+                Without this, you cannot save changes or publish content.
               </p>
             </div>
 
@@ -122,7 +122,7 @@ export function RepoInvitationAlert({ repoId }: RepoInvitationAlertProps) {
                   className="gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Aceptar invitación en GitHub
+                  Accept invitation on GitHub
                 </a>
               </Button>
               <Button
@@ -131,7 +131,7 @@ export function RepoInvitationAlert({ repoId }: RepoInvitationAlertProps) {
                 onClick={() => window.location.reload()}
                 className="text-amber-700 hover:bg-amber-500/10"
               >
-                Ya la acepté, refrescar
+                I already accepted, refresh
               </Button>
             </div>
           </div>

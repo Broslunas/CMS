@@ -22,11 +22,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: {
-    default: "Broslunas CMS | Gestiona tus Content Collections",
+    default: "Broslunas CMS | Manage your Content Collections",
     template: "%s | Broslunas CMS",
   },
   description:
-    "El CMS definitivo para Astro. Gestiona tus Content Collections directamente desde GitHub. Rápido, seguro y con una interfaz intuitiva.",
+    "The definitive CMS for Astro. Manage your Content Collections directly from GitHub. Fast, secure, and with an intuitive interface.",
   keywords: [
     "astro",
     "cms",
@@ -55,19 +55,19 @@ export const metadata: Metadata = {
 
   openGraph: {
     type: "website",
-    locale: "es_ES",
+    locale: "en_US",
     url: "/",
-    title: "Broslunas CMS | Gestiona tus Content Collections",
+    title: "Broslunas CMS | Manage your Content Collections",
     description:
-      "Gestiona tus Content Collections de Astro con el poder de Git. Sin bases de datos, sincronización directa con GitHub.",
+      "Manage your Astro Content Collections with the power of Git. No databases, direct synchronization with GitHub.",
     siteName: "Broslunas CMS",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "Broslunas CMS | Gestiona tus Content Collections",
+    title: "Broslunas CMS | Manage your Content Collections",
     description:
-      "Gestiona tus Content Collections de Astro con el poder de Git. Sin bases de datos, sincronización directa con GitHub.",
+      "Manage your Astro Content Collections with the power of Git. No databases, direct synchronization with GitHub.",
     creator: "@broslunas",
   },
   icons: {

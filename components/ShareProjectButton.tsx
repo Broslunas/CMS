@@ -48,12 +48,12 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
 
   const handleShare = async () => {
     if ((activeTab === "email" && !email) || (activeTab === "username" && !username)) {
-      toast.error("Por favor completa el campo requerido");
+      toast.error("Please complete the required field");
       return;
     }
 
     setLoading(true);
-    const toastId = toast.loading("Enviando invitación...");
+    const toastId = toast.loading("Sending invitation...");
 
     try {
       const payload = {
@@ -70,10 +70,10 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Error al compartir");
+        throw new Error(data.error || "Error sharing");
       }
 
-      toast.success(`Proyecto compartido con ${data.user?.username || data.user?.name || "el usuario"}`, { id: toastId });
+      toast.success(`Project shared with ${data.user?.username || data.user?.name || "the user"}`, { id: toastId });
       setEmail("");
       setUsername("");
       fetchCollaborators(); // Refresh list
@@ -86,9 +86,9 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
   };
 
   const handleUnshare = async (userId: string) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar a este colaborador? Ya no podrá acceder al proyecto desde el CMS.")) return;
+    if (!confirm("Are you sure you want to remove this collaborator? They will no longer be able to access the project from the CMS.")) return;
     
-    const toastId = toast.loading("Eliminando colaborador...");
+    const toastId = toast.loading("Removing collaborator...");
     try {
       const res = await fetch("/api/projects/unshare", {
         method: "POST",
@@ -96,12 +96,12 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
         body: JSON.stringify({ repoId, userId })
       });
 
-      if (!res.ok) throw new Error("Error al eliminar colaborador");
+      if (!res.ok) throw new Error("Error removing collaborator");
 
-      toast.success("Colaborador eliminado", { id: toastId });
+      toast.success("Collaborator removed", { id: toastId });
       fetchCollaborators(); // Refresh list
     } catch (e) {
-      toast.error("Error al eliminar colaborador", { id: toastId });
+      toast.error("Error removing collaborator", { id: toastId });
     }
   };
 
@@ -115,7 +115,7 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
           fetchCollaborators();
         }}
         className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200"
-        title="Compartir proyecto"
+        title="Share project"
       >
         <Users className="h-5 w-5" />
       </button>
@@ -123,8 +123,8 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
       <Modal
         isOpen={isOpen}
         onClose={() => !loading && setIsOpen(false)}
-        title="Compartir Repositorio"
-        description={`Gestiona quién tiene acceso a ${repoName}.`}
+        title="Share Repository"
+        description={`Manage who has access to ${repoName}.`}
         footer={
           <div className="flex justify-end gap-3 w-full">
             <Button
@@ -132,7 +132,7 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
               onClick={() => setIsOpen(false)}
               disabled={loading}
             >
-              Cerrar
+              Close
             </Button>
           </div>
         }
@@ -142,34 +142,34 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
             <div className="space-y-4">
                 <div className="w-full">
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-3 block">
-                        Invitar nuevo colaborador
+                        Invite new collaborator
                     </Label>
                     <div className="grid grid-cols-2 gap-1 p-1 bg-muted/50 rounded-lg mb-4">
                         <button
                             onClick={() => setActiveTab("email")}
                             className={`text-sm font-medium py-1.5 rounded-md transition-all ${activeTab === "email" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                         >
-                            Por Email
+                            By Email
                         </button>
                         <button
                             onClick={() => setActiveTab("username")}
                             className={`text-sm font-medium py-1.5 rounded-md transition-all ${activeTab === "username" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                         >
-                            Por GitHub
+                            By GitHub
                         </button>
                     </div>
 
                     <div className="flex gap-2">
                         {activeTab === "email" ? (
                              <Input 
-                                placeholder="usuario@ejemplo.com" 
+                                placeholder="user@example.com" 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={loading}
                             />
                         ) : (
                             <Input 
-                                placeholder="GitHub Username (ej. broslunas)" 
+                                placeholder="GitHub Username (e.g. broslunas)" 
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 disabled={loading}
@@ -189,14 +189,14 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
             {/* Collaborators List Section */}
             <div className="space-y-3 pt-4 border-t">
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground font-bold flex justify-between">
-                    Colaboradores actuales
+                    Current collaborators
                     {fetchingCollabs && <Loader2 className="h-3 w-3 animate-spin" />}
                 </Label>
                 
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                     {collaborators.length === 0 && !fetchingCollabs ? (
                         <p className="text-sm text-center py-4 text-muted-foreground italic bg-muted/20 rounded-lg border border-dashed">
-                            Aún no has invitado a nadie.
+                            You haven't invited anyone yet.
                         </p>
                     ) : (
                         // Filter duplicates by userId just in case
@@ -237,7 +237,7 @@ export default function ShareProjectButton({ repoId, repoName }: ShareProjectBut
                 <div className="p-3 border border-amber-500/30 bg-amber-500/5 rounded-lg flex gap-3 text-xs text-amber-700 dark:text-amber-500">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <p className="leading-relaxed">
-                        <strong>Nota:</strong> Los colaboradores pueden editar contenido. Si usas Vercel (Free), recuerda que el repo debe ser <strong>Público</strong>.
+                        <strong>Note:</strong> Collaborators can edit content. If you use Vercel (Free), remember that the repo must be <strong>Public</strong>.
                     </p>
                 </div>
             </div>

@@ -26,26 +26,26 @@ export default async function Home() {
           <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
             <div className="inline-flex items-center rounded-full border border-border bg-background/50 backdrop-blur-sm px-3 py-1 text-sm text-muted-foreground shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
               <span className="flex h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-              v1.0 Ahora Disponible
+              v1.0 Now Available
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground animate-in fade-in slide-in-from-bottom-8 duration-700">
-              El CMS para Astro <br/>
+              The CMS for Astro <br/>
               <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                basado en Git
+                based on Git
               </span>
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-              Gestiona tus Content Collections sin salir de tu flujo de trabajo. 
-              Sin bases de datos. Sin complicaciones. Solo tú, tu repositorio y tu contenido.
+              Manage your Content Collections without leaving your workflow. 
+              No databases. No hassles. Just you, your repo, and your content.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
                {session?.user ? (
                  <Link href="/dashboard">
                    <Button size="lg" className="h-12 px-8 text-base shadow-lg hover:shadow-primary/20 transition-all font-semibold">
-                     Ir al Dashboard
+                     Go to Dashboard
                    </Button>
                  </Link>
                ) : (
@@ -56,7 +56,7 @@ export default async function Home() {
                <Link href="https://github.com/broslunas/cms" target="_blank">
                  <Button variant="outline" size="lg" className="h-12 px-8 text-base hover:bg-muted bg-transparent backdrop-blur-sm border-zinc-200 dark:border-zinc-800">
                    <Github className="mr-2 h-5 w-5" />
-                   Ver en GitHub
+                   View on GitHub
                  </Button>
                </Link>
             </div>
@@ -73,33 +73,33 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard 
               icon={<GitBranch className="h-8 w-8 text-primary" />}
-              title="Git Nativo"
-              description="Cada cambio es un commit. Mantén el historial completo de tu contenido y revierte cambios cuando lo necesites."
+              title="Native Git"
+              description="Every change is a commit. Keep full history of your content and revert changes when needed."
             />
             <FeatureCard 
               icon={<Database className="h-8 w-8 text-primary" />}
-              title="Sin Base de Datos"
-              description="Tu contenido vive en archivos JSON y Markdown. Olvídate de gestionar bases de datos complejas."
+              title="No Database"
+              description="Your content lives in JSON and Markdown files. Forget about managing complex databases."
             />
             <FeatureCard 
               icon={<LayoutTemplate className="h-8 w-8 text-primary" />}
-              title="Esquemas de Astro"
-              description="Importamos automáticamente tus esquemas de Content Collections. Type-safe desde el primer día."
+              title="Astro Schemas"
+              description="We automatically import your Content Collections schemas. Type-safe from day one."
             />
             <FeatureCard 
               icon={<FileJson className="h-8 w-8 text-primary" />}
-              title="Edición Visual de JSON"
-              description="Edita estructuras de datos complejas con una interfaz intuitiva, diseñada específicamente para datos estáticos."
+              title="Visual JSON Editing"
+              description="Edit complex data structures with an intuitive interface, designed specifically for static data."
             />
             <FeatureCard 
               icon={<Lock className="h-8 w-8 text-primary" />}
-              title="Control Total"
-              description="Tú posees tus datos. Sin vendor lock-in. Si decides dejarnos, tu contenido sigue en tu repositorio."
+              title="Total Control"
+              description="You own your data. No vendor lock-in. If you decide to leave, your content remains in your repo."
             />
             <FeatureCard 
               icon={<Zap className="h-8 w-8 text-primary" />}
-              title="Ultra Rápido"
-              description="Interfaz optimizada para la velocidad. Carga instantánea y ediciones en tiempo real."
+              title="Ultra Fast"
+              description="Interface optimized for speed. Instant loading and real-time edits."
             />
           </div>
         </div>
@@ -115,15 +115,15 @@ export default async function Home() {
                     Developer First
                   </div>
                   <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
-                    Diseñado para el desarrollador moderno
+                    Designed for the modern developer
                   </h2>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    Broslunas CMS entiende tu estructura de proyecto. Simplemente conecta tu repositorio y nosotros nos encargamos del resto.
+                    Broslunas CMS understands your project structure. Simply connect your repo and we handle the rest.
                   </p>
                   <ul className="space-y-4 pt-4">
-                    <IntegrationStep number="1" text="Instala el GitHub App" />
-                    <IntegrationStep number="2" text="Selecciona tus repositorios" />
-                    <IntegrationStep number="3" text="Empieza a editar contenido" />
+                    <IntegrationStep number="1" text="Install GitHub App" />
+                    <IntegrationStep number="2" text="Select your repositories" />
+                    <IntegrationStep number="3" text="Start editing content" />
                   </ul>
                </div>
                
@@ -164,15 +164,15 @@ export default async function Home() {
          
          <div className="container px-4 relative z-10 mx-auto max-w-3xl">
            <h2 className="text-4xl md:text-5xl font-bold mb-8 tracking-tight">
-             ¿Listo para empezar?
+             Ready to start?
            </h2>
            <p className="text-xl text-muted-foreground mb-12">
-             Únete a los desarrolladores que ya están gestionando sus sitios de Astro de forma más inteligente.
+             Join developers who are already managing their Astro sites more intelligently.
            </p>
            {session?.user ? (
              <Link href="/dashboard">
                <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-xl hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300">
-                 Ir al Dashboard <Rocket className="ml-2 h-5 w-5" />
+                 Go to Dashboard <Rocket className="ml-2 h-5 w-5" />
                </Button>
              </Link>
            ) : (

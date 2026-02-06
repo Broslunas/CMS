@@ -1,50 +1,49 @@
-
 export default function TermsPage() {
   return (
     <div className="container mx-auto px-4 py-16 max-w-3xl">
-      <h1 className="text-4xl font-bold mb-8">Términos de Servicio</h1>
-      <p className="text-muted-foreground mb-8">Última actualización: 10 de Octubre, 2024</p>
+      <h1 className="text-4xl font-bold mb-8">Terms of Service</h1>
+      <p className="text-muted-foreground mb-8">Last updated: February 6, 2026</p>
       
       <div className="prose prose-zinc dark:prose-invert max-w-none space-y-8">
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Aceptación de los Términos</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Acceptance of Terms</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Al acceder y utilizar Broslunas CMS ("el Servicio"), usted acepta y acuerda estar obligado por los términos y disposiciones de este acuerdo. Además, al utilizar estos servicios particulares, usted estará sujeto a cualquier regla o guía de uso publicada aplicable a dichos servicios.
+            By accessing and using Broslunas CMS ("the Service"), you accept and agree to be bound by the terms and provisions of this agreement. In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Descripción del Servicio</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Description of Service</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Broslunas CMS es una herramienta de gestión de contenido para sitios web estáticos construidos con Astro. El Servicio se integra con GitHub para permitir la edición de contenido. Nos reservamos el derecho de modificar, suspender o discontinuar el Servicio en cualquier momento con aviso previo razonable.
+            Broslunas CMS is a content management tool for static websites built with Astro. The Service integrates with GitHub to enable content editing. We reserve the right to modify, suspend, or discontinue the Service at any time with reasonable prior notice.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Conducta del Usuario</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">3. User Conduct</h2>
           <p className="text-muted-foreground leading-relaxed">
-             Usted es el único responsable de todo el código, video, imágenes, información, datos, texto, software, música, sonido, gráficos, mensajes u otros materiales ("contenido") que usted cargue, publique o muestre a través del Servicio. Usted acepta no utilizar el Servicio para ningún propósito ilegal o no autorizado.
+             You are solely responsible for all code, video, images, information, data, text, software, music, sound, graphics, messages, or other materials ("content") that you upload, post, publish, or display via the Service. You agree not to use the Service for any illegal or unauthorized purpose.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Propiedad Intelectual</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Intellectual Property</h2>
           <p className="text-muted-foreground leading-relaxed">
-            El Servicio y su contenido original, características y funcionalidad son y seguirán siendo propiedad exclusiva de Broslunas y sus licenciantes. El Servicio está protegido por derechos de autor, marcas registradas y otras leyes tanto de España como de países extranjeros.
+            The Service and its original content, features, and functionality are and will remain the exclusive property of Broslunas and its licensors. The Service is protected by copyright, trademark, and other laws of both Spain and foreign countries.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Limitación de Responsabilidad</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Limitation of Liability</h2>
           <p className="text-muted-foreground leading-relaxed">
-            En ningún caso Broslunas, ni sus directores, empleados, socios, agentes, proveedores o afiliados, serán responsables por daños indirectos, incidentales, especiales, consecuentes o punitivos, incluyendo sin limitación, pérdida de beneficios, datos, uso, buena voluntad, u otras pérdidas intangibles, resultantes de su acceso o uso o incapacidad de acceder o usar el Servicio.
+            In no event shall Broslunas, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
           </p>
         </section>
         
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Ley Aplicable</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Governing Law</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Estos Términos se regirán e interpretarán de acuerdo con las leyes de España, sin tener en cuenta sus disposiciones sobre conflictos de leyes.
+            These Terms shall be governed and construed in accordance with the laws of Spain, without regard to its conflict of law provisions.
           </p>
         </section>
       </div>

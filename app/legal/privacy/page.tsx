@@ -1,56 +1,55 @@
-
 export default function PrivacyPage() {
   return (
     <div className="container mx-auto px-4 py-16 max-w-3xl">
-      <h1 className="text-4xl font-bold mb-8">Política de Privacidad</h1>
-      <p className="text-muted-foreground mb-8">Última actualización: 10 de Octubre, 2024</p>
+      <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
+      <p className="text-muted-foreground mb-8">Last updated: February 6, 2026</p>
       
       <div className="prose prose-zinc dark:prose-invert max-w-none space-y-8">
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Introducción</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Introduction</h2>
           <p className="text-muted-foreground leading-relaxed">
-            En Broslunas CMS ("nosotros", "nuestro" o "la Empresa"), respetamos su privacidad y estamos comprometidos a protegerla mediante el cumplimiento de esta política.
-            Esta política describe los tipos de información que podemos recopilar de usted o que usted puede proporcionar cuando visita el sitio web broslunas.com (nuestro "Sitio Web") y nuestras prácticas para recopilar, usar, mantener, proteger y divulgar esa información.
+            At Broslunas CMS ("we", "our", or "the Company"), we respect your privacy and are committed to protecting it through compliance with this policy.
+            This policy describes the types of information we may collect from you or that you may provide when you visit the website broslunas.com (our "Website") and our practices for collecting, using, maintaining, protecting, and disclosing that information.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Información que recopilamos</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Information We Collect</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
-            Recopilamos varios tipos de información de y sobre los usuarios de nuestro Sitio Web, incluida información:
+            We collect several types of information from and about users of our Website, including information:
           </p>
           <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-            <li>Por la cual se le puede identificar personalmente, como nombre, dirección postal, dirección de correo electrónico, número de teléfono ("información personal").</li>
-            <li>Sobre su conexión a internet, el equipo que utiliza para acceder a nuestro Sitio Web y detalles de uso.</li>
-            <li>Información de Repositorios: Para proporcionar nuestro servicio, accedemos a repositorios de GitHub según los permisos que usted otorgue. No almacenamos el contenido de sus repositorios, solo metadatos necesarios.</li>
+            <li>By which you may be personally identified, such as name, postal address, e-mail address, telephone number ("personal information").</li>
+            <li>About your internet connection, the equipment you use to access our Website, and usage details.</li>
+            <li>Repository Information: To provide our service, we access GitHub repositories based on the permissions you grant. We do not store the content of your repositories, only necessary metadata.</li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Cómo usamos su información</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">3. How We Use Your Information</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
-            Utilizamos la información que recopilamos sobre usted o que usted nos proporciona, incluida cualquier información personal:
+            We use the information we collect about you or that you provide to us, including any personal information:
           </p>
           <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-            <li>Para presentarle nuestro Sitio Web y su contenido.</li>
-            <li>Para proporcionarle información, productos o servicios que nos solicite.</li>
-            <li>Para cumplir con cualquier otro propósito para el cual la proporcione.</li>
-            <li>Para notificarle sobre cambios en nuestro Sitio Web o cualquier producto o servicio que ofrezcamos o proporcionemos a través de él.</li>
-            <li>Para mejorar nuestro Sitio Web y ofrecerle una mejor experiencia personalizada.</li>
+            <li>To present our Website and its contents to you.</li>
+            <li>To provide you with information, products, or services that you request from us.</li>
+            <li>To fulfill any other purpose for which you provide it.</li>
+            <li>To notify you about changes to our Website or any products or services we offer or provide through it.</li>
+            <li>To improve our Website and deliver a better and more personalized experience.</li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Seguridad de los datos</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Data Security</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Hemos implementado medidas diseñadas para proteger su información personal de pérdidas accidentales y del acceso, uso, alteración y divulgación no autorizados. Toda la información que nos proporciona se almacena en nuestros servidores seguros detrás de cortafuegos.
+            We have implemented measures designed to secure your personal information from accidental loss and from unauthorized access, use, alteration, and disclosure. All information you provide to us is stored on our secure servers behind firewalls.
           </p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Contacto</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Contact</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Para hacer preguntas o comentarios sobre esta política de privacidad y nuestras prácticas de privacidad, contáctenos en: privacy@broslunas.com
+            To ask questions or comment about this privacy policy and our privacy practices, contact us at: privacy@broslunas.com
           </p>
         </section>
       </div>

@@ -18,7 +18,7 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    const toastId = toast.loading(`Eliminando ${repoName}...`);
+    const toastId = toast.loading(`Deleting ${repoName}...`);
 
     try {
       const response = await fetch("/api/repos/delete", {
@@ -30,7 +30,7 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
       });
 
       if (response.ok) {
-        toast.success("Repositorio eliminado correctamente", { id: toastId });
+        toast.success("Repository deleted successfully", { id: toastId });
         setShowConfirm(false);
         router.refresh();
       } else {
@@ -39,7 +39,7 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
       }
     } catch (error) {
       console.error("Delete error:", error);
-      toast.error("Error al eliminar el repositorio", { id: toastId });
+      toast.error("Error deleting repository", { id: toastId });
     } finally {
       setIsDeleting(false);
     }
@@ -54,7 +54,7 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
           setShowConfirm(true);
         }}
         className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all duration-200"
-        title="Eliminar repositorio"
+        title="Delete repository"
         disabled={isDeleting}
       >
         <Trash2 className="h-5 w-5" />
@@ -63,8 +63,8 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
       <Modal
         isOpen={showConfirm}
         onClose={() => !isDeleting && setShowConfirm(false)}
-        title="¿Eliminar Proyecto?"
-        description="Esta acción desvinculará el repositorio de tu dashboard."
+        title="Delete Project?"
+        description="This action will unlink the repository from your dashboard."
         footer={
           <div className="flex justify-end gap-3">
             <button
@@ -72,14 +72,14 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
               className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               disabled={isDeleting}
             >
-              Cancelar
+              Cancel
             </button>
             <button
               onClick={handleDelete}
               className="px-4 py-2 text-sm font-bold bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-all shadow-lg shadow-destructive/20"
               disabled={isDeleting}
             >
-              {isDeleting ? "Eliminando..." : "Sí, eliminar proyecto"}
+              {isDeleting ? "Deleting..." : "Yes, delete project"}
             </button>
           </div>
         }
@@ -88,15 +88,15 @@ export default function DeleteRepoButton({ projectId, repoName }: DeleteRepoButt
             <div className="flex items-start gap-4 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl">
                 <AlertTriangle className="h-6 w-6 text-destructive shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                    <p className="text-sm font-bold text-destructive">Atención</p>
+                    <p className="text-sm font-bold text-destructive">Warning</p>
                     <p className="text-xs text-destructive/80 leading-relaxed">
-                        Se eliminarán todos los posts y configuraciones locales de <strong>{repoName}</strong>. 
-                        Tus archivos en GitHub permanecerán intactos.
+                        All local posts and configurations for <strong>{repoName}</strong> will be deleted. 
+                        Your files on GitHub will remain intact.
                     </p>
                 </div>
             </div>
             <p className="text-sm text-muted-foreground">
-                ¿Estás seguro de que quieres continuar? Esta acción no se puede deshacer.
+                Are you sure you want to continue? This action cannot be undone.
             </p>
         </div>
       </Modal>

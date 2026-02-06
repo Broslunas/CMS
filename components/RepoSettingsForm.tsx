@@ -97,10 +97,10 @@ export function RepoSettingsForm({
           <CardContent className="pt-4 flex gap-3 items-start">
             <Globe className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">Recordatorio de Vercel</p>
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">Vercel Reminder</p>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Si usas una cuenta gratuita de Vercel, el repositorio debe ser público para que las builds se ejecuten
-                correctamente. Los repositorios privados requieren un plan Pro o Enterprise.
+                If you use a free Vercel account, the repository must be public for builds to run correctly. 
+                Private repositories require a Pro or Enterprise plan.
               </p>
             </div>
           </CardContent>
@@ -121,11 +121,10 @@ export function RepoSettingsForm({
               <div className="bg-blue-500/10 p-4 rounded-md border border-blue-200">
                 <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
                   <Lock className="h-4 w-4" />
-                  <span className="font-semibold text-sm">Repositorio Compartido</span>
+                  <span className="font-semibold text-sm">Shared Repository</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Este repositorio es compartido. Solo el propietario puede configurar el despliegue y el
-                  almacenamiento.
+                  This repository is shared. Only the owner can configure deployment and storage.
                 </p>
               </div>
 

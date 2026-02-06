@@ -12,23 +12,23 @@ export default function PricingPage() {
         <div className="container mx-auto relative z-10 text-center max-w-3xl">
           <div className="inline-flex items-center justify-center p-3 mb-8 rounded-full bg-primary/10 text-primary">
             <Rocket className="w-6 h-6 mr-2" />
-            <span className="font-semibold">Próximamente</span>
+            <span className="font-semibold">Coming Soon</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            Planes Flexibles <br/>
+            Flexible Plans <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">
-              en camino
+              on the way
             </span>
           </h1>
           <p className="text-xl text-muted-foreground mb-12 leading-relaxed max-w-2xl mx-auto">
-            Estamos finalizando nuestros planes de precios para ofrecerte la mejor opción según tus necesidades. Mientras tanto, disfruta de todas las funcionalidades totalmente gratis.
+            We are finalizing our pricing plans to offer you the best option for your needs. In the meantime, enjoy all features <strong>completely for free</strong>.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
              <Link href="/dashboard">
                <Button size="lg" className="h-14 px-10 text-lg rounded-full shadow-xl hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 transition-all duration-300">
-                 Empezar Gratis Ahora
+                 Start for Free Now
                </Button>
              </Link>
           </div>

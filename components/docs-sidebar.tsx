@@ -7,56 +7,56 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 const docsConfig = [
   {
-    title: "Empezando",
+    title: "Getting Started",
     items: [
       {
-        title: "Introducción",
+        title: "Introduction",
         href: "/docs",
       },
       {
-        title: "Instalación y Setup",
+        title: "Installation & Setup",
         href: "/docs/getting-started/installation",
       },
       {
-        title: "Vincular Repositorios",
+        title: "Linking Repositories",
         href: "/docs/getting-started/linking-repos",
       },
     ],
   },
   {
-    title: "Conceptos Core",
+    title: "Core Concepts",
     items: [
       {
         title: "Astro Collections",
         href: "/docs/core-concepts/collections",
       },
       {
-        title: "Sincronización Git",
+        title: "Git Synchronization",
         href: "/docs/core-concepts/git-sync",
       },
       {
-        title: "Schemas & Tipos",
+        title: "Schemas & Types",
         href: "/docs/core-concepts/schemas",
       },
     ],
   },
   {
-    title: "Funcionalidades",
+    title: "Features",
     items: [
       {
-        title: "Editor Visual",
+        title: "Visual Editor",
         href: "/docs/features/visual-editor",
       },
       {
-        title: "Integración Vercel",
+        title: "Vercel Integration",
         href: "/docs/features/vercel",
       },
       {
-        title: "Colaboración",
+        title: "Collaboration",
         href: "/docs/features/collaboration",
       },
       {
-        title: "Control de Versiones",
+        title: "Version Control",
         href: "/docs/features/version-control",
       },
       {
@@ -64,20 +64,20 @@ const docsConfig = [
         href: "/docs/features/ai",
       },
       {
-        title: "Modo JSON",
+        title: "JSON Mode",
         href: "/docs/features/json-mode",
       },
     ],
   },
   {
-    title: "Arquitectura",
+    title: "Architecture",
     items: [
       {
-        title: "Cómo funciona",
+        title: "How it works",
         href: "/docs/architecture",
       },
       {
-        title: "Seguridad",
+        title: "Security",
         href: "/docs/security",
       },
     ],

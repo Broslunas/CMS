@@ -16,7 +16,7 @@ export function SiteFooter() {
               <span className="font-bold text-lg tracking-tight">Broslunas CMS</span>
             </Link>
             <p className="text-muted-foreground leading-relaxed max-w-sm">
-              El CMS definitivo para Astro. Gestiona tus Content Collections con el poder de Git y una interfaz visual premium.
+              The definitive CMS for Astro. Manage your Content Collections with the power of Git and a premium visual interface.
             </p>
             <div className="flex items-center space-x-4">
               <Link href="https://github.com/broslunas" target="_blank">
@@ -36,32 +36,32 @@ export function SiteFooter() {
 
           {/* Product Column */}
           <div className="space-y-4">
-            <h3 className="font-bold text-foreground">Producto</h3>
+            <h3 className="font-bold text-foreground">Product</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
-                <Link href="/pricing" className="hover:text-primary transition-colors">Precios</Link>
+                <Link href="/pricing" className="hover:text-primary transition-colors">Pricing</Link>
               </li>
               <li>
-                <Link href="/docs" className="hover:text-primary transition-colors">Documentación</Link>
+                <Link href="/docs" className="hover:text-primary transition-colors">Documentation</Link>
               </li>
               <li>
                 <Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link>
               </li>
               <li>
-                <Link href="/changelog" className="hover:text-primary transition-colors">Novedades</Link>
+                <Link href="/changelog" className="hover:text-primary transition-colors">Changelog</Link>
               </li>
             </ul>
           </div>
 
           {/* Resources Column */}
           <div className="space-y-4">
-            <h3 className="font-bold text-foreground">Recursos</h3>
+            <h3 className="font-bold text-foreground">Resources</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
                 <Link href="https://github.com/broslunas/cms" target="_blank" className="hover:text-primary transition-colors">GitHub Repo</Link>
               </li>
               <li>
-                <Link href="/docs/getting-started/installation" className="hover:text-primary transition-colors">Guía de Inicio</Link>
+                <Link href="/docs/getting-started/installation" className="hover:text-primary transition-colors">Getting Started</Link>
               </li>
               <li>
                 <Link href="https://astro.build" target="_blank" className="hover:text-primary transition-colors">Astro</Link>
@@ -74,10 +74,10 @@ export function SiteFooter() {
             <h3 className="font-bold text-foreground">Legal</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
-                <Link href="/legal/privacy" className="hover:text-primary transition-colors">Privacidad</Link>
+                <Link href="/legal/privacy" className="hover:text-primary transition-colors">Privacy</Link>
               </li>
               <li>
-                <Link href="/legal/terms" className="hover:text-primary transition-colors">Términos</Link>
+                <Link href="/legal/terms" className="hover:text-primary transition-colors">Terms</Link>
               </li>
               <li>
                 <Link href="/legal/cookies" className="hover:text-primary transition-colors">Cookies</Link>
@@ -87,10 +87,10 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Broslunas. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} Broslunas. All rights reserved.</p>
           <div className="flex items-center space-x-6">
-            <Link href="/legal/privacy" className="hover:text-foreground transition-colors">Privacidad</Link>
-            <Link href="/legal/terms" className="hover:text-foreground transition-colors">Términos</Link>
+            <Link href="/legal/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link href="/legal/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/legal/cookies" className="hover:text-foreground transition-colors">Cookies</Link>
           </div>
         </div>

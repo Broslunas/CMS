@@ -18,10 +18,10 @@ export default function NotFound() {
         {/* Message */}
         <div className="space-y-4 max-w-lg mx-auto mt-4 md:mt-8">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-            Página no encontrada
+            Page not found
           </h2>
           <p className="text-muted-foreground text-lg">
-            Parece que has llegado a un territorio inexplorado. La página que buscas no existe o ha sido movida.
+            It looks like you've reached uncharted territory. The page you are looking for does not exist or has been moved.
           </p>
         </div>
 
@@ -34,7 +34,7 @@ export default function NotFound() {
             <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Volver al Inicio
+            Back to Home
           </Link>
           
           <Link
@@ -44,7 +44,7 @@ export default function NotFound() {
             <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
-            Ir al Dashboard
+            Go to Dashboard
           </Link>
         </div>
       </div>

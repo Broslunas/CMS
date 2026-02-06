@@ -86,12 +86,12 @@ export default async function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border pb-8">
           <div>
             <h2 className="text-4xl font-black tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Mis Proyectos
+              My Projects
             </h2>
             <p className="text-muted-foreground mt-2 text-lg">
               {allProjects.length === 0
-                ? "Comienza importando tu primer repositorio"
-                : `Gestionando ${allProjects.length} ${allProjects.length === 1 ? "proyecto activo" : "proyectos activos"}`}
+                ? "Start by importing your first repository"
+                : `Managing ${allProjects.length} ${allProjects.length === 1 ? "active project" : "active projects"}`}
             </p>
           </div>
 
@@ -108,10 +108,10 @@ export default async function DashboardPage() {
                 <FolderGit2 className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-2xl font-bold">
-                No hay proyectos aún
+                No projects yet
               </h3>
               <p className="text-muted-foreground text-lg">
-                Importa tu primer repositorio de GitHub para comenzar a gestionar tu contenido de forma profesional
+                Import your first GitHub repository to start managing your content professionally
               </p>
               <div className="pt-4">
                 <ImportButton />
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
                       </p>
                     ) : (
                       <p className="text-sm text-muted-foreground/40 italic">
-                        Sin descripción disponible en el repositorio
+                        No description available in the repository
                       </p>
                     )}
                   </CardContent>

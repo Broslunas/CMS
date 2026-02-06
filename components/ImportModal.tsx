@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Github, Loader2 } from "lucide-react";
+import { Loader2, Github } from "lucide-react";
 
 interface Repo {
   id: number;
@@ -56,7 +55,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
   const handleImport = async (repo: Repo) => {
     setImporting(true);
     setSelectedRepo(repo.full_name);
-    setProgress({ step: "starting", message: "Iniciando importación..." });
+    setProgress({ step: "starting", message: "Starting import..." });
 
     try {
       const [owner, repoName] = repo.full_name.split("/");
@@ -72,7 +71,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Error en la respuesta del servidor");
+        throw new Error("Server response error");
       }
 
       const reader = response.body?.getReader();
@@ -98,7 +97,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
                 total: data.total,
               });
             } else if (data.type === "complete") {
-              console.log(`✅ Importado: ${data.imported} archivos`);
+              console.log(`✅ Imported: ${data.imported} files`);
               onClose();
               router.refresh();
               return;
@@ -106,13 +105,13 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
               throw new Error(data.error);
             }
           } catch (e) {
-            console.error("Error parseando chunk:", e);
+            console.error("Error parsing chunk:", e);
           }
         }
       }
     } catch (error: any) {
       console.error("Import error:", error);
-      alert(`Error al importar: ${error.message}`);
+      alert(`Import error: ${error.message}`);
     } finally {
       setImporting(false);
       setSelectedRepo(null);
@@ -123,11 +122,11 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Importar Repositorio"
-      description="Selecciona un repositorio de Astro para importar a tu dashboard."
+      title="Import Repository"
+      description="Select an Astro repository to import to your dashboard."
       footer={
         <Button variant="ghost" onClick={onClose} disabled={importing}>
-          Cancelar
+          Cancel
         </Button>
       }
     >
@@ -136,7 +135,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <div className="text-center">
-              <p className="font-medium text-lg">{progress.message || "Importando..."}</p>
+              <p className="font-medium text-lg">{progress.message || "Importing..."}</p>
               {progress.total && progress.total > 0 && (
                 <div className="mt-4 w-64 space-y-2">
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
@@ -146,7 +145,7 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {progress.completed} de {progress.total} archivos procesados
+                    {progress.completed} of {progress.total} files processed
                   </p>
                 </div>
               )}
@@ -157,12 +156,10 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : repos.length === 0 ? (
-// ... resto del componente ...
-
           <div className="text-center py-12">
             <Github className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">No se encontraron repositorios de Astro</p>
-            <p className="text-xs text-muted-foreground/70 mt-2">Asegúrate de tener repositorios con Astro en tu cuenta de GitHub</p>
+            <p className="text-muted-foreground">No Astro repositories found</p>
+            <p className="text-xs text-muted-foreground/70 mt-2">Make sure you have Astro repositories in your GitHub account</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -195,10 +192,10 @@ export default function ImportModal({ isOpen, onClose }: ImportModalProps) {
                     {importing && selectedRepo === repo.full_name ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Importando...
+                        Importing...
                       </>
                     ) : (
-                      "Importar"
+                      "Import"
                     )}
                   </Button>
                 </div>

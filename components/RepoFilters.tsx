@@ -71,7 +71,7 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
         </svg>
         <input
           type="text"
-          placeholder="Buscar posts..."
+          placeholder="Search posts..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all text-sm"
@@ -86,7 +86,7 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
           onChange={(e) => setCollection(e.target.value)}
           className="px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
-          <option value="all">Todas las colecciones</option>
+          <option value="all">All collections</option>
           {collections.map((col) => (
             <option key={col} value={col}>
               {col}
@@ -100,10 +100,10 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
           onChange={(e) => setStatus(e.target.value)}
           className="px-3 py-2 bg-background border border-input rounded-md text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
-          <option value="all">Todos los estados</option>
-          <option value="synced">Sincronizados</option>
-          <option value="modified">Modificados</option>
-          <option value="draft">Borradores</option>
+          <option value="all">All statuses</option>
+          <option value="synced">Synced</option>
+          <option value="modified">Modified</option>
+          <option value="draft">Drafts</option>
         </select>
       </div>
     </div>
