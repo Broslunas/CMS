@@ -14,12 +14,12 @@ const docsConfig = [
         href: "/docs",
       },
       {
-        title: "Instalar GitHub App",
-        href: "/docs/installation",
+        title: "Instalación y Setup",
+        href: "/docs/getting-started/installation",
       },
       {
-        title: "Vincular Repositorio",
-        href: "/docs/linking-repos",
+        title: "Vincular Repositorios",
+        href: "/docs/getting-started/linking-repos",
       },
     ],
   },
@@ -28,15 +28,15 @@ const docsConfig = [
     items: [
       {
         title: "Astro Collections",
-        href: "/docs/astro-collections",
+        href: "/docs/core-concepts/collections",
       },
       {
         title: "Sincronización Git",
-        href: "/docs/git-sync",
+        href: "/docs/core-concepts/git-sync",
       },
       {
         title: "Schemas & Tipos",
-        href: "/docs/schemas",
+        href: "/docs/core-concepts/schemas",
       },
     ],
   },
@@ -45,15 +45,27 @@ const docsConfig = [
     items: [
       {
         title: "Editor Visual",
-        href: "/docs/editor",
+        href: "/docs/features/visual-editor",
       },
       {
-        title: "Gestión de Permisos",
-        href: "/docs/permissions",
+        title: "Integración Vercel",
+        href: "/docs/features/vercel",
+      },
+      {
+        title: "Colaboración",
+        href: "/docs/features/collaboration",
+      },
+      {
+        title: "Control de Versiones",
+        href: "/docs/features/version-control",
+      },
+      {
+        title: "Gemini AI",
+        href: "/docs/features/ai",
       },
       {
         title: "Modo JSON",
-        href: "/docs/json-mode",
+        href: "/docs/features/json-mode",
       },
     ],
   },

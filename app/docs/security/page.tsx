@@ -1,56 +1,75 @@
 import { Button } from "@/components/ui/button"
 import { Link } from "next-view-transitions"
-import { ChevronLeft, ShieldCheck } from "lucide-react"
+import { ChevronLeft, ShieldCheck, Lock, Fingerprint, EyeOff } from "lucide-react"
 
 export default function SecurityPage() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl flex items-center gap-3">
-          <ShieldCheck className="h-10 w-10 text-primary" /> Seguridad y Privacidad
+    <div className="space-y-10 max-w-3xl pb-10">
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <ShieldCheck className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-medium text-primary">Technical Reference</p>
+        </div>
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+          Seguridad y Privacidad
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Cómo protegemos tu código y tus datos.
+        <p className="text-xl text-muted-foreground leading-relaxed">
+           Diseñado bajo el principio de menor privilegio. Tu código nunca es nuestro, solo lo tomamos prestado cuando tú dices.
         </p>
       </div>
       
-      <div className="space-y-4 my-8">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight">
-          Acceso a Repositorios
-        </h2>
-        <p className="leading-7">
-          Broslunas CMS utiliza una <strong>GitHub App</strong> en lugar de un OAuth App tradicional. Esto nos permite ofrecer un control mucho más fino sobre la seguridad:
-        </p>
-        <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
-            <li><strong>Acceso granular</strong>: Tú decides explícitamente a qué repositorios tenemos acceso. No pedimos acceso de lectura/escritura a toda tu cuenta.</li>
-            <li><strong>Revocación fácil</strong>: Puedes desinstalar la App de un repositorio específico desde los ajustes de GitHub en cualquier momento.</li>
-        </ul>
+      <div className="space-y-8">
+        <div className="grid gap-6 md:grid-cols-2">
+            <div className="border bg-card p-6 rounded-xl">
+                <div className="text-primary mb-4 bg-primary/10 w-fit p-2 rounded-lg">
+                    <Lock className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-lg mb-2">Tokens Efímeros</h3>
+                <p className="text-sm text-muted-foreground">
+                    Nunca guardamos tu Access Token personal permanentemente. Usamos tokens de instalación de GitHub Apps que rotan cada hora y solo son válidos para los repositorios que has autorizado.
+                </p>
+            </div>
+             <div className="border bg-card p-6 rounded-xl">
+                 <div className="text-primary mb-4 bg-primary/10 w-fit p-2 rounded-lg">
+                    <Fingerprint className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-lg mb-2">Acceso Granular</h3>
+                <p className="text-sm text-muted-foreground">
+                    A diferencia de OAuth, la GitHub App te permite seleccionar repo por repo. No tienes que darnos las llaves de toda tu organización si solo quieres editar un blog.
+                </p>
+            </div>
+        </div>
+
+        <section className="space-y-4">
+             <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Privacidad de Datos</h2>
+             <div className="space-y-4">
+                 <div className="flex gap-4 items-start">
+                    <EyeOff className="w-5 h-5 mt-1 text-muted-foreground" />
+                    <div>
+                        <h4 className="font-semibold text-foreground">Tu contenido es tuyo</h4>
+                        <p className="text-sm text-muted-foreground">
+                            No utilizamos tu código para entrenar modelos de IA ni lo compartimos con terceros. La caché de MongoDB está aislada y protegida.
+                        </p>
+                    </div>
+                 </div>
+                 <div className="flex gap-4 items-start">
+                    <ShieldCheck className="w-5 h-5 mt-1 text-muted-foreground" />
+                    <div>
+                        <h4 className="font-semibold text-foreground">Revocación Inmediata</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Al desinstalar la App en GitHub, perdemos acceso instantáneamente. Nuestro sistema detecta la revocación y borra los datos cacheados asociados.
+                        </p>
+                    </div>
+                 </div>
+             </div>
+        </section>
       </div>
 
-      <div className="space-y-4 my-8">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight">
-          Manejo de Tokens
-        </h2>
-        <p className="leading-7">
-          Nosotros <strong>nunca almacenamos tu token personal de GitHub</strong> de forma permanente para operaciones de escritura. 
-          Las operaciones se realizan utilizando tokens de instalación de corta duración (1 hora) que se generan dinámicamente y expiran automáticamente.
-        </p>
-      </div>
-
-      <div className="space-y-4 my-8">
-        <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight">
-          Datos en Tránsito y Reposo
-        </h2>
-        <ul className="my-6 ml-6 list-disc [&>li]:mt-2">
-            <li>Toda la comunicación con GitHub se realiza bajo HTTPS/TLS.</li>
-            <li>Nuestra base de datos caché (MongoDB) está protegida y aislada.</li>
-            <li>No vendemos ni analizamos tu contenido. Tu código es tuyo.</li>
-        </ul>
-      </div>
-
-      <div className="flex justify-start mt-12">
+      <div className="flex justify-start mt-12 pt-8 border-t">
          <Link href="/docs/architecture">
-           <Button variant="ghost">
+           <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
              <ChevronLeft className="mr-2 h-4 w-4" /> Arquitectura
            </Button>
          </Link>
