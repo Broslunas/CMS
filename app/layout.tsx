@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteHeader } from "@/components/site-header";
 import { CookieBanner } from "@/components/cookie-banner";
+import { CommandMenu } from "@/components/command-menu";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -109,6 +110,7 @@ export default function RootLayout({
                 <CookieBanner />
               </div>
               <Toaster />
+              <CommandMenu />
               
               {/* Google Analytics */}
               <Script

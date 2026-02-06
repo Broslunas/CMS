@@ -3,11 +3,8 @@
 Esta lista está diseñada para elevar la calidad, funcionalidad y experiencia de usuario de Broslunas CMS a un nivel premium y profesional.
 
 ## 🎨 UI/UX & Experiencia Visual (Premium Feel)
-1.  **Command Palette Global (`Cmd+K`)**: Navegación rápida por archivos, acciones y configuraciones sin usar el ratón.
 3.  **Skeleton Loaders Inteligentes**: Reemplazar spinners con esqueletos pulsantes que imitan la estructura del contenido.
-4.  **Sistema Toast Avanzado**: Notificaciones apilables, con animaciones de entrada/salida y botón de "Deshacer" acción.
 5.  **Menús Contextuales (Click Derecho)**: Acciones rápidas (Renombrar, Borrar, Duplicar) en el explorador de archivos.
-6.  **Atajos de Teclado Globales**: `Ctrl+S` para guardar, `Ctrl+P` para previsualizar, etc.
 7.  **Breadcrumbs Dinámicos**: Navegación de migas de pan con dropdowns para hermanos de carpeta.
 8.  **Modo Zen (Focus Mode)**: Botón para ocultar barras laterales y centrarse solo en el editor.
 9.  **Paneles Redimensionables**: Permitir al usuario ajustar el ancho del editor vs la previsualización.

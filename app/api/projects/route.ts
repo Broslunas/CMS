@@ -1,9 +1,7 @@
 import { auth } from "@/lib/auth";
-import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
+import clientPromise, { DB_NAME, getUserCollectionName } from "@/lib/mongodb";
 
-// GET - Listar proyectos importados del usuario y compartidos
 export async function GET() {
   try {
     const session = await auth();
@@ -26,7 +24,7 @@ export async function GET() {
       .find({ type: "shared_project_reference" })
       .toArray();
 
-    // 3. Resolve shared projects from owners' collections
+    // 3. Resolve shared projects
     const sharedProjectsPromises = sharedRefs.map(async (ref) => {
       try {
         const ownerCollection = db.collection(getUserCollectionName(ref.ownerId));
@@ -36,31 +34,34 @@ export async function GET() {
         });
         
         if (project) {
-          // Identify as shared and attach ownerId explicitly if needed
-          // (project.userId is already the owner's ID)
           return {
             ...project,
+            _id: ref._id, 
             isShared: true,
             sharedBy: ref.ownerId
           };
         }
-        return null;
+        return null; // Project not found or deleted by owner
       } catch (error) {
-        console.error(`Error fetching shared project ${ref.repoId} from ${ref.ownerId}:`, error);
         return null;
       }
     });
 
     const sharedProjects = (await Promise.all(sharedProjectsPromises)).filter(p => p !== null);
 
-    // 4. Combine and Sort by updatedAt
     const allProjects = [...ownProjects, ...sharedProjects].sort((a: any, b: any) => {
         const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
         const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
         return dateB - dateA;
     });
 
-    return NextResponse.json(allProjects);
+    const simpleProjects = allProjects.map((project: any) => ({
+      repoId: project.repoId,
+      name: project.name,
+      isShared: !!project.isShared
+    }));
+
+    return NextResponse.json(simpleProjects);
   } catch (error) {
     console.error("Error fetching projects:", error);
     return NextResponse.json(
