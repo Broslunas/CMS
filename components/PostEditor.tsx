@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-import { Link } from "next-view-transitions";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
@@ -13,6 +11,9 @@ import Modal from "./Modal";
 import { SocialLinksEditor } from "./SocialLinksEditor";
 import { VersionHistory } from "./VersionHistory";
 import { DiffViewer } from "./DiffViewer";
+import { EditorHeader } from "./post-editor/EditorHeader";
+import { MetadataEditor } from "./post-editor/MetadataEditor";
+import { ContentEditor } from "./post-editor/ContentEditor";
 
 interface PostMetadata {
   [key: string]: any;
@@ -45,441 +46,25 @@ interface PostEditorProps {
   templatePosts?: Post[];
 }
 
-function JsonFieldEditor({ fieldKey, value, onChange, onDelete, isComplexArray = false }: { fieldKey: string, value: any, onChange: (val: any) => void, onDelete: () => void, isComplexArray?: boolean }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [text, setText] = useState(JSON.stringify(value, null, 2));
-  const [error, setError] = useState("");
-
-  const handleSave = () => {
-    try {
-      const parsed = JSON.parse(text);
-      onChange(parsed);
-      setIsEditing(false);
-      setError("");
-    } catch (e) {
-      setError("JSON inválido: " + (e as Error).message);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setText(JSON.stringify(value, null, 2));
-    setError("");
-  };
-
-  if (isEditing) {
-    return (
-        <div key={fieldKey} className="w-full">
-            <div className="bg-card border border-border rounded-md p-3">
-                <textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    className="w-full h-48 bg-muted/50 text-foreground font-mono text-xs p-2 rounded border border-border focus:outline-none focus:border-ring resize-y"
-                    spellCheck={false}
-                />
-                {error && <p className="text-destructive text-xs mt-2">{error}</p>}
-                <div className="flex justify-end gap-2 mt-3">
-                    <button onClick={handleCancel} className="text-xs text-muted-foreground hover:text-foreground px-3 py-1">Cancelar</button>
-                    <button onClick={handleSave} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90">Guardar JSON</button>
-                </div>
-            </div>
-        </div>
-    )
-  }
-
-  return (
-    <div className="bg-card border border-border rounded-md p-4">
-        <div className="flex justify-between items-start mb-2">
-             <p className="text-sm text-muted-foreground">
-               {isComplexArray 
-                 ? `Campo complejo con ${value.length} elementos`
-                 : "Campo objeto complejo"}
-             </p>
-             <button
-                onClick={() => { setText(JSON.stringify(value, null, 2)); setIsEditing(true); }}
-                className="text-xs flex items-center gap-1 text-primary hover:text-primary/80 transition-colors"
-                title="Editar JSON"
-             >
-                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                 Editar JSON
-             </button>
-        </div>
-        <details className="mt-2">
-            <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground select-none">
-            Ver JSON Actual
-            </summary>
-            <pre className="mt-2 text-xs text-muted-foreground overflow-auto max-h-40 bg-muted/50 p-2 rounded border border-border">
-            {JSON.stringify(value, null, 2)}
-            </pre>
-        </details>
-    </div>
-  )
-}
-
-
-
-function TranscriptionEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: string, value: any[], onChange: (val: any[]) => void, onDelete: () => void }) {
-  // Verificación de seguridad
-  if (!Array.isArray(value)) return null;
-
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isJsonMode, setIsJsonMode] = useState(false);
-  const [jsonText, setJsonText] = useState("");
-  const [jsonError, setJsonError] = useState("");
-
-  const handleUpdate = (index: number, field: string, newValue: string) => {
-    const updated = [...value];
-    updated[index] = { ...updated[index], [field]: newValue };
-    onChange(updated);
-  };
-
-  const handleAdd = () => {
-    onChange([...value, { time: "00:00", text: "" }]);
-    setIsExpanded(true); // Auto-expand when adding
-  };
-
-  const handleRemove = (index: number) => {
-    const updated = value.filter((_, i) => i !== index);
-    onChange(updated);
-  };
-
-  const toggleJsonMode = () => {
-      if (!isJsonMode) {
-          setJsonText(JSON.stringify(value, null, 2));
-          setIsJsonMode(true);
+function generateYaml(meta: any) {
+  let output = "---\n";
+  for(const [key, value] of Object.entries(meta)) {
+      if(value === undefined || value === null) continue;
+      if(Array.isArray(value)) {
+         output += `${key}:\n`;
+         value.forEach(v => {
+             if(typeof v === 'object') output += `  - ${JSON.stringify(v)}\n`;
+             else output += `  - ${v}\n`;
+         });
+      } else if (typeof value === 'object') {
+         output += `${key}: ${JSON.stringify(value)}\n`;
       } else {
-          setIsJsonMode(false);
-          setJsonError("");
+         output += `${key}: ${value}\n`;
       }
-  };
-
-  const handleImport = () => {
-      // Intentar primero como JSON
-      try {
-          const parsed = JSON.parse(jsonText);
-          if (Array.isArray(parsed)) {
-            onChange(parsed);
-            setIsJsonMode(false);
-            setJsonError("");
-            return;
-          }
-      } catch (e) {
-         // Silently fail JSON parse, try text parse
-      }
-
-      // Intentar Parseo de Texto ([00:00] Speaker: Text)
-      try {
-          const lines = jsonText.split('\n');
-          const transcription: any[] = [];
-          const regex = /^\[(\d{1,2}:\d{2})\]\s*(?:[^:]+:\s*)?(.*)/;
-
-          let hasMatches = false;
-
-          lines.forEach(line => {
-              const cleanLine = line.trim();
-              if (!cleanLine) return;
-
-              const match = cleanLine.match(regex);
-              if (match) {
-                  hasMatches = true;
-                  const time = match[1];
-                  const textContent = match[2] ? match[2].trim() : "";
-                  
-                  // Simple unescape if user pasted stringified text by mistake, otherwise keep distinct
-                  transcription.push({
-                      time: time,
-                      text: textContent
-                  });
-              }
-          });
-
-          if (hasMatches && transcription.length > 0) {
-              onChange(transcription);
-              setIsJsonMode(false);
-              setJsonError("");
-              return;
-          }
-
-          throw new Error("No se pudo detectar formato JSON ni Texto válido ([00:00] ...)");
-      } catch (e) {
-          setJsonError((e as Error).message);
-      }
-  };
-
-  return (
-    <div key={fieldKey} className="w-full">
-      <div className="bg-muted/30 border border-border rounded-lg overflow-hidden transition-all">
-        {/* Header - Always visible & clickable to toggle */}
-        <div 
-            className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setIsExpanded(!isExpanded)}
-        >
-            <div className="flex items-center gap-3">
-                 <button 
-                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                 >
-                    <svg className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                 </button>
-                 <div>
-                    <p className="text-sm font-medium text-foreground">Editor de Transcripción</p>
-                    <p className="text-xs text-muted-foreground">{value.length} segmentos</p>
-                 </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-                 {isExpanded && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
-                        className={`text-xs px-2 py-1 rounded border transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
-                    >
-                        {isJsonMode ? 'Cancelar Importación' : 'Importar JSON/Texto'}
-                    </button>
-                 )}
-            </div>
-        </div>
-        
-        {/* Content Body */}
-        {isExpanded && (
-            <div className="p-4 border-t border-border bg-card/30">
-                {isJsonMode ? (
-                    <div className="space-y-3">
-                        <textarea
-                            value={jsonText}
-                            onChange={(e) => setJsonText(e.target.value)}
-                            className="w-full h-64 bg-background text-foreground font-mono text-xs p-3 rounded border border-input focus:outline-none focus:border-ring resize-y"
-                            placeholder="Pega tu JSON o Texto con formato [00:00] Speaker: ... aquí..."
-                            spellCheck={false}
-                        />
-                        {jsonError && <p className="text-destructive text-xs">{jsonError}</p>}
-                        <div className="flex justify-end gap-2">
-                            <button onClick={toggleJsonMode} className="text-xs text-muted-foreground hover:text-foreground px-3 py-1">Cancelar</button>
-                            <button onClick={handleImport} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90">Procesar e Importar</button>
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                        {value.map((item, index) => (
-                            <div key={index} className="flex gap-3 bg-card border border-border p-3 rounded-md group hover:border-input transition-colors">
-                            <div className="w-24 shrink-0">
-                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Tiempo</label>
-                                <input
-                                type="text"
-                                value={item.time || ""}
-                                onChange={(e) => handleUpdate(index, "time", e.target.value)}
-                                placeholder="00:00"
-                                className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs text-foreground font-mono focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Texto</label>
-                                <textarea
-                                value={item.text || ""}
-                                onChange={(e) => handleUpdate(index, "text", e.target.value)}
-                                placeholder="Escribe la transcripción..."
-                                rows={2}
-                                className="w-full bg-background border border-input rounded px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring resize-y min-h-[60px]"
-                                />
-                            </div>
-                            <button
-                                onClick={() => handleRemove(index)}
-                                className="self-start mt-6 text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Eliminar segmento"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                            </div>
-                        ))}
-                        </div>
-
-                        <button
-                        onClick={handleAdd}
-                        className="mt-4 w-full py-2 border border-dashed border-border rounded-md text-xs text-muted-foreground hover:text-foreground hover:border-input hover:bg-muted/50 transition-all flex items-center justify-center gap-2"
-                        >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                        Añadir Nuevo Segmento
-                        </button>
-                    </>
-                )}
-            </div>
-        )}
-      </div>
-    </div>
-  );
+  }
+  output += "---\n";
+  return output;
 }
-
-function SectionsEditor({ fieldKey, value, onChange, onDelete }: { fieldKey: string, value: any[], onChange: (val: any[]) => void, onDelete: () => void }) {
-    // Verificación de seguridad
-    if (!Array.isArray(value)) return null;
-
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [isJsonMode, setIsJsonMode] = useState(false);
-    const [jsonText, setJsonText] = useState("");
-    const [jsonError, setJsonError] = useState("");
-  
-    const handleUpdate = (index: number, field: string, newValue: string) => {
-      const updated = [...value];
-      updated[index] = { ...updated[index], [field]: newValue };
-      onChange(updated);
-    };
-  
-    const handleAdd = () => {
-      onChange([...value, { time: "00:00", title: "" }]);
-      setIsExpanded(true);
-    };
-  
-    const handleRemove = (index: number) => {
-      const updated = value.filter((_, i) => i !== index);
-      onChange(updated);
-    };
-
-    const toggleJsonMode = () => {
-        if (!isJsonMode) {
-            setJsonText(JSON.stringify(value, null, 2));
-            setIsJsonMode(true);
-        } else {
-            setIsJsonMode(false);
-            setJsonError("");
-        }
-    };
-
-    const handleJsonSave = () => {
-        try {
-            const parsed = JSON.parse(jsonText);
-            if (!Array.isArray(parsed)) throw new Error("Debe ser un array");
-            onChange(parsed);
-            setIsJsonMode(false);
-            setJsonError("");
-        } catch (e) {
-            setJsonError("JSON inválido: " + (e as Error).message);
-        }
-    };
-  
-    return (
-      <div key={fieldKey} className="w-full">
-        <div className="bg-muted/30 border border-border rounded-lg overflow-hidden transition-all">
-          {/* Header */}
-          <div 
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
-              <div className="flex items-center gap-3">
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <svg className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                    <div>
-                         <p className="text-sm font-medium text-foreground">Editor de Secciones</p>
-                         <p className="text-xs text-muted-foreground">{value.length} secciones</p>
-                    </div>
-              </div>
-              <div className="flex items-center gap-2">
-                 {isExpanded && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); toggleJsonMode(); }}
-                        className={`text-xs px-2 py-1 rounded border transition-colors ${isJsonMode ? 'bg-primary/10 text-primary border-primary/20' : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-muted'}`}
-                    >
-                        {isJsonMode ? 'Cancelar JSON' : 'Importar/Editar JSON'}
-                    </button>
-                 )}
-            </div>
-          </div>
-          
-          {isExpanded && (
-            <div className="p-4 border-t border-border bg-card/30">
-                 {isJsonMode ? (
-                    <div className="space-y-3">
-                        <textarea
-                            value={jsonText}
-                            onChange={(e) => setJsonText(e.target.value)}
-                            className="w-full h-64 bg-background text-foreground font-mono text-xs p-3 rounded border border-input focus:outline-none focus:border-ring resize-y"
-                            placeholder="Pega tu JSON aquí..."
-                            spellCheck={false}
-                        />
-                        {jsonError && <p className="text-destructive text-xs">{jsonError}</p>}
-                        <div className="flex justify-end gap-2">
-                            <button onClick={toggleJsonMode} className="text-xs text-muted-foreground hover:text-foreground px-3 py-1">Cancelar</button>
-                            <button onClick={handleJsonSave} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90">Guardar Cambios</button>
-                        </div>
-                    </div>
-                 ) : (
-                    <>
-                        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                            {value.map((item, index) => (
-                            <div key={index} className="flex gap-3 bg-card border border-border p-3 rounded-md group hover:border-input transition-colors items-center">
-                                <div className="w-24 shrink-0">
-                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Tiempo</label>
-                                <input
-                                    type="text"
-                                    value={item.time || ""}
-                                    onChange={(e) => handleUpdate(index, "time", e.target.value)}
-                                    placeholder="00:00"
-                                    className="w-full bg-background border border-input rounded px-2 py-1.5 text-xs text-foreground font-mono focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                                </div>
-                                <div className="flex-1">
-                                <label className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider mb-1 block">Título</label>
-                                <input
-                                    type="text"
-                                    value={item.title || ""}
-                                    onChange={(e) => handleUpdate(index, "title", e.target.value)}
-                                    placeholder="Título de la sección..."
-                                    className="w-full bg-background border border-input rounded px-3 py-1.5 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
-                                </div>
-                                <button
-                                onClick={() => handleRemove(index)}
-                                className="mt-4 text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Eliminar sección"
-                                >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                            </div>
-                            ))}
-                        </div>
-                
-                        <button
-                            onClick={handleAdd}
-                            className="mt-4 w-full py-2 border border-dashed border-border rounded-md text-xs text-muted-foreground hover:text-foreground hover:border-input hover:bg-muted/50 transition-all flex items-center justify-center gap-2"
-                        >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                            Añadir Nueva Sección
-                        </button>
-                    </>
-                 )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function generateYaml(meta: any) {
-    let output = "---\n";
-    for(const [key, value] of Object.entries(meta)) {
-        if(value === undefined || value === null) continue;
-        if(Array.isArray(value)) {
-           output += `${key}:\n`;
-           value.forEach(v => {
-               if(typeof v === 'object') output += `  - ${JSON.stringify(v)}\n`;
-               else output += `  - ${v}\n`;
-           });
-        } else if (typeof value === 'object') {
-           output += `${key}: ${JSON.stringify(value)}\n`;
-        } else {
-           output += `${key}: ${value}\n`;
-        }
-    }
-    output += "---\n";
-    return output;
-  }
 
 export default function PostEditor({ post, schema, isNew = false, templatePosts = [] }: PostEditorProps) {
   const [metadata, setMetadata] = useState<PostMetadata>(post.metadata);
@@ -534,8 +119,6 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [diffOriginal, setDiffOriginal] = useState("");
   const [diffCurrent, setDiffCurrent] = useState("");
-
-
 
   // Blame State
   const [showBlame, setShowBlame] = useState(false);
@@ -615,6 +198,37 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [showTemplateModal, setShowTemplateModal] = useState(isNew && templatePosts.length > 0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
+
+  const insertText = (before: string, after: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const previousText = textarea.value;
+    const selectedText = previousText.substring(start, end);
+
+    const newText =
+      previousText.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      previousText.substring(end);
+
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        end + before.length
+      );
+    }, 0);
+  };
+
+  const updateMetadata = (key: string, value: any) => {
+    setMetadata({ ...metadata, [key]: value });
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -974,411 +588,6 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     }
   };
 
-  const updateMetadata = (key: string, value: any) => {
-    setMetadata({ ...metadata, [key]: value });
-  };
-
-  const insertText = (before: string, after: string = "") => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const previousText = textarea.value;
-    const selectedText = previousText.substring(start, end);
-
-    const newText =
-      previousText.substring(0, start) +
-      before +
-      selectedText +
-      after +
-      previousText.substring(end);
-
-    setContent(newText);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        start + before.length,
-        end + before.length
-      );
-    }, 0);
-  };
-
-  const renderField = (key: string, value: any) => {
-    // Arrays especiales (como transcription)
-    if (key === 'social' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        return (
-            <div key={key}>
-                <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-foreground capitalize">
-                    {key} <span className="text-xs text-muted-foreground font-normal">(Redes Sociales)</span>
-                    </label>
-                    <button 
-                    onClick={() => handleDeleteField(key)} 
-                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    title={`Eliminar campo ${key}`}
-                    >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    </button>
-                </div>
-                <SocialLinksEditor 
-                    value={value}
-                    onChange={(val) => updateMetadata(key, val)}
-                    allowedNetworks={
-                         // Strict mode: if we have schema suggestions loaded, we enforce them.
-                         // If suggestedFields is empty (not loaded yet), we pass undefined to show defaults.
-                         Object.keys(suggestedFields).length > 0 
-                            ? (suggestedFields['social']?.nestedFields ? Object.keys(suggestedFields['social'].nestedFields) : [])
-                            : undefined
-                    }
-                />
-            </div>
-        );
-    }
-
-    if (Array.isArray(value) && value.length > 0 && typeof value[0] === "object") {
-      // Check for Transcription format (time + text)
-      const isTranscription = value.every(item => 'time' in item && 'text' in item);
-      if (isTranscription) {
-          return (
-             <div key={key}>
-                <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-foreground capitalize">
-                    {key}
-                    </label>
-                    <button 
-                    onClick={() => handleDeleteField(key)} 
-                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                    title={`Eliminar campo ${key}`}
-                    >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    </button>
-                </div>
-                <TranscriptionEditor 
-                    fieldKey={key}
-                    value={value}
-                    onChange={(val) => updateMetadata(key, val)}
-                    onDelete={() => handleDeleteField(key)}
-                />
-             </div>
-          )
-      }
-
-      // Check for Sections format (time + title)
-      const isSections = value.every(item => 'time' in item && 'title' in item);
-        if (isSections) {
-        return (
-           <div key={key}>
-              <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-foreground capitalize">
-                  {key}
-                  </label>
-                  <button 
-                  onClick={() => handleDeleteField(key)} 
-                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                  title={`Eliminar campo ${key}`}
-                  >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  </button>
-              </div>
-              <SectionsEditor 
-                  fieldKey={key}
-                  value={value}
-                  onChange={(val) => updateMetadata(key, val)}
-                  onDelete={() => handleDeleteField(key)}
-              />
-           </div>
-        )
-    }
-
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize">
-              {key}
-            </label>
-            <button 
-              onClick={() => handleDeleteField(key)} 
-              className="text-muted-foreground hover:text-destructive transition-colors p-1"
-              title={`Eliminar campo ${key}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-          <JsonFieldEditor 
-            fieldKey={key} 
-            value={value} 
-            onChange={(val: any) => updateMetadata(key, val)}
-            onDelete={() => handleDeleteField(key)}
-            isComplexArray={true}
-          />
-        </div>
-      );
-    }
-
-    // Arrays simples (como tags)
-    if (Array.isArray(value)) {
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize">
-              {key} (separados por coma)
-            </label>
-            <button 
-              onClick={() => handleDeleteField(key)} 
-              className="text-muted-foreground hover:text-destructive transition-colors p-1"
-              title={`Eliminar campo ${key}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-          <input
-            type="text"
-            value={value.join(", ")}
-            onChange={(e) =>
-              updateMetadata(
-                key,
-                e.target.value.split(",").map((t) => t.trim())
-              )
-            }
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-          />
-        </div>
-      );
-    }
-
-    // Strings
-    if (typeof value === "string") {
-      const trimmedValue = value.trim();
-      
-      // Detección de fecha ISO
-      // Regex flexible para ISO 8601
-      const isDate = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(trimmedValue);
-
-      if (isDate) {
-         try {
-            const dateObj = new Date(trimmedValue);
-            // Convertir a formato datetime-local (YYYY-MM-DDThh:mm)
-            // Usamos getTimezoneOffset para ajustar a la hora local para el input
-            const localISOTime = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-            
-            return (
-                <div key={key}>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-foreground capitalize">
-                      {key} <span className="text-muted-foreground text-xs font-normal">(Fecha)</span>
-                    </label>
-                    <button 
-                      onClick={() => handleDeleteField(key)} 
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                      title={`Eliminar campo ${key}`}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                  <input
-                    type="datetime-local"
-                    value={localISOTime}
-                    onChange={(e) => {
-                        const newDate = new Date(e.target.value);
-                        updateMetadata(key, newDate.toISOString());
-                    }}
-                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm [color-scheme:dark]"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1 font-mono">{trimmedValue}</p>
-                </div>
-            );
-         } catch (e) {
-            // Si falla el parseo, mostrar como string normal
-         }
-      }
-
-      const isImage = 
-        // 1. Detección por extensión (soportando query params y espacios)
-        trimmedValue.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif|tiff|tif)(\?.*)?$/i) || 
-        // 2. Detección por nombre de campo + URL
-        ((trimmedValue.startsWith("http") || trimmedValue.startsWith("/")) && 
-         (key.toLowerCase().includes("image") || 
-          key.toLowerCase().includes("img") || 
-          key.toLowerCase().includes("cover") || 
-          key.toLowerCase().includes("avatar") ||
-          key.toLowerCase().includes("thumbnail") ||
-          key.toLowerCase().includes("banner") ||
-          key.toLowerCase().includes("poster") ||
-          key.toLowerCase().includes("logo") ||
-          key.toLowerCase().includes("icon") ||
-          key.toLowerCase().includes("bg")));
-
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize">
-              {key}
-            </label>
-            <button 
-              onClick={() => handleDeleteField(key)} 
-              className="text-muted-foreground hover:text-destructive transition-colors p-1"
-              title={`Eliminar campo ${key}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => updateMetadata(key, e.target.value)}
-                className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => triggerUpload({ type: 'metadata', key })}
-                className="px-3 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-border"
-                title="Subir imagen"
-              >
-                {isUploading && uploadTarget.key === key ? (
-                  <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                )}
-                <span className="hidden sm:inline">Subir</span>
-              </button>
-            </div>
-            {isImage && trimmedValue.length > 0 && (
-              <div className="relative group w-fit">
-                <div className="rounded-lg overflow-hidden border border-border bg-muted/50 max-w-xs">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    key={trimmedValue} // Forzar re-render si cambia la URL
-                    src={trimmedValue} 
-                    alt={`Preview of ${key}`}
-                    className="max-h-48 object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                    onLoad={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'block';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                    <span className="text-xs text-white bg-black/70 px-2 py-1 rounded">
-                      Vista Previa
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Numbers
-    if (typeof value === "number") {
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize">
-              {key}
-            </label>
-            <button 
-              onClick={() => handleDeleteField(key)} 
-              className="text-muted-foreground hover:text-destructive transition-colors p-1"
-              title={`Eliminar campo ${key}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-          <input
-            type="number"
-            value={value}
-            onChange={(e) => updateMetadata(key, parseFloat(e.target.value))}
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-          />
-        </div>
-      );
-    }
-
-    // Booleans
-    if (typeof value === "boolean") {
-      return (
-        <div key={key}>
-          {/* Boolean field with custom delete handling */}
-          <div className="flex items-center justify-between">
-             <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={value}
-                  onChange={(e) => updateMetadata(key, e.target.checked)}
-                  className="w-4 h-4 bg-background border-input rounded"
-                />
-                <span className="text-sm font-medium text-foreground capitalize">{key}</span>
-             </label>
-             <button 
-                onClick={() => handleDeleteField(key)} 
-                className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                title={`Eliminar campo ${key}`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-          </div>
-        </div>
-      );
-    }
-
-    // Objetos complejos
-    if (typeof value === "object" && value !== null) {
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize">
-              {key}
-            </label>
-            <button 
-              onClick={() => handleDeleteField(key)} 
-              className="text-muted-foreground hover:text-destructive transition-colors p-1"
-              title={`Eliminar campo ${key}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-          <JsonFieldEditor 
-             fieldKey={key} 
-             value={value} 
-             onChange={(val: any) => updateMetadata(key, val)}
-             onDelete={() => handleDeleteField(key)}
-          />
-        </div>
-      );
-    }
-
-    return null;
-  };
-
   const loadBlame = async () => {
       setLoadingBlame(true);
       try {
@@ -1413,24 +622,6 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     setShowDiffModal(true);
   };
 
-  const ToolbarButton = ({  
-    icon, 
-    label, 
-    onClick 
-  }: { 
-    icon: React.ReactNode, 
-    label: string, 
-    onClick: () => void 
-  }) => (
-    <button
-      onClick={onClick}
-      title={label}
-      className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-    >
-      {icon}
-    </button>
-  );
-
   return (
     <>
       <input
@@ -1440,91 +631,21 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
         className="hidden"
         accept="image/*,video/*,audio/*,.pdf,.zip"
       />
-      {/* Header */}
-      <header className="border-b border-border bg-background sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link
-            href={`/dashboard/repos?repo=${encodeURIComponent(post.repoId)}`}
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Volver a Posts
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleSave(false)}
-              disabled={saving || committing}
-              className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {saving ? "Guardando..." : "Guardar"}
-            </button>
-
-            <button
-              onClick={() => handleSave(true)}
-              disabled={saving || committing}
-              className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {committing ? "Commiteando..." : "Guardar y Commitear"}
-            </button>
-
-            {!isNew && (
-              <button
-                 onClick={handleShowDiff}
-                 className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
-                 title="Ver Cambios (Diff)"
-              >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  <span className="hidden sm:inline text-xs font-medium">Cambios</span>
-              </button>
-            )}
-
-            {!isNew && (
-                <button
-                    onClick={() => {
-                        setShowBlame(true);
-                        if (blameRanges.length === 0) loadBlame();
-                    }}
-                    className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors flex items-center gap-2"
-                    title="Git Blame"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                    <span className="hidden sm:inline text-xs font-medium">Blame</span>
-                </button>
-            )}
-
-            {!isNew && (
-              <button
-                onClick={() => setShowHistory(true)}
-                className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                title="Historial de Versiones"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-            )}
-
-            {!isNew && (
-              <div className="hidden md:block w-px h-6 bg-border mx-1" />
-            )}
-
-            {!isNew && (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                title="Eliminar Post"
-                className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      
+      <EditorHeader 
+        repoId={post.repoId}
+        isNew={!!isNew}
+        saving={saving}
+        committing={committing}
+        onSave={handleSave}
+        onShowDiff={handleShowDiff}
+        onShowBlame={() => {
+            setShowBlame(true);
+            if (blameRanges.length === 0) loadBlame();
+        }}
+        onShowHistory={() => setShowHistory(true)}
+        onDelete={() => setShowDeleteConfirm(true)}
+      />
 
       {/* Main Editor */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-6 bg-background min-h-screen">
@@ -1573,250 +694,35 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
         </div>
 
         {/* Metadata Fields */}
-        <div className="bg-card rounded-lg p-6 border border-border space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Metadata</h2>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowImportModal(true); loadImportablePosts(); }}
-                className="px-3 py-1.5 text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded border border-border transition-colors flex items-center gap-2"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-8a2 2 0 012-2z" />
-                </svg>
-                Importar
-              </button>
-              <button
-                onClick={() => setShowAiModal(true)}
-                className="px-3 py-1.5 text-xs font-medium bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 rounded transition-colors flex items-center gap-2"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Generar con IA
-              </button>
-              <button
-                onClick={() => setShowAddField(true)}
-                className="px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded transition-colors flex items-center gap-2"
-              >
-                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Añadir Campo
-              </button>
-              {!isNew && (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="px-3 py-1.5 text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 rounded transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Eliminar
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="space-y-4">
-            {Object.entries(metadata).map(([key, value]) => renderField(key, value))}
-          </div>
-          {Object.keys(metadata).length === 0 && (
-            <p className="text-muted-foreground text-sm">No hay campos de metadata</p>
-          )}
-        </div>
+        <MetadataEditor 
+            metadata={metadata}
+            onUpdate={updateMetadata}
+            onDeleteField={handleDeleteField}
+            onShowImportModal={() => { setShowImportModal(true); loadImportablePosts(); }}
+            onShowAiModal={() => setShowAiModal(true)}
+            onShowAddField={() => setShowAddField(true)}
+            onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+            isNew={!!isNew}
+            triggerUpload={triggerUpload}
+            isUploading={isUploading}
+            uploadTarget={uploadTarget}
+            suggestedFields={suggestedFields}
+        />
 
-        {/* Content Editor - THEMED + TOOLBAR */}
-        <div className="bg-card rounded-lg shadow-sm border border-border flex flex-col min-h-[600px]">
-          {/* Tabs & Toolbar */}
-          <div className="border-b border-border bg-card">
-            <div className="flex items-center justify-between px-4 py-2">
-              {/* Tabs */}
-              <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
-                <button
-                  onClick={() => setActiveTab("edit")}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    activeTab === "edit"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  }`}
-                >
-                  Editor
-                </button>
-                <button
-                  onClick={() => setActiveTab("preview")}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    activeTab === "preview"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  }`}
-                >
-                  Preview
-                </button>
-                <button
-                  onClick={() => setActiveTab("split")}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    activeTab === "split"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  }`}
-                >
-                  Split
-                </button>
-              </div>
+        {/* Content Editor */}
+        <ContentEditor 
+            content={content}
+            onChange={setContent}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            textareaRef={textareaRef}
+            insertText={insertText}
+            triggerUpload={triggerUpload}
+            isUploading={isUploading}
+            uploadTarget={uploadTarget}
+        />
 
-              {/* Formatting Toolbar */}
-              {(activeTab === "edit" || activeTab === "split") && (
-                <div className="flex items-center gap-1 border-l border-border pl-4 ml-4">
-                   <ToolbarButton 
-                    label="Negrita (Ctrl+B)" 
-                    onClick={() => insertText("**", "**")}
-                    icon={<span className="font-bold">B</span>}
-                  />
-                  <ToolbarButton 
-                    label="Cursiva (Ctrl+I)" 
-                    onClick={() => insertText("*", "*")}
-                    icon={<span className="italic">I</span>}
-                  />
-                  <div className="w-px h-4 bg-border mx-1" />
-                  <ToolbarButton 
-                    label="Título 1" 
-                    onClick={() => insertText("# ", "")}
-                    icon={<span className="font-bold text-sm">H1</span>}
-                  />
-                  <ToolbarButton 
-                    label="Título 2" 
-                    onClick={() => insertText("## ", "")}
-                    icon={<span className="font-bold text-sm">H2</span>}
-                  />
-                  <ToolbarButton 
-                    label="Título 3" 
-                    onClick={() => insertText("### ", "")}
-                    icon={<span className="font-bold text-sm">H3</span>}
-                  />
-                  <div className="w-px h-4 bg-border mx-1" />
-                  <ToolbarButton 
-                    label="Lista" 
-                    onClick={() => insertText("- ", "")}
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    }
-                  />
-                  <ToolbarButton 
-                    label="Cita" 
-                    onClick={() => insertText("> ", "")}
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                    }
-                  />
-                  <ToolbarButton 
-                    label="Código" 
-                    onClick={() => insertText("```\n", "\n```")}
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                      </svg>
-                    }
-                  />
-                  <div className="w-px h-4 bg-border mx-1" />
-                  <ToolbarButton 
-                    label="Link" 
-                    onClick={() => insertText("[", "](url)")}
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                    }
-                  />
-                  <ToolbarButton 
-                    label="Link de Imagen" 
-                    onClick={() => insertText("![Alt text](", ")")}
-                    icon={
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                    }
-                  />
-                  <ToolbarButton 
-                    label="Subir Imagen"
-                    onClick={() => triggerUpload({ type: 'content' })}
-                    icon={
-                      isUploading && uploadTarget.type === 'content' ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      )
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Editor Area */}
-          <div className="flex-1 flex flex-col relative">
-            {activeTab === "edit" && (
-              <div className="flex-1 flex flex-col">
-                <textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="flex-1 w-full p-8 bg-background text-foreground placeholder-muted-foreground outline-none font-mono text-sm leading-relaxed resize-none"
-                  placeholder="Empieza a escribir..."
-                />
-              </div>
-            )}
-
-            {activeTab === "preview" && (
-              <div className="flex-1 p-8 bg-background overflow-y-auto">
-                <div className="prose dark:prose-invert max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {content || "*No hay contenido para previsualizar*"}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "split" && (
-              <div className="flex-1 grid grid-cols-2 divide-x divide-border">
-                <textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full h-full p-6 bg-background text-foreground placeholder-muted-foreground outline-none font-mono text-sm leading-relaxed resize-none"
-                  placeholder="Escribe aquí..."
-                />
-                <div className="h-full p-6 bg-background overflow-y-auto">
-                   <div className="prose dark:prose-invert prose-sm max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {content || "*Previsualización*"}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Status Bar */}
-            <div className="border-t border-border bg-muted/30 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
-               <div className="flex gap-4">
-                  <span>{content.length} caracteres</span>
-                  <span>{content.split(/\s+/).filter(w => w.length > 0).length} palabras</span>
-                  <span>{content.split("\n").length} líneas</span>
-               </div>
-               <div>
-                  Markdown Compatible
-               </div>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Danger Zone */}
+        {/* Danger Zone - Removed redundant content as it's just empty or duplicates actions */}
 
       </main>
 
@@ -1832,6 +738,64 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
           onRestore={handleHistoryRestore}
         />
       )}
+
+      {/* Diff Modal */}
+      <Modal
+        isOpen={showDiffModal}
+        onClose={() => setShowDiffModal(false)}
+        title="Diferencias de Contenido"
+        description="Comparando el contenido original (guardado) con tu borrador actual."
+        className="max-w-6xl"
+        footer={<button onClick={()=>setShowDiffModal(false)} className="px-4 py-2 text-sm text-foreground bg-secondary rounded hover:bg-secondary/80">Cerrar</button>}
+      >
+        <DiffViewer oldValue={diffOriginal} newValue={diffCurrent} />
+      </Modal>
+
+      {/* Blame Modal/Overlay - Using a Modal due to potential size */}
+       <Modal
+        isOpen={showBlame}
+        onClose={() => setShowBlame(false)}
+        title="Git Blame Information"
+        description={`Historial de cambios línea por línea para ${post.filePath}`}
+        className="max-w-5xl"
+        footer={<button onClick={()=>setShowBlame(false)} className="px-4 py-2 text-sm text-foreground bg-secondary rounded hover:bg-secondary/80">Cerrar</button>}
+      >
+        <div className="max-h-[70vh] overflow-y-auto">
+            {loadingBlame && (
+                <div className="flex justify-center p-8">
+                     <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                </div>
+            )}
+            {!loadingBlame && blameRanges.length === 0 && <p className="text-muted-foreground text-center p-4">No hay información de blame disponible.</p>}
+            {!loadingBlame && blameRanges.length > 0 && (
+                <div className="font-mono text-xs">
+                    {blameRanges.map((range, idx) => (
+                        <div key={idx} className="flex border-b border-border hover:bg-muted/30 p-1">
+                             <div className="w-16 text-muted-foreground border-r border-border pr-2 mr-2 text-right">
+                                {range.startingLine}-{range.endingLine}
+                             </div>
+                             <div className="flex-1">
+                                <div className="flex justify-between mb-1">
+                                    <span className="font-semibold text-primary">{range.commit.author.name}</span>
+                                    <span className="text-muted-foreground">
+                                        {range.commit.committedDate && !isNaN(new Date(range.commit.committedDate).getTime())
+                                            ? formatDistanceToNow(new Date(range.commit.committedDate), { addSuffix: true, locale: es })
+                                            : "Fecha desconocida"}
+                                    </span>
+                                </div>
+                                <div className="text-muted-foreground truncate" title={range.commit.message}>
+                                    {range.commit.message}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground mt-0.5 select-all">
+                                    {range.commit.oid.substring(0, 7)}
+                                </div>
+                             </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+      </Modal>
 
       {/* Modal Definitions */}
       {/* Add Field Modal */}
@@ -1857,9 +821,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
           </div>
         }
       >
-
         <div className="space-y-4">
-          
           {/* Suggestions from config.ts */}
           {Object.keys(suggestedFields).length > 0 && (
             <div className="bg-muted/30 p-3 rounded-md border border-dashed border-border mb-4">
@@ -2398,114 +1360,15 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
                   </button>
                 ))
              )}
-             {!loadingPosts && importablePosts.filter(p => p.collection === post.collection).length === 0 && (
-                <div className="text-center py-8 bg-muted/20 border border-dashed border-border rounded-md">
-                   <p className="text-sm text-muted-foreground">No se encontraron otros posts en esta colección.</p>
+              {!loadingPosts && importablePosts.filter(p => p.collection === post.collection).length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                    <p>No se encontraron posts en esta colección.</p>
                 </div>
-             )}
+              )}
            </div>
         </div>
       </Modal>
 
-      {/* Visual Diff Modal */}
-      <Modal
-        isOpen={showDiffModal}
-        onClose={() => setShowDiffModal(false)}
-        title="Cambios Visuales (Diff)"
-        description="Compara el contenido original con tu borrador actual antes de guardar."
-        className="max-w-4xl"
-        footer={
-           <button
-             onClick={() => setShowDiffModal(false)}
-             className="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded font-medium"
-           >
-             Cerrar
-           </button>
-        }
-      >
-        <DiffViewer oldValue={diffOriginal} newValue={diffCurrent} />
-      </Modal>
-
-      {/* Blame Modal */}
-      <Modal
-        isOpen={showBlame}
-        onClose={() => setShowBlame(false)}
-        title="Git Blame - Autores por Línea"
-        description="Explora quién editó cada parte del archivo y cuándo."
-        className="max-w-5xl"
-        footer={
-           <button
-             onClick={() => setShowBlame(false)}
-             className="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded font-medium"
-           >
-             Cerrar
-           </button>
-        }
-      >
-        <div className="bg-card border border-border rounded-md overflow-hidden max-h-[70vh] flex flex-col">
-            {loadingBlame ? (
-                <div className="p-12 flex flex-col items-center justify-center gap-4">
-                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                    <p className="text-muted-foreground">Analizando historial del archivo...</p>
-                </div>
-            ) : (
-                <div className="overflow-auto custom-scrollbar flex-1">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-muted/50 sticky top-0 z-10">
-                            <tr>
-                                <th className="p-2 text-xs font-medium text-muted-foreground border-b border-border w-48">Autor & Fecha</th>
-                                <th className="p-2 text-xs font-medium text-muted-foreground border-b border-border">Línea</th>
-                                <th className="p-2 text-xs font-medium text-muted-foreground border-b border-border w-full">Contenido</th>
-                            </tr>
-                        </thead>
-                        <tbody className="font-mono text-xs">
-                          {/* We need to render the content lines and match them with blame ranges */}
-                          {(content || "").split('\n').map((line, idx) => {
-                              const lineNum = idx + 1;
-                              // Find range for this line
-                              const range = blameRanges.find(r => lineNum >= r.startingLine && lineNum <= r.endingLine);
-                              
-                              // Check if it's the start of a range to show info, otherwise empty to cleaner look?
-                              // Or show for every line but grouped visually?
-                              // Let's grouping visually by borders.
-                              const isStartOfRange = range && range.startingLine === lineNum;
-                              const isEndOfRange = range && range.endingLine === lineNum;
-
-                              return (
-                                  <tr key={idx} className="hover:bg-muted/30 group">
-                                      <td className={`p-2 border-r border-border align-top ${isEndOfRange ? 'border-b border-border/50' : ''}`}>
-                                          {isStartOfRange && range && (
-                                              <div className="flex flex-col gap-0.5">
-                                                  <div className="flex items-center gap-2">
-                                                      {range.commit.author.avatarUrl && (
-                                                          <img src={range.commit.author.avatarUrl} alt="" className="w-4 h-4 rounded-full" />
-                                                      )}
-                                                      <span className="font-semibold text-foreground">{range.commit.author.name}</span>
-                                                  </div>
-                                                  <span className="text-[10px] text-muted-foreground">
-                                                      {range.commit.author.date && formatDistanceToNow(new Date(range.commit.author.date), { addSuffix: true, locale: es })}
-                                                  </span>
-                                                  <span className="text-[10px] text-primary/70 truncate max-w-[150px]" title={range.commit.message}>
-                                                      {range.commit.message}
-                                                  </span>
-                                              </div>
-                                          )}
-                                      </td>
-                                      <td className={`p-2 text-right text-muted-foreground select-none border-r border-border w-12 bg-muted/10 ${isEndOfRange ? 'border-b border-border/50' : ''}`}>
-                                          {lineNum}
-                                      </td>
-                                      <td className={`p-2 whitespace-pre-wrap break-all ${isEndOfRange ? 'border-b border-border/50' : ''}`}>
-                                          {line}
-                                      </td>
-                                  </tr>
-                              );
-                          })}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </div>
-      </Modal>
     </>
   );
 }
