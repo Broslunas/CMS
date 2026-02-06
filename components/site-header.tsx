@@ -2,7 +2,7 @@ import { Link } from "next-view-transitions"
 import { auth, signOut } from "@/lib/auth"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
-import { Github, LogOut, User } from "lucide-react"
+import { Github, LogOut, User, Menu } from "lucide-react"
 
 export async function SiteHeader() {
   const session = await auth()
@@ -14,31 +14,43 @@ export async function SiteHeader() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
              <span className="text-white font-bold text-xl leading-none">B</span>
           </div>
-          <span className="font-bold text-lg tracking-tight inline-block">Broslunas CMS</span>
+          <span className="font-bold text-lg tracking-tight inline-block text-foreground">Broslunas CMS</span>
         </Link>
-        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium">
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           <Link
             href="/dashboard"
-            className="transition-colors hover:text-primary text-foreground/60"
+            className="transition-colors hover:text-primary text-foreground/80"
           >
             Dashboard
           </Link>
           <Link
-            href="https://github.com/broslunas"
+            href="/pricing"
+            className="transition-colors hover:text-primary text-foreground/80"
+          >
+            Precios
+          </Link>
+          <Link
+            href="/docs"
+            className="transition-colors hover:text-primary text-foreground/80"
+          >
+            Documentación
+          </Link>
+          <Link
+            href="https://github.com/broslunas/cms"
             target="_blank"
-            className="transition-colors hover:text-primary text-foreground/60"
+            className="transition-colors hover:text-primary text-foreground/80"
           >
             GitHub
           </Link>
         </nav>
-        <div className="ml-auto flex items-center space-x-5">
+        <div className="ml-auto flex items-center space-x-3 md:space-x-5">
           {session?.user ? (
-             <div className="flex items-center gap-5">
-                <div className="flex items-center gap-3 py-1 px-3 rounded-full bg-muted/50 border border-border">
+             <div className="flex items-center gap-2 md:gap-5">
+                <div className="hidden md:flex items-center gap-3 py-1 px-3 rounded-full bg-muted/50 border border-border">
                   {session.user.image ? (
                     <img src={session.user.image} alt="User" className="w-6 h-6 rounded-full ring-2 ring-primary/20" />
                   ) : <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-3.5 h-3.5 text-primary" /></div>}
-                  <span className="hidden lg:inline-block text-xs font-semibold">{session.user.name}</span>
+                  <span className="inline-block text-xs font-semibold">{session.user.name}</span>
                 </div>
                 <form
                   action={async () => {
@@ -52,9 +64,20 @@ export async function SiteHeader() {
                   </Button>
                 </form>
              </div>
-          ) : null}
+          ) : (
+            <div className="hidden md:block">
+               {/* Login button placeholder or logic */}
+            </div>
+          )}
           <div className="h-6 w-[1px] bg-border mx-1 hidden md:block" />
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            
+            {/* Mobile Menu Button Placeholder - Ideally this would be a full mobile menu */}
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </header>

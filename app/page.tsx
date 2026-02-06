@@ -13,6 +13,7 @@ import {
   Code
 } from "lucide-react";
 import LoginButton from "@/components/LoginButton";
+import { SiteFooter } from "@/components/site-footer";
 
 export default async function Home() {
   const session = await auth();
@@ -52,7 +53,7 @@ export default async function Home() {
                    <LoginButton /> 
                  </div>
                )}
-               <Link href="https://github.com/broslunas" target="_blank">
+               <Link href="https://github.com/broslunas/cms" target="_blank">
                  <Button variant="outline" size="lg" className="h-12 px-8 text-base hover:bg-muted bg-transparent backdrop-blur-sm border-zinc-200 dark:border-zinc-800">
                    <Github className="mr-2 h-5 w-5" />
                    Ver en GitHub
@@ -183,17 +184,7 @@ export default async function Home() {
       </section>
       
       {/* Footer */}
-      <footer className="py-12 border-t border-border bg-muted/20 text-center relative z-10">
-        <div className="flex justify-center items-center gap-2 mb-4">
-           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md">
-             <span className="text-primary-foreground font-bold leading-none">B</span>
-           </div>
-           <span className="font-bold text-lg text-foreground">Broslunas CMS</span>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          © {new Date().getFullYear()} Broslunas Engineering. All rights reserved.
-        </p>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
