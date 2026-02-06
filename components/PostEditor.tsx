@@ -137,6 +137,14 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [uploadFilename, setUploadFilename] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isLimitedStorage, setIsLimitedStorage] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/storage/status?repoId=${encodeURIComponent(post.repoId)}`)
+      .then(res => res.json())
+      .then(data => setIsLimitedStorage(!!data.isLimited))
+      .catch(() => setIsLimitedStorage(true)); // Fallback to limited if check fails
+  }, [post.repoId]);
 
   useEffect(() => {
     // Poll for sync status if not new
@@ -234,24 +242,55 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPendingFile(file);
+    
     // Set initial custom filename without extension for easier editing
     const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.'));
     setUploadFilename(nameWithoutExt || file.name);
-    setShowUploadModal(true);
+
+    if (isLimitedStorage) {
+      // Skip modal, show info and upload directly
+      toast.info(
+        <div className="space-y-1">
+          <p className="font-semibold">Usando Almacenamiento Free Limitado</p>
+          <ul className="text-[10px] list-disc list-inside opacity-90">
+            <li>Solo imágenes</li>
+            <li>Convertido auto a WebP</li>
+            <li>Máximo 300KB</li>
+            <li>Nombre aleatorio</li>
+            <li>Carpeta raíz</li>
+          </ul>
+        </div>,
+        { duration: 5000 }
+      );
+      
+      // We need to call confirmUpload but we don't have pendingFile in state yet synchronously
+      // So we use the file directly
+      await performUpload(file);
+    } else {
+      setPendingFile(file);
+      setShowUploadModal(true);
+    }
+    
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const confirmUpload = async () => {
     if (!pendingFile) return;
+    await performUpload(pendingFile);
+  };
 
+  const performUpload = async (file: File) => {
     setIsUploading(true);
     setShowUploadModal(false);
     const formData = new FormData();
-    formData.append("file", pendingFile);
+    formData.append("file", file);
 
     try {
-      const response = await fetch(`/api/upload?repoId=${encodeURIComponent(post.repoId)}&folder=${encodeURIComponent(uploadFolder)}&filename=${encodeURIComponent(uploadFilename)}`, {
+      // If limited, we override folder and filename to be safe, though server does it too
+      const folderArg = isLimitedStorage ? "" : uploadFolder;
+      const filenameArg = isLimitedStorage ? "" : uploadFilename;
+
+      const response = await fetch(`/api/upload?repoId=${encodeURIComponent(post.repoId)}&folder=${encodeURIComponent(folderArg)}&filename=${encodeURIComponent(filenameArg)}`, {
         method: "POST",
         body: formData,
       });
@@ -262,7 +301,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
           updateMetadata(uploadTarget.key, data.url);
           toast.success("Imagen subida y actualizada");
         } else {
-          insertText(`![${pendingFile.name}](${data.url})`, "");
+          insertText(`![${file.name}](${data.url})`, "");
           toast.success("Imagen subida e insertada");
         }
       } else {

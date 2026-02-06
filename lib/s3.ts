@@ -67,8 +67,19 @@ export async function getS3Client(userId: string, repoId?: string) {
     }
   }
 
+  let isLimited = false;
+
   if (!s3Settings || !s3Settings.endpoint || !s3Settings.accessKey || !s3Settings.secretKey || !s3Settings.bucket) {
-    throw new Error("S3 settings not configured");
+     // Use Default LIMITED configuration
+     s3Settings = {
+        endpoint: process.env.DEFAULT_S3_ENDPOINT,
+        bucket: "cms-assets",
+        publicUrl: "https://cdn-cms.broslunas.com",
+        accessKey: process.env.DEFAULT_S3_ACCESS_KEY,
+        secretKey: process.env.DEFAULT_S3_SECRET_KEY,
+        region: "WEUR"
+     };
+     isLimited = true;
   }
 
   const s3Client = new S3Client({
@@ -86,5 +97,6 @@ export async function getS3Client(userId: string, repoId?: string) {
     bucket: s3Settings.bucket,
     publicUrl: s3Settings.publicUrl,
     endpoint: s3Settings.endpoint,
+    isLimited
   }
 }
