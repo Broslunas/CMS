@@ -25,10 +25,6 @@ const sidebarNavItems = [
     href: "/dashboard/settings/editor",
   },
   {
-    title: "Storage",
-    href: "/dashboard/settings/storage",
-  },
-  {
     title: "Integrations",
     href: "/dashboard/settings/integrations",
   },

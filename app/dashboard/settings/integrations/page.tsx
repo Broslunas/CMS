@@ -6,13 +6,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Loader2, Check, X } from "lucide-react"
+import { Loader2, Check, X, HardDrive } from "lucide-react"
 
 export default function SettingsIntegrationsPage() {
   const [loading, setLoading] = useState(false)
   const [vercelToken, setVercelToken] = useState("")
   const [initialLoading, setInitialLoading] = useState(true)
   const [githubInstalled, setGithubInstalled] = useState<boolean | null>(null)
+  
+  // S3 State
+  const [s3Endpoint, setS3Endpoint] = useState("")
+  const [s3Region, setS3Region] = useState("")
+  const [s3AccessKey, setS3AccessKey] = useState("")
+  const [s3SecretKey, setS3SecretKey] = useState("")
+  const [s3Bucket, setS3Bucket] = useState("")
+  const [s3PublicUrl, setS3PublicUrl] = useState("")
+  const [s3Loading, setS3Loading] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -25,6 +34,13 @@ export default function SettingsIntegrationsPage() {
         if (res.ok) {
             const data = await res.json()
             setVercelToken(data.vercelGlobalToken || "")
+            // S3 Settings
+            setS3Endpoint(data.s3Endpoint || "")
+            setS3Region(data.s3Region || "")
+            setS3AccessKey(data.s3AccessKey || "")
+            setS3SecretKey(data.s3SecretKey || "")
+            setS3Bucket(data.s3Bucket || "")
+            setS3PublicUrl(data.s3PublicUrl || "")
         }
     } catch (error) {
         console.error("Failed to fetch settings", error)
@@ -37,7 +53,7 @@ export default function SettingsIntegrationsPage() {
       try {
           const res = await fetch("/api/check-installation")
           const data = await res.json()
-          setGithubInstalled(data.isInstalled)
+          setGithubInstalled(data.installed)
       } catch (error) {
           console.error("Failed to check GitHub installation", error)
       }
@@ -61,6 +77,34 @@ export default function SettingsIntegrationsPage() {
         toast.error("An error occurred")
     } finally {
         setLoading(false)
+    }
+  }
+
+  const onSaveS3 = async () => {
+    setS3Loading(true)
+    try {
+        const res = await fetch("/api/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                s3Endpoint,
+                s3Region,
+                s3AccessKey,
+                s3SecretKey,
+                s3Bucket,
+                s3PublicUrl
+            })
+        })
+        
+        if (res.ok) {
+            toast.success("Storage settings updated")
+        } else {
+            toast.error("Failed to update storage settings")
+        }
+    } catch (error) {
+        toast.error("An error occurred")
+    } finally {
+        setS3Loading(false)
     }
   }
 
@@ -168,6 +212,97 @@ export default function SettingsIntegrationsPage() {
                         Manage on GitHub
                     </a>
                 )}
+            </div>
+        </div>
+
+        {/* S3 Storage Integration */}
+        <div className="rounded-lg border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                        <HardDrive className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <h4 className="font-medium">S3 Storage</h4>
+                        <p className="text-sm text-muted-foreground">Configure object storage for media.</p>
+                    </div>
+                </div>
+                 <div className="flex items-center gap-2">
+                    {s3Bucket && s3AccessKey ? (
+                        <span className="flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                            <Check className="w-3 h-3 mr-1"/> Configured
+                        </span>
+                    ) : (
+                        <span className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                            Not Configured
+                        </span>
+                    )}
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="s3_endpoint">Endpoint</Label>
+                    <Input 
+                        id="s3_endpoint" 
+                        value={s3Endpoint} 
+                        onChange={(e) => setS3Endpoint(e.target.value)}
+                        placeholder="https://s3.amazonaws.com" 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="s3_region">Region</Label>
+                    <Input 
+                        id="s3_region" 
+                        value={s3Region} 
+                        onChange={(e) => setS3Region(e.target.value)}
+                        placeholder="us-east-1" 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="s3_bucket">Bucket Name</Label>
+                    <Input 
+                        id="s3_bucket" 
+                        value={s3Bucket} 
+                        onChange={(e) => setS3Bucket(e.target.value)}
+                        placeholder="my-app-uploads" 
+                    />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="s3_public_url">Public URL Base (Optional)</Label>
+                    <Input 
+                        id="s3_public_url" 
+                        value={s3PublicUrl} 
+                        onChange={(e) => setS3PublicUrl(e.target.value)}
+                        placeholder="https://cdn.example.com" 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="s3_access_key">Access Key ID</Label>
+                    <Input 
+                        id="s3_access_key" 
+                        type="password"
+                        value={s3AccessKey} 
+                        onChange={(e) => setS3AccessKey(e.target.value)}
+                        placeholder="AKI..." 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="s3_secret_key">Secret Access Key</Label>
+                    <Input 
+                        id="s3_secret_key" 
+                        type="password" 
+                        value={s3SecretKey} 
+                        onChange={(e) => setS3SecretKey(e.target.value)}
+                        placeholder="Super secret key..." 
+                    />
+                </div>
+            </div>
+
+            <div className="flex justify-end">
+                <Button onClick={onSaveS3} disabled={s3Loading}>
+                    {s3Loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Save Storage Settings"}
+                </Button>
             </div>
         </div>
       </div>
