@@ -48,6 +48,13 @@ export default function AIPage() {
                          <span className="text-sm text-muted-foreground">Selecciona un texto y pide a Gemini que lo reescriba para ser más formal, divertido o conciso.</span>
                      </div>
                  </li>
+                 <li className="flex items-start gap-3">
+                     <span className="bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs mt-0.5">4</span>
+                     <div>
+                         <strong className="block text-foreground">Transcripción y Secciones</strong>
+                         <span className="text-sm text-muted-foreground">Convierte tus audios en texto y deja que la IA detecte y genere automáticamente capítulos o secciones.</span>
+                     </div>
+                 </li>
              </ul>
         </div>
 

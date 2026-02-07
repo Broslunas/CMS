@@ -48,8 +48,16 @@ const docsConfig = [
         href: "/docs/features/visual-editor",
       },
       {
+        title: "GitHub App",
+        href: "/docs/features/github-app",
+      },
+      {
         title: "Vercel Integration",
         href: "/docs/features/vercel",
+      },
+      {
+        title: "S3 Storage",
+        href: "/docs/features/storage",
       },
       {
         title: "Collaboration",

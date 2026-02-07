@@ -81,9 +81,9 @@ export default function VisualEditorPage() {
              <ChevronLeft className="mr-2 h-4 w-4" /> Schemas
            </Button>
          </Link>
-         <Link href="/docs/features/vercel">
+         <Link href="/docs/features/github-app">
            <Button className="pr-4 hover:pr-6 transition-all">
-             Integración Vercel <ChevronRight className="ml-2 h-4 w-4" />
+             GitHub App <ChevronRight className="ml-2 h-4 w-4" />
            </Button>
          </Link>
       </div>

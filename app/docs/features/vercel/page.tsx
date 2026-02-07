@@ -81,14 +81,14 @@ export default function VercelPage() {
       </div>
 
       <div className="flex justify-between pt-8 border-t">
-         <Link href="/docs/features/visual-editor">
+         <Link href="/docs/features/github-app">
            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
-             <ChevronLeft className="mr-2 h-4 w-4" /> Editor Visual
+             <ChevronLeft className="mr-2 h-4 w-4" /> GitHub App
            </Button>
          </Link>
-         <Link href="/docs/features/collaboration">
+         <Link href="/docs/features/storage">
            <Button className="pr-4 hover:pr-6 transition-all">
-             Colaboración <ChevronRight className="ml-2 h-4 w-4" />
+             S3 Storage <ChevronRight className="ml-2 h-4 w-4" />
            </Button>
          </Link>
       </div>

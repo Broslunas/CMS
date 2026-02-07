@@ -69,9 +69,9 @@ export default function CollaborationPage() {
       </div>
 
       <div className="flex justify-between pt-8 border-t">
-         <Link href="/docs/features/vercel">
+         <Link href="/docs/features/storage">
            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
-             <ChevronLeft className="mr-2 h-4 w-4" /> Vercel Integration
+             <ChevronLeft className="mr-2 h-4 w-4" /> S3 Storage
            </Button>
          </Link>
          <Link href="/docs/features/version-control">
