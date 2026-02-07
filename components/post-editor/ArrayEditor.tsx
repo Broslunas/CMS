@@ -1,8 +1,32 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Trash2, ChevronRight, ChevronDown, Image as ImageIcon, Calendar, Type, Hash, Loader2, Code2 } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { 
+    Plus, Trash2, ChevronRight, ChevronDown, 
+    Image as ImageIcon, Calendar, Type, Hash, 
+    Loader2, Code2, GripVertical 
+} from "lucide-react";
 import { toast } from "sonner";
+import {
+    DndContext, 
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+    defaultDropAnimationSideEffects
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Reusing the conversion logic if possible, or keeping it local
 const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
@@ -51,10 +75,31 @@ export function ArrayEditor({
     repoId
 }: ArrayEditorProps) {
     const items = Array.isArray(value) ? value : [];
-    const [expandedItems, setExpandedItems] = useState<number[]>([0]);
+    
+    // Create stable IDs for the items session
+    const itemsWithIds = useMemo(() => {
+        return items.map((item, index) => ({
+            ...item,
+            id: item.id || item._id || `item-${index}`
+        }));
+    }, [items]);
+
+    const [expandedIds, setExpandedIds] = useState<string[]>(["item-0"]);
     const [isJsonMode, setIsJsonMode] = useState(false);
     const [jsonText, setJsonText] = useState("");
     const [jsonError, setJsonError] = useState("");
+    const [activeId, setActiveId] = useState<string | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Detect schema from all items to be safe, or first item
     const schema = useMemo(() => {
@@ -70,12 +115,12 @@ export function ArrayEditor({
             return ['title', 'src']; // Default example schema
         }
         
-        return Array.from(keys).filter(k => k !== 'pubDate');
+        return Array.from(keys).filter(k => k !== 'pubDate' && k !== 'id');
     }, [items]);
 
-    const toggleExpand = (index: number) => {
-        setExpandedItems(prev => 
-            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    const toggleExpand = (id: string) => {
+        setExpandedIds(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
 
@@ -107,7 +152,8 @@ export function ArrayEditor({
             return item;
         });
         onChange(cleaned);
-        setExpandedItems(prev => [...prev, newList.length - 1]);
+        const newId = `item-${newList.length - 1}`;
+        setExpandedIds(prev => [...prev, newId]);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -132,23 +178,22 @@ export function ArrayEditor({
         }
     };
 
-    const handleJsonSave = () => {
-        try {
-            const parsed = JSON.parse(jsonText);
-            if (!Array.isArray(parsed)) throw new Error("Debe ser un array");
-            // Clean pubDate if it exists in JSON
-            const cleaned = parsed.map(item => {
-                if (typeof item === 'object' && item !== null) {
-                    const { pubDate, ...rest } = item;
-                    return rest;
-                }
-                return item;
-            });
-            onChange(cleaned);
-            setIsJsonMode(false);
-            setJsonError("");
-        } catch (e) {
-            setJsonError("JSON inválido: " + (e as Error).message);
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (over && active.id !== over.id) {
+            const oldIndex = itemsWithIds.findIndex(item => item.id === active.id);
+            const newIndex = itemsWithIds.findIndex(item => item.id === over.id);
+            
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newItems = arrayMove(items, oldIndex, newIndex);
+                onChange(newItems);
+            }
         }
     };
 
@@ -199,7 +244,29 @@ export function ArrayEditor({
                         {jsonError && <p className="text-destructive text-xs font-medium px-2">{jsonError}</p>}
                         <div className="flex justify-end gap-3">
                             <button onClick={toggleJsonMode} className="text-xs font-bold text-muted-foreground hover:text-foreground px-4 py-2 uppercase tracking-widest">Cancelar</button>
-                            <button onClick={handleJsonSave} className="text-xs font-bold bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 shadow-sm hover:shadow-md transition-all uppercase tracking-widest">Guardar Cambios</button>
+                            <button 
+                                onClick={() => {
+                                    try {
+                                        const parsed = JSON.parse(jsonText);
+                                        if (!Array.isArray(parsed)) throw new Error("Debe ser un array");
+                                        const cleaned = parsed.map(item => {
+                                            if (typeof item === 'object' && item !== null) {
+                                                const { pubDate, ...rest } = item;
+                                                return rest;
+                                            }
+                                            return item;
+                                        });
+                                        onChange(cleaned);
+                                        setIsJsonMode(false);
+                                        setJsonError("");
+                                    } catch (e) {
+                                        setJsonError("JSON inválido: " + (e as Error).message);
+                                    }
+                                }} 
+                                className="text-xs font-bold bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 shadow-sm hover:shadow-md transition-all uppercase tracking-widest"
+                            >
+                                Guardar Cambios
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -215,150 +282,66 @@ export function ArrayEditor({
                             <p className="text-xs text-muted-foreground/50 mt-1">Pulsa para añadir el primer elemento a la lista</p>
                         </div>
                     ) : (
-                        items.map((item, index) => (
-                            <div 
-                                key={index} 
-                                className={`group border rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md ${
-                                    expandedItems.includes(index) 
-                                    ? 'border-primary/30 ring-1 ring-primary/10 bg-card' 
-                                    : 'border-border bg-card/50 hover:border-border-hover'
-                                }`}
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext
+                                items={itemsWithIds.map(i => i.id)}
+                                strategy={verticalListSortingStrategy}
                             >
-                                {/* Header */}
-                                <div 
-                                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors select-none"
-                                    onClick={() => toggleExpand(index)}
-                                >
-                                    <div className="flex items-center gap-4 min-w-0">
-                                        <div className={`p-2 rounded-lg transition-colors ${expandedItems.includes(index) ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground'}`}>
-                                            {expandedItems.includes(index) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                        </div>
-                                        
-                                        {/* Preview Image in Header if available */}
-                                        {schema.find(k => getFieldType(k, item[k]) === 'image') && item[schema.find(k => getFieldType(k, item[k]) === 'image')!] && (
-                                            <div className="w-10 h-10 rounded-md overflow-hidden bg-muted border border-border shrink-0">
-                                                <img 
-                                                    src={convertToGitHubRawUrl(item[schema.find(k => getFieldType(k, item[k]) === 'image')!], repoId)} 
-                                                    alt="" 
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => (e.target as HTMLImageElement).style.opacity = '0'}
-                                                />
-                                            </div>
-                                        )}
-
-                                        <div className="min-w-0">
-                                            <h4 className="text-sm font-bold text-foreground truncate max-w-[200px] sm:max-w-md">
-                                                {item.title || item.name || item.text || item.label || `Elemento #${index + 1}`}
-                                            </h4>
-                                            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-tighter opacity-70">
-                                                Index {index} • {Object.keys(item).length} Campos
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); handleRemoveItem(index); }}
-                                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                            title="Eliminar item"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                <div className="space-y-4">
+                                    {itemsWithIds.map((item, index) => (
+                                        <SortableItem 
+                                            key={item.id}
+                                            id={item.id}
+                                            index={index}
+                                            item={item}
+                                            expanded={expandedIds.includes(item.id)}
+                                            onToggle={() => toggleExpand(item.id)}
+                                            onRemove={() => handleRemoveItem(index)}
+                                            onUpdate={(subKey, val) => handleUpdateItem(index, subKey, val)}
+                                            schema={schema}
+                                            repoId={repoId}
+                                            fieldKey={fieldKey}
+                                            triggerUpload={triggerUpload}
+                                            isUploading={isUploading}
+                                            uploadTarget={uploadTarget}
+                                            getFieldType={getFieldType}
+                                        />
+                                    ))}
                                 </div>
+                            </SortableContext>
 
-                                {/* Body */}
-                                {expandedItems.includes(index) && (
-                                    <div className="p-6 border-t border-border bg-gradient-to-b from-transparent to-muted/5 space-y-6 animate-in slide-in-from-top-4 duration-300">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {schema.map(subKey => {
-                                                const type = getFieldType(subKey, item[subKey]);
-                                                return (
-                                                    <div key={subKey} className={`space-y-2 ${type === 'image' ? 'md:col-span-2' : ''}`}>
-                                                        <label className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                                                            {subKey}
-                                                        </label>
-                                                        
-                                                        {type === 'image' ? (
-                                                            <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                                                                <div className="sm:col-span-3 space-y-3">
-                                                                    <div className="relative group/input">
-                                                                        <input 
-                                                                            type="text" 
-                                                                            value={item[subKey] || ""} 
-                                                                            onChange={(e) => handleUpdateItem(index, subKey, e.target.value)}
-                                                                            className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 focus:border-primary focus:outline-none transition-all pr-12"
-                                                                            placeholder="https://ejemplo.com/imagen.webp"
-                                                                        />
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => triggerUpload?.({ type: 'metadata', key: fieldKey, index, subKey })}
-                                                                            className="absolute right-2 top-2 p-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors"
-                                                                            title="Subir archivo"
-                                                                        >
-                                                                            {isUploading && uploadTarget?.index === index && uploadTarget?.subKey === subKey ? (
-                                                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                                            ) : (
-                                                                                <ImageIcon className="w-4 h-4" />
-                                                                            )}
-                                                                        </button>
-                                                                    </div>
-                                                                    <p className="text-[10px] text-muted-foreground italic px-1">Ruta absoluta o relativa al repositorio</p>
-                                                                </div>
-                                                                <div className="sm:col-span-2 flex items-center justify-center sm:justify-end">
-                                                                    <div className="relative aspect-video w-full max-w-[200px] rounded-xl overflow-hidden border-2 border-border bg-muted/20 shadow-inner group/preview">
-                                                                        <img 
-                                                                            src={convertToGitHubRawUrl(item[subKey] || '', repoId)} 
-                                                                            alt="Vista previa" 
-                                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover/preview:scale-110"
-                                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/121212/333333?text=Sin+Imagen'; }}
-                                                                        />
-                                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
-                                                                            <span className="text-[10px] text-white font-bold tracking-widest uppercase">Vista Previa</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ) : type === 'date' ? (
-                                                            <div className="relative">
-                                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                                                                <input 
-                                                                    type="date"
-                                                                    value={item[subKey] ? (typeof item[subKey] === 'string' && item[subKey].includes('T') ? item[subKey].split('T')[0] : item[subKey]) : ""}
-                                                                    onChange={(e) => handleUpdateItem(index, subKey, e.target.value)}
-                                                                    className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all [color-scheme:dark]"
-                                                                />
-                                                            </div>
-                                                        ) : type === 'number' ? (
-                                                            <div className="relative">
-                                                                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                                                                <input 
-                                                                    type="number"
-                                                                    value={item[subKey] || 0}
-                                                                    onChange={(e) => handleUpdateItem(index, subKey, parseFloat(e.target.value))}
-                                                                    className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="relative">
-                                                                <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                                                                <input 
-                                                                    type="text"
-                                                                    value={item[subKey] || ""}
-                                                                    onChange={(e) => handleUpdateItem(index, subKey, e.target.value)}
-                                                                    className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
-                                                                    placeholder={`Escribe ${subKey}...`}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
+                            <DragOverlay dropAnimation={{
+                                sideEffects: defaultDropAnimationSideEffects({
+                                    styles: {
+                                        active: {
+                                            opacity: '0.5',
+                                        },
+                                    },
+                                }),
+                            }}>
+                                {activeId ? (
+                                    <div className="border border-primary bg-card rounded-xl p-4 shadow-2xl opacity-80 cursor-grabbing">
+                                        <div className="flex items-center gap-4">
+                                            <GripVertical className="w-4 h-4 text-primary" />
+                                            <div className="w-10 h-10 rounded-md bg-muted border border-border" />
+                                            <div>
+                                                <h4 className="text-sm font-bold text-foreground">
+                                                    {(() => {
+                                                        const item = itemsWithIds.find(i => i.id === activeId);
+                                                        return item?.title || item?.name || item?.text || item?.label || "Moviendo...";
+                                                    })()}
+                                                </h4>
+                                            </div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        ))
+                                ) : null}
+                            </DragOverlay>
+                        </DndContext>
                     )
                 )}
             </div>
@@ -372,6 +355,211 @@ export function ArrayEditor({
                         <Plus className="w-4 h-4" />
                         Añadir otro elemento
                     </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+interface SortableItemProps {
+    id: string;
+    index: number;
+    item: any;
+    expanded: boolean;
+    onToggle: () => void;
+    onRemove: () => void;
+    onUpdate: (subKey: string, newValue: any) => void;
+    schema: string[];
+    repoId?: string;
+    fieldKey: string;
+    triggerUpload?: (target: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string }) => void;
+    isUploading?: boolean;
+    uploadTarget?: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string };
+    getFieldType: (key: string, val: any) => string;
+}
+
+function SortableItem({
+    id,
+    index,
+    item,
+    expanded,
+    onToggle,
+    onRemove,
+    onUpdate,
+    schema,
+    repoId,
+    fieldKey,
+    triggerUpload,
+    isUploading,
+    uploadTarget,
+    getFieldType
+}: SortableItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : undefined,
+    };
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style}
+            className={`group border rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md ${
+                isDragging ? 'opacity-50 ring-2 ring-primary border-primary' :
+                expanded 
+                ? 'border-primary/30 ring-1 ring-primary/10 bg-card' 
+                : 'border-border bg-card/50 hover:border-border-hover'
+            }`}
+        >
+            {/* Header */}
+            <div 
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors select-none"
+                onClick={onToggle}
+            >
+                <div className="flex items-center gap-3 min-w-0">
+                    <div 
+                        {...attributes} 
+                        {...listeners}
+                        className="p-1 text-muted-foreground hover:text-primary cursor-grab active:cursor-grabbing rounded hover:bg-primary/10 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <GripVertical className="w-4 h-4" />
+                    </div>
+                    
+                    <div className={`p-2 rounded-lg transition-colors ${expanded ? 'bg-primary/10 text-primary' : 'bg-muted/50 text-muted-foreground'}`}>
+                        {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </div>
+                    
+                    {/* Preview Image in Header if available */}
+                    {schema.find(k => getFieldType(k, item[k]) === 'image') && item[schema.find(k => getFieldType(k, item[k]) === 'image')!] && (
+                        <div className="w-10 h-10 rounded-md overflow-hidden bg-muted border border-border shrink-0">
+                            <img 
+                                src={convertToGitHubRawUrl(item[schema.find(k => getFieldType(k, item[k]) === 'image')!], repoId)} 
+                                alt="" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => (e.target as HTMLImageElement).style.opacity = '0'}
+                            />
+                        </div>
+                    )}
+
+                    <div className="min-w-0">
+                        <h4 className="text-sm font-bold text-foreground truncate max-w-[200px] sm:max-w-md">
+                            {item.title || item.name || item.text || item.label || `Elemento #${index + 1}`}
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-tighter opacity-70">
+                            Index {index} • {Object.keys(item).filter(k => k !== 'id').length} Campos
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Eliminar item"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Body */}
+            {expanded && (
+                <div className="p-6 border-t border-border bg-gradient-to-b from-transparent to-muted/5 space-y-6 animate-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {schema.map(subKey => {
+                            const type = getFieldType(subKey, item[subKey]);
+                            return (
+                                <div key={subKey} className={`space-y-2 ${type === 'image' ? 'md:col-span-2' : ''}`}>
+                                    <label className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                                        {subKey}
+                                    </label>
+                                    
+                                    {type === 'image' ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                                            <div className="sm:col-span-3 space-y-3">
+                                                <div className="relative group/input">
+                                                    <input 
+                                                        type="text" 
+                                                        value={item[subKey] || ""} 
+                                                        onChange={(e) => onUpdate(subKey, e.target.value)}
+                                                        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 focus:border-primary focus:outline-none transition-all pr-12"
+                                                        placeholder="https://ejemplo.com/imagen.webp"
+                                                    />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => triggerUpload?.({ type: 'metadata', key: fieldKey, index, subKey })}
+                                                        className="absolute right-2 top-2 p-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors"
+                                                        title="Subir archivo"
+                                                    >
+                                                        {isUploading && uploadTarget?.index === index && uploadTarget?.subKey === subKey ? (
+                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                        ) : (
+                                                            <ImageIcon className="w-4 h-4" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground italic px-1">Ruta absoluta o relativa al repositorio</p>
+                                            </div>
+                                            <div className="sm:col-span-2 flex items-center justify-center sm:justify-end">
+                                                <div className="relative aspect-video w-full max-w-[200px] rounded-xl overflow-hidden border-2 border-border bg-muted/20 shadow-inner group/preview">
+                                                    <img 
+                                                        src={convertToGitHubRawUrl(item[subKey] || '', repoId)} 
+                                                        alt="Vista previa" 
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover/preview:scale-110"
+                                                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/121212/333333?text=Sin+Imagen'; }}
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <span className="text-[10px] text-white font-bold tracking-widest uppercase">Vista Previa</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : type === 'date' ? (
+                                        <div className="relative">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                                            <input 
+                                                type="date"
+                                                value={item[subKey] ? (typeof item[subKey] === 'string' && item[subKey].includes('T') ? item[subKey].split('T')[0] : item[subKey]) : ""}
+                                                onChange={(e) => onUpdate(subKey, e.target.value)}
+                                                className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all [color-scheme:dark]"
+                                            />
+                                        </div>
+                                    ) : type === 'number' ? (
+                                        <div className="relative">
+                                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                                            <input 
+                                                type="number"
+                                                value={item[subKey] || 0}
+                                                onChange={(e) => onUpdate(subKey, parseFloat(e.target.value))}
+                                                className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="relative">
+                                            <Type className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                                            <input 
+                                                type="text"
+                                                value={item[subKey] || ""}
+                                                onChange={(e) => onUpdate(subKey, e.target.value)}
+                                                className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
+                                                placeholder={`Escribe ${subKey}...`}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>
