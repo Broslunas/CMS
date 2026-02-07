@@ -26,7 +26,7 @@ export default async function ReposPage({
   const session = await auth();
   const params = await searchParams;
 
-  if (!session?.user) {
+  if (!session?.user || session.error === "RefreshAccessTokenError") {
     redirect("/");
   }
 

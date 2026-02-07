@@ -13,7 +13,7 @@ import { ObjectId } from "mongodb";
 export default async function DashboardPage() {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user || session.error === "RefreshAccessTokenError") {
     redirect("/");
   }
 

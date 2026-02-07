@@ -7,13 +7,40 @@ import { Octokit } from "@octokit/rest";
  */
 export async function checkAppInstalled(accessToken: string): Promise<boolean> {
   try {
-    const octokit = new Octokit({ auth: accessToken });
+    if (!accessToken) {
+      console.error('No access token provided to checkAppInstalled');
+      return false;
+    }
+
+    console.log(`Checking app installation with token (length: ${accessToken.length}, prefix: ${accessToken.substring(0, 4)}...)`);
+    const octokit = new Octokit({ 
+      auth: accessToken.trim(),
+      request: {
+        fetch: fetch,
+        timeout: 5000,
+      }
+    });
+    
+    // Debug: Verificar el usuario autenticado
+    try {
+      const { data: user } = await octokit.rest.users.getAuthenticated();
+      console.log(`Authenticated as: ${user.login} (${user.id})`);
+    } catch (userError: any) {
+      console.error('FAIL: GET /user failed with token:', userError.status, userError.message);
+      if (userError.response) {
+        try {
+          console.error('Response body:', JSON.stringify(userError.response.data));
+          console.error('Response headers:', JSON.stringify(userError.response.headers));
+        } catch (e) {
+          console.error('Could not log response details');
+        }
+      }
+      return false;
+    }
     
     // Obtener todas las instalaciones de apps del usuario
-    const { data: installations } = await octokit.request('GET /user/installations', {
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
+    const { data: installations } = await octokit.apps.listInstallationsForAuthenticatedUser({
+      per_page: 100,
     });
 
     const appName = process.env.GITHUB_APP_NAME;
@@ -24,14 +51,24 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
     }
 
     // Verificar si nuestra app está en la lista
-    const installedSlugs = installations.installations.map((i: any) => i.app_slug);
-    const ourApp = installations.installations.find(
+    const ourApp = (installations as any).installations?.find(
       (installation: any) => installation.app_slug === appName
     );
 
+    if (ourApp) {
+      console.log(`App "${appName}" found with installation ID: ${ourApp.id}`);
+    } else {
+      const availableApps = (installations as any).installations?.map((i: any) => i.app_slug).join(', ') || 'none';
+      console.log(`App "${appName}" not found in user installations. Available apps: ${availableApps}`);
+    }
+
     return !!ourApp;
-  } catch (error) {
-    console.error('Error checking app installation:', error);
+  } catch (error: any) {
+    if (error.status === 401) {
+      console.error('Error checking app installation: Unauthorized (401). This typically means the access token is invalid or missing the required "read:org" scope.');
+    } else {
+      console.error('Error checking app installation:', error.message || error);
+    }
     return false;
   }
 }
@@ -56,7 +93,12 @@ export function getAppInstallUrl(): string {
  */
 export async function getInstallationId(accessToken: string): Promise<number | null> {
   try {
-    const octokit = new Octokit({ auth: accessToken });
+    const octokit = new Octokit({ 
+      auth: accessToken.trim(),
+      request: {
+        fetch: fetch,
+      } 
+    });
     
     const { data: installations } = await octokit.request('GET /user/installations', {
       headers: {
@@ -74,8 +116,12 @@ export async function getInstallationId(accessToken: string): Promise<number | n
     );
 
     return ourApp ? ourApp.id : null;
-  } catch (error) {
-    console.error('Error getting installation ID:', error);
+  } catch (error: any) {
+    if (error.status === 401) {
+      console.error('Error getting installation ID: Unauthorized (401). Verify "read:org" scope.');
+    } else {
+      console.error('Error getting installation ID:', error.message || error);
+    }
     return null;
   }
 }

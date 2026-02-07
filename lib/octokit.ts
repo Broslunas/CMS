@@ -34,7 +34,10 @@ export async function promiseAllWithLimit<T>(
 
 export function getOctokit(accessToken: string) {
   return new Octokit({
-    auth: accessToken,
+    auth: accessToken.trim(),
+    request: {
+      fetch: fetch,
+    }
   });
 }
 
