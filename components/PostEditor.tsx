@@ -132,7 +132,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadTarget, setUploadTarget] = useState<{ type: 'content' | 'metadata', key?: string }>({ type: 'content' });
+  const [uploadTarget, setUploadTarget] = useState<{ type: 'content' | 'metadata', key?: string, index?: number, subKey?: string }>({ type: 'content' });
   const [isCheckingSync, setIsCheckingSync] = useState(false);
   const [uploadFolder, setUploadFolder] = useState("images");
   const [uploadFilename, setUploadFilename] = useState("");
@@ -299,7 +299,17 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
       if (response.ok) {
         const data = await response.json();
         if (uploadTarget.type === 'metadata' && uploadTarget.key) {
-          updateMetadata(uploadTarget.key, data.url);
+          if (uploadTarget.index !== undefined && uploadTarget.subKey) {
+            // Nested array metadata update
+            const array = [...(metadata[uploadTarget.key] || [])];
+            if (array[uploadTarget.index]) {
+              array[uploadTarget.index] = { ...array[uploadTarget.index], [uploadTarget.subKey]: data.url };
+              updateMetadata(uploadTarget.key, array);
+            }
+          } else {
+            // Simple metadata update
+            updateMetadata(uploadTarget.key, data.url);
+          }
           toast.success("Imagen subida y actualizada");
         } else {
           insertText(`![${file.name}](${data.url})`, "");
@@ -318,7 +328,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     }
   };
 
-  const triggerUpload = (target: { type: 'content' | 'metadata', key?: string }) => {
+  const triggerUpload = (target: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string }) => {
     setUploadTarget(target);
     fileInputRef.current?.click();
   };

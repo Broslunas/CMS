@@ -12,9 +12,9 @@ interface MetadataEditorProps {
     onShowAddField: () => void;
     onShowDeleteConfirm: () => void;
     isNew: boolean;
-    triggerUpload: (target: { type: 'content' | 'metadata', key?: string }) => void;
+    triggerUpload: (target: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string }) => void;
     isUploading: boolean;
-    uploadTarget: { type: 'content' | 'metadata', key?: string };
+    uploadTarget: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string };
     suggestedFields: Record<string, any>;
     repoId: string;
 }
