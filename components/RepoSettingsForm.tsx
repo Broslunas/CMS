@@ -124,16 +124,9 @@ export function RepoSettingsForm({
                   <span className="font-semibold text-sm">Shared Repository</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  This repository is shared. Only the owner can configure deployment and storage.
+                  This repository is shared. Only the owner can configure storage.
                 </p>
               </div>
-
-              {projectId && (
-                <div className="space-y-1">
-                  <Label className="text-xs">Project ID (Vercel)</Label>
-                  <Input value={projectId} disabled className="h-8 text-xs bg-muted/50" />
-                </div>
-              )}
             </div>
           ) : (
             <>
@@ -200,9 +193,15 @@ export function RepoSettingsForm({
           </h3>
 
           {isSharedRepo ? (
-            <div className="bg-blue-500/10 p-3 rounded-md text-xs text-blue-600">
-              Controlled by repository owner.
-            </div>
+            <div className="bg-blue-500/10 p-4 rounded-md border border-blue-200">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
+                  <Lock className="h-4 w-4" />
+                  <span className="font-semibold text-sm">Shared Repository</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This repository is shared. Only the owner can configure deployment.
+                </p>
+              </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
