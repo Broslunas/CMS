@@ -6,6 +6,7 @@ import {
     Image as ImageIcon, Calendar, Type, Hash, 
     Loader2, Code2, GripVertical 
 } from "lucide-react";
+import { Switch } from "../ui/switch";
 import { toast } from "sonner";
 import {
     DndContext, 
@@ -543,6 +544,14 @@ function SortableItem({
                                                 onChange={(e) => onUpdate(subKey, parseFloat(e.target.value))}
                                                 className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
                                             />
+                                        </div>
+                                    ) : type === 'boolean' ? (
+                                            <div className="relative flex items-center gap-3 p-3 bg-muted/20 rounded-xl border border-border/50">
+                                            <Switch 
+                                                checked={!!item[subKey]} 
+                                                onCheckedChange={(checked) => onUpdate(subKey, checked)} 
+                                            />
+                                            <span className={`text-sm font-medium transition-colors ${item[subKey] ? 'text-primary' : 'text-muted-foreground'}`}>{item[subKey] ? 'Activado' : 'Desactivado'}</span>
                                         </div>
                                     ) : (
                                         <div className="relative">

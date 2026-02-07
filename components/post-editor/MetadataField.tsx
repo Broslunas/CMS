@@ -5,6 +5,7 @@ import { TranscriptionEditor } from "./TranscriptionEditor";
 import { SectionsEditor } from "./SectionsEditor";
 import { ArrayEditor } from "./ArrayEditor";
 import { SocialLinksEditor } from "../SocialLinksEditor";
+import { Switch } from "../ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -326,7 +327,28 @@ export function MetadataField({
         return ( <div key={key}><div className="flex items-center justify-between mb-2"><label className="text-sm font-medium text-foreground capitalize">{key}</label><button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div><input type="number" value={value} onChange={(e) => onUpdate(key, parseFloat(e.target.value))} className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm" /></div> );
     }
     if (typeof value === "boolean") {
-        return ( <div key={key}><div className="flex items-center justify-between"><label className="flex items-center gap-2"><input type="checkbox" checked={value} onChange={(e) => onUpdate(key, e.target.checked)} className="w-4 h-4 bg-background border-input rounded" /><span className="text-sm font-medium text-foreground capitalize">{key}</span></label><button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div></div> );
+        return ( 
+            <div key={key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border group hover:border-primary/20 transition-all">
+                <div className="flex items-center gap-3">
+                    <Switch 
+                        checked={value} 
+                        onCheckedChange={(checked) => onUpdate(key, checked)} 
+                    />
+                    <label className="text-sm font-medium text-foreground capitalize cursor-pointer select-none" onClick={() => onUpdate(key, !value)}>
+                        {key}
+                    </label>
+                </div>
+                <button 
+                    onClick={() => onDelete(key)} 
+                    className="text-muted-foreground hover:text-destructive transition-colors p-2 hover:bg-destructive/10 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    title={`Eliminar campo ${key}`}
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div> 
+        );
     }
     if (typeof value === "object" && value !== null) {
         return ( <div key={key}><div className="flex items-center justify-between mb-2"><label className="text-sm font-medium text-foreground capitalize">{key}</label><button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div><JsonFieldEditor fieldKey={key} value={value} onChange={(val: any) => onUpdate(key, val)} onDelete={() => onDelete(key)} /></div> );
