@@ -22,6 +22,10 @@ export async function POST(request: NextRequest) {
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
     
+    // Fetch user settings for commit strategy
+    const userSettings = await userCollection.findOne({ type: "settings" });
+    const authorStrategy = userSettings?.githubCommitStrategy || "bot";
+    
     let targetCollection = userCollection;
 
     // Resolve collection if repoId is provided (for shared repos)
@@ -67,7 +71,8 @@ export async function POST(request: NextRequest) {
           repo,
           post.filePath,
           post.sha,
-          `Delete ${post.filePath}`
+          `Delete ${post.filePath}`,
+          { authorStrategy }
         );
       } catch (error: any) {
         console.error("GitHub delete error:", error);

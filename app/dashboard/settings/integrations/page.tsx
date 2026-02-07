@@ -22,6 +22,10 @@ export default function SettingsIntegrationsPage() {
   const [s3Bucket, setS3Bucket] = useState("")
   const [s3PublicUrl, setS3PublicUrl] = useState("")
   const [s3Loading, setS3Loading] = useState(false)
+  
+  // Commit Strategy State
+  const [commitStrategy, setCommitStrategy] = useState("bot")
+  const [commitLoading, setCommitLoading] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -41,6 +45,8 @@ export default function SettingsIntegrationsPage() {
             setS3SecretKey(data.s3SecretKey || "")
             setS3Bucket(data.s3Bucket || "")
             setS3PublicUrl(data.s3PublicUrl || "")
+            // Commit Strategy
+            setCommitStrategy(data.githubCommitStrategy || "bot")
         }
     } catch (error) {
         console.error("Failed to fetch settings", error)
@@ -105,6 +111,29 @@ export default function SettingsIntegrationsPage() {
         toast.error("An error occurred")
     } finally {
         setS3Loading(false)
+    }
+  }
+
+  const onSaveCommitStrategy = async () => {
+    setCommitLoading(true)
+    try {
+        const res = await fetch("/api/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                githubCommitStrategy: commitStrategy 
+            })
+        })
+        
+        if (res.ok) {
+            toast.success("Commit strategy updated")
+        } else {
+            toast.error("Failed to update commit strategy")
+        }
+    } catch (error) {
+        toast.error("An error occurred")
+    } finally {
+        setCommitLoading(false)
     }
   }
 
@@ -212,6 +241,46 @@ export default function SettingsIntegrationsPage() {
                         Manage on GitHub
                     </a>
                 )}
+            </div>
+            {/* Commit Strategy Section */}
+            <Separator className="my-2"/>
+            
+            <div className="space-y-4">
+                 <div>
+                    <h5 className="font-medium text-sm">Commit Authoring</h5>
+                    <p className="text-sm text-muted-foreground">Choose how commits are authored.</p>
+                 </div>
+
+                 <div className="p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-md border text-sm text-blue-800 dark:text-blue-300">
+                    <p className="font-semibold mb-1">Recommended: Use Bot</p>
+                    <p>Using the Bot ensures code consistency and correct attribution. </p>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Author</Label>
+                    <select 
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={commitStrategy}
+                        onChange={(e) => setCommitStrategy(e.target.value)}
+                    >
+                        <option value="bot">Broslunas Bot (Recommended)</option>
+                        <option value="user">My User Account</option>
+                    </select>
+                </div>
+
+                {commitStrategy === "bot" && (
+                    <div className="p-3 bg-yellow-50/50 dark:bg-yellow-900/20 rounded-md border text-sm text-yellow-800 dark:text-yellow-300">
+                        <p className="font-semibold mb-1">Important for Vercel Free Plan</p>
+                        <p>If you are using the Vercel Free plan and your repository is Private, commits made by the Bot <strong>might not trigger automatic builds</strong>.</p>
+                        <p className="mt-1">In that specific case, please switch to &quot;My User Account&quot;.</p>
+                    </div>
+                )}
+
+                 <div className="flex justify-end">
+                    <Button onClick={onSaveCommitStrategy} disabled={commitLoading}>
+                        {commitLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Save Strategy"}
+                    </Button>
+                </div>
             </div>
         </div>
 

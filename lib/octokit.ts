@@ -237,9 +237,16 @@ export async function updateFile(
   path: string,
   content: string,
   message: string,
-  sha?: string
+  sha?: string,
+  options: { authorStrategy?: "bot" | "user" } = {}
 ) {
-  const appOctokit = await getAppOctokit(owner, repo);
+  const { authorStrategy = "bot" } = options;
+  let appOctokit = null;
+  
+  if (authorStrategy === "bot") {
+      appOctokit = await getAppOctokit(owner, repo);
+  }
+
   const octokit = appOctokit || getOctokit(accessToken);
 
   const requestBody: any = {
@@ -251,8 +258,9 @@ export async function updateFile(
     sha, // Si existe, actualiza; si no, crea
   };
 
-  // Only force author if NOT using the App (App auth defaults to Bot user with correct avatar)
-  if (!appOctokit) {
+  // Only force author if NOT using the App AND strategy is 'bot' (fallback mode)
+  // If strategy is 'user', we let GitHub use the authenticated user (no explicit author)
+  if (!appOctokit && authorStrategy === "bot") {
       requestBody.author = COMMIT_AUTHOR;
       requestBody.committer = COMMIT_AUTHOR;
   }
@@ -274,9 +282,16 @@ export async function deleteFile(
   repo: string,
   path: string,
   sha: string,
-  message: string
+  message: string,
+  options: { authorStrategy?: "bot" | "user" } = {}
 ) {
-  const appOctokit = await getAppOctokit(owner, repo);
+  const { authorStrategy = "bot" } = options;
+  let appOctokit = null;
+
+  if (authorStrategy === "bot") {
+      appOctokit = await getAppOctokit(owner, repo);
+  }
+  
   const octokit = appOctokit || getOctokit(accessToken);
 
   const requestBody: any = {
@@ -287,7 +302,7 @@ export async function deleteFile(
     sha,
   };
 
-  if (!appOctokit) {
+  if (!appOctokit && authorStrategy === "bot") {
       requestBody.author = COMMIT_AUTHOR;
       requestBody.committer = COMMIT_AUTHOR;
   }

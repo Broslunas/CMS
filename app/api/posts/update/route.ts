@@ -24,6 +24,10 @@ export async function PUT(request: NextRequest) {
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
     
+    // Fetch user settings for commit strategy
+    const userSettings = await userCollection.findOne({ type: "settings" });
+    const authorStrategy = userSettings?.githubCommitStrategy || "bot";
+    
     let targetCollection = userCollection;
 
     // Resolve collection if repoId is provided
@@ -77,7 +81,8 @@ export async function PUT(request: NextRequest) {
         post.filePath,
         markdownContent,
         `Update ${post.metadata.title || post.filePath}`,
-        post.sha // SHA actual del archivo
+        post.sha, // SHA actual del archivo
+        { authorStrategy }
       );
 
       // Actualizar el SHA en MongoDB

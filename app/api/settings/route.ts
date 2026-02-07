@@ -34,6 +34,7 @@ export async function GET(req: Request) {
         s3SecretKey: settings.s3SecretKey || null,
         s3Bucket: settings.s3Bucket || null,
         s3PublicUrl: settings.s3PublicUrl || null,
+        githubCommitStrategy: settings.githubCommitStrategy || "bot", // Default to bot as recommended
     });
 
   } catch (error) {
@@ -56,7 +57,8 @@ export async function PATCH(req: Request) {
         s3AccessKey,
         s3SecretKey,
         s3Bucket,
-        s3PublicUrl
+        s3PublicUrl,
+        githubCommitStrategy
     } = await req.json();
 
     const client = await clientPromise;
@@ -71,6 +73,7 @@ export async function PATCH(req: Request) {
     if (s3SecretKey !== undefined) update.s3SecretKey = s3SecretKey;
     if (s3Bucket !== undefined) update.s3Bucket = s3Bucket;
     if (s3PublicUrl !== undefined) update.s3PublicUrl = s3PublicUrl;
+    if (githubCommitStrategy !== undefined) update.githubCommitStrategy = githubCommitStrategy;
 
     await userCollection.updateOne(
         { type: "settings" },

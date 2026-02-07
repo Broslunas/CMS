@@ -22,6 +22,10 @@ export async function POST(request: NextRequest) {
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
     
+    // Fetch user settings for commit strategy
+    const userSettings = await userCollection.findOne({ type: "settings" });
+    const authorStrategy = userSettings?.githubCommitStrategy || "bot";
+    
     let targetCollection = userCollection;
     let effectiveUserId = session.user.id; // The 'owner' of the data
 
@@ -92,7 +96,9 @@ export async function POST(request: NextRequest) {
             repo,
             filePath,
             markdownContent,
-            `Create ${metadata.title || filePath}`
+            `Create ${metadata.title || filePath}`,
+            undefined, // sha
+            { authorStrategy }
         );
         createdSha = result.sha;
         commitSha = result.commit;

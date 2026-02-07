@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
     const db = client.db(DB_NAME);
     const userCollection = db.collection(getUserCollectionName(session.user.id));
     
+    // Fetch user settings for commit strategy
+    const userSettings = await userCollection.findOne({ type: "settings" });
+    const authorStrategy = userSettings?.githubCommitStrategy || "bot";
+    
     // Find the post
     let post = await userCollection.findOne({ _id: new ObjectId(postId) });
     let targetCollection = userCollection;
@@ -81,7 +85,9 @@ export async function POST(request: NextRequest) {
                 repo, 
                 newFilePath, 
                 markdownContent, 
-                `Rename ${oldFilePath} to ${newFilePath} (Create)`
+                `Rename ${oldFilePath} to ${newFilePath} (Create)`,
+                undefined,
+                { authorStrategy }
             );
 
             // 2. Delete file at old path
@@ -91,7 +97,8 @@ export async function POST(request: NextRequest) {
                 repo,
                 oldFilePath,
                 post.sha,
-                `Rename ${oldFilePath} to ${newFilePath} (Delete)`
+                `Rename ${oldFilePath} to ${newFilePath} (Delete)`,
+                { authorStrategy }
             );
             
             newSha = createRes.sha;
