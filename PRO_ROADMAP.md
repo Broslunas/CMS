@@ -39,16 +39,7 @@ Esta lista está diseñada para elevar la calidad, funcionalidad y experiencia d
 34. **Previsualización de SVG**: Renderizar SVGs en lugar de mostrar el código en el explorador.
 35. **Integración Unsplash/Pexels**: Buscador de stock photos integrado para insertar directamente.
 
-## 🤖 AI & Automatización (Gemini Power)
-36. **Corrector Gramatical AI**: Revisión de ortografía y estilo con un click.
-37. **Reescritura de Tono**: Botones para "Hacer más formal", "Hacer más corto", "Hacer más divertido".
-38. **Generador SEO Automático**: Sugerir Title y Meta Description basados en el contenido del post.
-39. **Auto-Tagging**: AI analiza el texto y sugiere etiquetas/categorías relevantes.
-40. **Chat con tu Contenido**: Asistente lateral para hacer preguntas sobre tus propios posts ("¿Qué dije sobre X en el post Y?").
-
 ## ⚙️ Sistema & Workflow
-41. **Workflow de Publicación**: Estados visuales (Borrador -> En Revisión -> Programado -> Publicado).
-42. **Roles de Usuario**: Diferenciar entre Admin (todo) y Editor (solo editar contenido, no borrar).
 43. **Audit Logs**: Registro de actividad (quién entró, quién editó qué y cuándo).
 44. **Webhooks Trigger UI**: Botón para disparar un "Rebuild" en Vercel/Netlify manualmente.
 45. **Soporte PWA**: Hacer el CMS instalable como app en escritorio y móvil.

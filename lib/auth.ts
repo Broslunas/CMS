@@ -36,17 +36,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           expiresAt: account.expires_at,
           refreshToken: account.refresh_token,
           user: token.user,
+          // Check app installation on login
+          appInstalled: await checkAppInstalled(account.access_token || ""),
+          lastAppCheck: Date.now(),
         };
       }
 
       // If the token has not expired yet, return it
       if (token.expiresAt && Date.now() < (token.expiresAt as number) * 1000) {
+        // Cache App Installation Check (5 minutes)
+        if (token.accessToken && (token.appInstalled === undefined || Date.now() - ((token.lastAppCheck as number) || 0) > 300000)) {
+            try {
+                token.appInstalled = await checkAppInstalled(token.accessToken as string);
+                token.lastAppCheck = Date.now();
+            } catch (e) {
+                console.error("Error refreshing app installation status in jwt", e);
+            }
+        }
         return token;
       }
 
       // If the access token has expired, try to update it
       if (token.refreshToken) {
-        return await refreshAccessToken(token);
+        const newToken = await refreshAccessToken(token);
+        // Re-check app installation with new token if needed
+        if (newToken.accessToken && !newToken.error) {
+             try {
+                newToken.appInstalled = await checkAppInstalled(newToken.accessToken);
+                newToken.lastAppCheck = Date.now();
+             } catch (e) {
+                console.error("Error refreshing app installation status after token refresh", e);
+             }
+        }
+        return newToken;
       }
 
       return token;
@@ -62,13 +84,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       
       // Verificar si el usuario tiene la app instalada
-      if (session.access_token && !session.error) {
-        try {
-          session.appInstalled = await checkAppInstalled(session.access_token);
-        } catch (error) {
-          console.error("Error checking app installation in session:", error);
-          session.appInstalled = false; // Asumir no instalado si hay error
-        }
+      // Ahora usamos el valor cacheado en el token para evitar llamadas a la API en cada request
+      if (token.appInstalled !== undefined) {
+         session.appInstalled = token.appInstalled as boolean;
       }
       
       return session;

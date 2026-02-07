@@ -18,5 +18,8 @@ declare module "next-auth/jwt" {
     expiresAt?: number;
     refreshToken?: string;
     error?: string;
+    appInstalled?: boolean;
+    lastAppCheck?: number;
+    user?: any;
   }
 }

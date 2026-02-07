@@ -106,7 +106,7 @@ export default function RootLayout({
                 </div>
                 
                 <SiteHeader />
-                <div className="flex-1 relative transition-all duration-300 ease-in-out">{children}</div>
+                <div className="flex-1 relative">{children}</div>
                 <CookieBanner />
               </div>
               <Toaster />
