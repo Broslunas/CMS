@@ -49,7 +49,21 @@ export async function POST(request: NextRequest) {
     // 2. Conectar a MongoDB
     const client = await clientPromise;
     const db = client.db(DB_NAME);
-    const userCollection = db.collection(getUserCollectionName(userId));
+    
+    // Determine target collection and userId
+    let targetCollection = db.collection(getUserCollectionName(userId));
+    let effectiveUserId = userId;
+
+    // Check for shared reference
+    const sharedRef = await targetCollection.findOne({ 
+       type: "shared_project_reference", 
+       repoId 
+    });
+
+    if (sharedRef) {
+        targetCollection = db.collection(getUserCollectionName(sharedRef.ownerId));
+        effectiveUserId = sharedRef.ownerId;
+    }
 
     let imported = 0;
     const errors: string[] = [];
@@ -93,7 +107,7 @@ export async function POST(request: NextRequest) {
               status: "synced",
               lastCommitAt: new Date(),
               updatedAt: new Date(),
-              userId,
+              userId: effectiveUserId,
               repoId,
               filePath,
               createdAt: new Date(),
@@ -117,7 +131,7 @@ export async function POST(request: NextRequest) {
     if (successfulDocs.length > 0) {
       const bulkOps = successfulDocs.map((result: any) => ({
         updateOne: {
-          filter: { type: "post", userId, repoId, filePath: result.document.filePath },
+          filter: { type: "post", userId: effectiveUserId, repoId, filePath: result.document.filePath },
           update: {
             $set: {
               type: result.document.type,
@@ -140,14 +154,14 @@ export async function POST(request: NextRequest) {
         },
       }));
 
-      await userCollection.bulkWrite(bulkOps);
+      await targetCollection.bulkWrite(bulkOps);
       imported = successfulDocs.length;
     }
 
     // 8. Guardar los schemas de las colecciones
     for (const schema of schemas) {
-      await userCollection.updateOne(
-        { type: "schema", userId, repoId, collectionName: schema.name },
+      await targetCollection.updateOne(
+        { type: "schema", userId: effectiveUserId, repoId, collectionName: schema.name },
         {
           $set: {
             type: "schema",
@@ -156,7 +170,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           },
           $setOnInsert: {
-            userId,
+            userId: effectiveUserId,
             repoId,
             createdAt: new Date(),
           },
@@ -166,8 +180,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 9. Guardar/actualizar el proyecto en user collection
-    await userCollection.updateOne(
-      { type: "project", userId, repoId },
+    await targetCollection.updateOne(
+      { type: "project", userId: effectiveUserId, repoId },
       {
         $set: {
           type: "project",
@@ -178,7 +192,7 @@ export async function POST(request: NextRequest) {
           updatedAt: new Date(),
         },
         $setOnInsert: {
-          userId,
+          userId: effectiveUserId,
           repoId,
           createdAt: new Date(),
         },
