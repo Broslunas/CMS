@@ -276,11 +276,12 @@ http://localhost:3000
 - **Mitigation**: Stops once installation is detected or the user leaves the page.
 - **Future Improvement**: Implement webhooks.
 
-### Session Caching
+### Session Caching & Re-verification
 
-- **Impact**: `appInstalled` is cached in the JWT.
-- **Mitigation**: Refreshed on every login and during navigation.
-- **Future Improvement**: Invalidate the cache when changes are detected.
+- **Implementation**: The installation status is now persisted in the database to prevent redirection loops.
+- **Periodic Check**: The system automatically re-verifies the installation status with GitHub every 5 minutes if the user is active.
+- **Behavior**: If the user uninstalls the app, they will be logged out (redirected to /setup) within 5 minutes.
+- **Benefit**: Balances user experience (fast page loads) with security (ensuring the app is still installed).
 
 ---
 

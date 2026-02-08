@@ -17,10 +17,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Check if the user has the app installed
-  if (!session.appInstalled) {
-    redirect("/setup");
-  }
+
 
   const client = await clientPromise;
   const db = client.db(DB_NAME);
