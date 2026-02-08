@@ -13,7 +13,7 @@ export function LoginButtonHeader() {
       className="font-semibold text-primary hover:bg-primary/10 transition-colors"
       onClick={openLoginPopup}
     >
-      Inicia sesión
+      Sign in
     </Button>
   );
 }

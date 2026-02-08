@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+// import { es } from "date-fns/locale"; // Removed
 import Modal from "./Modal";
 import { SocialLinksEditor } from "./SocialLinksEditor";
 import { VersionHistory } from "./VersionHistory";
@@ -837,7 +837,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
                                     <span className="font-semibold text-primary">{range.commit.author.name}</span>
                                     <span className="text-muted-foreground">
                                         {range.commit.committedDate && !isNaN(new Date(range.commit.committedDate).getTime())
-                                            ? formatDistanceToNow(new Date(range.commit.committedDate), { addSuffix: true, locale: es })
+                                            ? formatDistanceToNow(new Date(range.commit.committedDate), { addSuffix: true })
                                             : "Unknown date"}
                                     </span>
                                 </div>

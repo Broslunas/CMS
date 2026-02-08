@@ -13,7 +13,6 @@ export function useGitHubLogin() {
       
       if (event.data === "auth-complete") {
         router.refresh();
-        router.push("/dashboard");
       }
     };
 
