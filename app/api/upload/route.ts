@@ -43,14 +43,54 @@ export async function POST(req: Request) {
             const metadata = await image.metadata();
             
             // Resize if too large (max 1920x1920) to help reduce size
-            if ((metadata.width || 0) > 1920 || (metadata.height || 0) > 1920) {
+            let currentWidth = metadata.width || 0;
+            let currentHeight = metadata.height || 0;
+
+            if (currentWidth > 1920 || currentHeight > 1920) {
                 image = image.resize({
                     width: 1920, 
                     height: 1920, 
                     fit: 'inside', 
                     withoutEnlargement: true 
                 });
+
+                // Update dimensions for watermark calculation
+                const aspectRatio = currentWidth / currentHeight;
+                if (currentWidth > currentHeight) {
+                    currentWidth = 1920;
+                    currentHeight = Math.round(1920 / aspectRatio);
+                } else {
+                    currentHeight = 1920;
+                    currentWidth = Math.round(1920 * aspectRatio);
+                }
             }
+
+            // Add "Broslunas CMS" watermark
+            const fontSize = Math.max(20, Math.floor(currentWidth * 0.03));
+            const margin = Math.floor(fontSize * 1.0);
+            
+            const watermarkSvg = `
+                <svg width="${currentWidth}" height="${currentHeight}" viewBox="0 0 ${currentWidth} ${currentHeight}" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .watermark { 
+                            fill: rgba(255, 255, 255, 0.9); 
+                            font-size: ${fontSize}px; 
+                            font-family: Arial, sans-serif; 
+                            font-weight: bold;
+                            stroke: rgba(0,0,0,0.5);
+                            stroke-width: ${Math.max(1, fontSize * 0.05)}px;
+                        }
+                    </style>
+                    <text x="${currentWidth - margin}" y="${currentHeight - margin}" text-anchor="end" class="watermark">Broslunas CMS</text>
+                </svg>
+            `;
+
+            image = image.composite([{
+                input: Buffer.from(watermarkSvg),
+                top: 0,
+                left: 0,
+                blend: 'over'
+            }]);
 
             // Initial conversion attempt
             let outputBuffer = await image.webp({ quality: 80 }).toBuffer();

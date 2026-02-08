@@ -50,6 +50,20 @@ export async function getS3Client(userId: string, repoId?: string, forceDefault:
           };
         }
       }
+    } else if (project) {
+        // If the project exists but has no specific configuration, try to use the owner's global settings
+        // This is critical for shared users to inherit the owner's credentials
+        const globalSettings = await settingsUserCollection.findOne({ type: "settings" });
+        if (globalSettings) {
+          s3Settings = {
+            endpoint: globalSettings.s3Endpoint,
+            region: globalSettings.s3Region,
+            accessKey: globalSettings.s3AccessKey,
+            secretKey: globalSettings.s3SecretKey,
+            bucket: globalSettings.s3Bucket,
+            publicUrl: globalSettings.s3PublicUrl,
+          };
+        }
     }
   }
 
