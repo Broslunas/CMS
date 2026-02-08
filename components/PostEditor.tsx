@@ -146,6 +146,12 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [imageEditorFile, setImageEditorFile] = useState<{file: File, objectUrl: string} | null>(null);
 
+  // Guest Preview State
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewLink, setPreviewLink] = useState("");
+  const [previewExpiresAt, setPreviewExpiresAt] = useState<Date | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+
   useEffect(() => {
     fetch(`/api/storage/status?repoId=${encodeURIComponent(post.repoId)}`)
       .then(res => res.json())
@@ -727,6 +733,40 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     setDiffCurrent(currentFull);
     setShowDiffModal(true);
   };
+  const handleGuestPreview = async () => {
+    setIsGeneratingPreview(true);
+    const toastId = toast.loading("Generating preview link...");
+    
+    try {
+        const res = await fetch("/api/preview/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                postId: isNew ? null : post._id,
+                repoId: post.repoId,
+                collection: post.collection || 'blog',
+                content,
+                metadata
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const url = `${window.location.origin}/preview/${data.token}`;
+            setPreviewLink(url);
+            setPreviewExpiresAt(new Date(data.expiresAt));
+            setShowPreviewModal(true);
+            toast.dismiss(toastId);
+        } else {
+            const err = await res.json();
+            toast.error(err.error || "Error generating preview", { id: toastId });
+        }
+    } catch (e) {
+        toast.error("Connection error", { id: toastId });
+    } finally {
+        setIsGeneratingPreview(false);
+    }
+  };
 
   return (
     <>
@@ -750,7 +790,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
             if (blameRanges.length === 0) loadBlame();
         }}
         onShowHistory={() => setShowHistory(true)}
-
+        onGuestPreview={handleGuestPreview} // Add handler
         onDelete={() => setShowDeleteConfirm(true)}
       />
 
@@ -1580,6 +1620,45 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
           />
       )}
 
+      {/* Guest Preview Modal */}
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title="Guest Preview Link"
+        description="Share this link with anyone without an account to preview this draft."
+        footer={
+           <button
+             onClick={() => setShowPreviewModal(false)}
+             className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors"
+           >
+             Close
+           </button>
+        }
+      >
+        <div className="space-y-4">
+           <div className="bg-muted p-4 rounded-lg break-all font-mono text-sm relative group pr-10">
+              {previewLink}
+              <button
+                onClick={() => {
+                   navigator.clipboard.writeText(previewLink);
+                   toast.success("Link copied!");
+                }}
+                className="absolute right-2 top-2 p-1.5 bg-background border border-border rounded text-muted-foreground hover:text-foreground shadow-sm opacity-60 group-hover:opacity-100 transition-opacity"
+                title="Copy Link"
+              >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              </button>
+           </div>
+           
+           <div className="flex items-start gap-2 text-xs text-muted-foreground bg-yellow-500/10 p-2 rounded text-yellow-700 dark:text-yellow-400">
+              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <p>
+                 This link expires on {previewExpiresAt?.toLocaleString()} (24 hours).
+                 It shows a snapshot of the current draft.
+              </p>
+           </div>
+        </div>
+      </Modal>
     </>
   );
 }
