@@ -1,37 +1,37 @@
-# 🚀 Filtro de Repositorios Astro
+# 🚀 Astro Repository Filter
 
-## ✅ Implementado
+## ✅ Implemented
 
-Ahora el modal de importación **solo muestra repositorios que usan Astro**, haciendo el flujo más limpio y evitando errores de importar repos incompatibles.
+The import modal now **only shows repositories using Astro**, making the workflow cleaner and preventing errors from importing incompatible repositories.
 
 ---
 
-## 🔍 Detección de Astro
+## 🔍 Astro Detection
 
-### Método:
-Se verifica que el repositorio tenga **Astro instalado** revisando el `package.json`:
+### Method:
+A repository is verified to have **Astro installed** by checking its `package.json`:
 
 ```typescript
-// Busca "astro" en dependencies o devDependencies
+// Look for "astro" in dependencies or devDependencies
 {
   "dependencies": {
-    "astro": "^4.0.0"  // ✅ Detectado
+    "astro": "^4.0.0"  // ✅ Detected
   }
 }
 
-// O en devDependencies
+// Or in devDependencies
 {
   "devDependencies": {
-    "astro": "^4.0.0"  // ✅ Detectado
+    "astro": "^4.0.0"  // ✅ Detected
   }
 }
 ```
 
 ---
 
-## 📦 Función Agregada
+## 📦 Added Function
 
-### `isAstroRepo()` en `lib/octokit.ts`
+### `isAstroRepo()` in `lib/octokit.ts`
 
 ```typescript
 export async function isAstroRepo(
@@ -41,32 +41,32 @@ export async function isAstroRepo(
 ): Promise<boolean>
 ```
 
-**Funcionamiento:**
-1. Obtiene `package.json` del repositorio
-2. Lee las dependencies y devDependencies
-3. Retorna `true` si encuentra "astro"
-4. Retorna `false` si no hay package.json o no tiene astro
+**Operation:**
+1. Fetches `package.json` from the repository.
+2. Reads `dependencies` and `devDependencies`.
+3. Returns `true` if "astro" is found.
+4. Returns `false` if `package.json` doesn't exist or doesn't have Astro.
 
-**Manejo de errores:**
-- Si no existe `package.json` → `false`
-- Si hay error de permisos → `false`
-- Si el JSON es inválido → `false`
+**Error Handling:**
+- If `package.json` does not exist → `false`
+- If there is a permissions error → `false`
+- If the JSON is invalid → `false`
 
 ---
 
-## 🔌 API Actualizada
+## 🔌 Updated API
 
-### `/api/repos` - Ahora filtra automáticamente
+### `/api/repos` - Now filters automatically
 
-**Antes:**
+**Before:**
 ```typescript
-// Retornaba TODOS los repos
+// Returned ALL repositories
 return NextResponse.json(repos);
 ```
 
-**Ahora:**
+**After:**
 ```typescript
-// Filtra solo repos con Astro
+// Filters only repositories with Astro
 const astroRepos = [];
 
 for (const repo of repos) {
@@ -83,67 +83,67 @@ return NextResponse.json(astroRepos);
 
 ---
 
-## 🎨 UX Mejorado
+## 🎨 Improved UX
 
-### Modal de Importación
+### Import Modal
 
-**Header actualizado:**
+**Updated Header:**
 ```
 ┌─────────────────────────────┐
-│ Importar Repositorio        │
-│ Solo repositorios con Astro │ ← Nuevo texto
+│ Import Repository           │
+│ Only Astro repositories     │ ← New text
 └─────────────────────────────┘
 ```
 
-**Estado vacío mejorado:**
+**Improved Empty State:**
 ```
-No se encontraron repositorios de Astro
-Asegúrate de tener repositorios con Astro 
-en tu cuenta de GitHub
+No Astro repositories found.
+Make sure you have repositories with Astro 
+in your GitHub account.
 ```
 
 ---
 
-## ⚡ Rendimiento
+## ⚡ Performance
 
-### Optimización:
-- El filtrado se hace **en el servidor** (API route)
-- El cliente solo recibe repos válidos
-- No hay requests innecesarios
+### Optimization:
+- Filtering is done **server-side** (API route).
+- The client only receives valid repos.
+- No unnecessary requests.
 
-### Consideraciones:
-- Para 100 repos, hace ~100 llamadas a GitHub API
-- Se ejecuta secuencialmente para evitar rate limits
-- GitHub tiene límite de 5000 requests/hora (suficiente)
+### Considerations:
+- For 100 repos, it makes ~100 calls to the GitHub API.
+- Executed sequentially to avoid rate limits.
+- GitHub has a limit of 5000 requests/hour (sufficient).
 
-### Posibles mejoras futuras:
-- [ ] Cachear resultados de `isAstroRepo()`
-- [ ] Ejecutar verificaciones en paralelo (batch)
-- [ ] Guardar flag "isAstro" en DB al importar
-
----
-
-## 🎯 Beneficios
-
-1. ✅ **Prevención de errores**: No se pueden importar repos sin Astro
-2. ✅ **UX mejorada**: Lista más pequeña y relevante
-3. ✅ **Claridad**: Usuario sabe que son solo repos de Astro
-4. ✅ **Profesional**: El CMS está especializado en Astro
+### Future Potential Improvements:
+- [ ] Cache `isAstroRepo()` results.
+- [ ] Run checks in parallel (batch).
+- [ ] Save an "isAstro" flag in the DB upon import.
 
 ---
 
-## 📊 Ejemplos de Detección
+## 🎯 Benefits
 
-### ✅ Detectados como Astro:
+1. ✅ **Error Prevention**: Repos without Astro cannot be imported.
+2. ✅ **Improved UX**: Smaller and more relevant list.
+3. ✅ **Clarity**: Users know these are only Astro repositories.
+4. ✅ **Professional**: The CMS is specialized in Astro.
+
+---
+
+## 📊 Detection Examples
+
+### ✅ Detected as Astro:
 ```json
-// Portfolio con Astro
+// Portfolio with Astro
 {
   "dependencies": {
     "astro": "^4.3.0"
   }
 }
 
-// Blog con Astro en devDeps
+// Blog with Astro in devDeps
 {
   "devDependencies": {
     "astro": "^3.6.0"
@@ -151,9 +151,9 @@ en tu cuenta de GitHub
 }
 ```
 
-### ❌ NO detectados:
+### ❌ NOT detected:
 ```json
-// Proyecto React (sin Astro)
+// React Project (without Astro)
 {
   "dependencies": {
     "react": "^18.0.0",
@@ -161,29 +161,29 @@ en tu cuenta de GitHub
   }
 }
 
-// Proyecto sin package.json
-// (HTML estático, etc.)
+// Project without package.json
+// (Static HTML, etc.)
 ```
 
 ---
 
 ## 🔧 Testing
 
-Para probar:
-1. Asegúrate de tener repos con y sin Astro
-2. Abre el modal de importación
-3. Solo deberían aparecer los de Astro
-4. Si no tienes repos de Astro, verás el mensaje de estado vacío
+To test:
+1. Ensure you have repos with and without Astro.
+2. Open the import modal.
+3. Only the Astro ones should appear.
+4. If you have no Astro repos, you will see the empty state message.
 
 ---
 
 ## ✅ Build Status
 
-- **TypeScript**: ✅ Sin errores
-- **Build**: ✅ Exitoso
-- **Archivos modificados**: 2
-- **Función nueva**: `isAstroRepo()`
+- **TypeScript**: ✅ No errors
+- **Build**: ✅ Successful
+- **Modified files**: 2
+- **New function**: `isAstroRepo()`
 
 ---
 
-**Resultado**: Modal inteligente que solo muestra repositorios compatibles con Astro, mejorando la experiencia y evitando errores. 🚀✨
+**Result**: A smart modal that only shows repositories compatible with Astro, improving the experience and avoiding errors. 🚀✨

@@ -1,127 +1,127 @@
-# 🔧 Configuración de GitHub App - Guía Paso a Paso
+# 🔧 GitHub App Configuration - Step-by-Step Guide
 
-## 📝 Antes de Comenzar
+## 📝 Before You Begin
 
-Esta guía es para **crear la GitHub App por primera vez**. Si ya la tienes creada, solo necesitas el slug para `GITHUB_APP_NAME`.
+This guide is for **creating the GitHub App for the first time**. If you have already created it, you only need the slug for `GITHUB_APP_NAME`.
 
 ---
 
-## 1️⃣ Crear la GitHub App
+## 1️⃣ Create the GitHub App
 
-### Paso 1: Ir a la página de creación
+### Step 1: Go to the creation page
 
 **URL**: https://github.com/settings/apps/new
 
-### Paso 2: Llenar el formulario
+### Step 2: Fill out the form
 
-#### **Información Básica**
+#### **Basic Information**
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
-| **GitHub App name** | `Broslunas CMS` (o el nombre que prefieras) |
-| **Description** | `Sistema de gestión de contenido para sitios estáticos` |
-| **Homepage URL** | `http://localhost:3000` (dev) o `https://tu-dominio.com` (prod) |
+| **GitHub App name** | `Broslunas CMS` (or your preferred name) |
+| **Description** | `Content management system for static sites` |
+| **Homepage URL** | `http://localhost:3000` (dev) or `https://your-domain.com` (prod) |
 
 #### **Identifying and authorizing users**
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
 | **Callback URL** | `http://localhost:3000/api/auth/callback/github` |
-| **Request user authorization (OAuth) during installation** | ✅ **MARCAR** |
-| **Enable Device Flow** | ❌ Dejar sin marcar |
+| **Request user authorization (OAuth) during installation** | ✅ **CHECK** |
+| **Enable Device Flow** | ❌ Leave unchecked |
 
 #### **Post installation**
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
-| **Setup URL (optional)** | Dejar vacío |
-| **Redirect on update** | ❌ Dejar sin marcar |
+| **Setup URL (optional)** | Leave blank |
+| **Redirect on update** | ❌ Leave unchecked |
 
 #### **Webhook**
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
-| **Active** | ❌ **DESMARCAR** (no necesitamos webhooks por ahora) |
+| **Active** | ❌ **UNCHECK** (webhooks are not needed for now) |
 
 ---
 
-## 2️⃣ Configurar Permisos
+## 2️⃣ Configure Permissions
 
-### Permisos de Repositorio (Repository permissions)
+### Repository permissions
 
-Scroll hasta la sección **"Permissions"** y configura:
+Scroll to the **"Permissions"** section and configure:
 
-| Permiso | Acceso | ¿Por qué? |
+| Permission | Access | Why? |
 |---------|--------|-----------|
-| **Contents** | `Read and write` | Para leer y escribir archivos en repos |
-| **Metadata** | `Read-only` | (Se activa automáticamente) |
+| **Contents** | `Read and write` | To read and write files in repositories |
+| **Metadata** | `Read-only` | (Automatically enabled) |
 
-**⚠️ IMPORTANTE**: Asegúrate de que **Contents** esté en **Read and write**, no solo Read.
+**⚠️ IMPORTANT**: Ensure that **Contents** is set to **Read and write**, not just Read.
 
-### Permisos de Cuenta (Account permissions)
+### Account permissions
 
-Todos en **No access** (no son necesarios).
+Set all to **No access** (they are not required).
 
 ---
 
-## 3️⃣ Configurar Instalación
+## 3️⃣ Configure Installation
 
 ### Where can this GitHub App be installed?
 
-Opciones:
-- ✅ **Any account** (si quieres que otros instalen tu app)
-- ✅ **Only on this account** (solo para ti - **RECOMENDADO para dev**)
+Options:
+- ✅ **Any account** (if you want others to install your app)
+- ✅ **Only on this account** (only for you - **RECOMMENDED for dev**)
 
-Selecciona: **Only on this account**
-
----
-
-## 4️⃣ Crear la App
-
-Click en el botón verde **"Create GitHub App"** al final del formulario.
+Select: **Only on this account**
 
 ---
 
-## 5️⃣ Obtener Credenciales
+## 4️⃣ Create the App
 
-Después de crear la app, verás la página de configuración:
+Click the green **"Create GitHub App"** button at the end of the form.
+
+---
+
+## 5️⃣ Obtain Credentials
+
+After creating the app, you will see the configuration page:
 
 ### Client ID
 
-Está visible en la página:
+Visible on the page:
 ```
-Client ID: Iv23liABCDEFGHIJKL (ejemplo)
+Client ID: Iv23liABCDEFGHIJKL (example)
 ```
 
-**Acción**: Copiarlo.
+**Action**: Copy it.
 
 ### Client Secret
 
-1. Scroll hasta la sección **"Client secrets"**
-2. Click en **"Generate a new client secret"**
-3. **⚠️ IMPORTANTE**: Copia el secret **INMEDIATAMENTE** (solo se muestra una vez)
+1. Scroll to the **"Client secrets"** section.
+2. Click on **"Generate a new client secret"**.
+3. **⚠️ IMPORTANT**: Copy the secret **IMMEDIATELY** (it is only shown once).
 
 ```
-Secret: ghp_abcdefgh123456789... (ejemplo)
+Secret: ghp_abcdefgh123456789... (example)
 ```
 
 ### App Slug
 
-El slug está en la URL de la página:
+The slug can be found in the page URL:
 
 ```
 https://github.com/settings/apps/broslunas-cms
                                     ^^^^^^^^^^^^
-                                    Este es el slug
+                                    This is the slug
 ```
 
-**O** está visible en la sección **"Basic information"** como **"App slug"**.
+**OR** it is visible in the **"Basic information"** section as **"App slug"**.
 
 ---
 
-## 6️⃣ Actualizar .env
+## 6️⃣ Update .env
 
-Copia las credenciales a tu archivo `.env`:
+Copy the credentials into your `.env` file:
 
 ```bash
 # MongoDB
@@ -129,7 +129,7 @@ MONGODB_URI="mongodb+srv://..."
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="tu-secret-aleatorio"
+NEXTAUTH_SECRET="your-random-secret"
 
 # GitHub App
 GITHUB_ID="Iv23liABCDEFGHIJKL"           # ← Client ID
@@ -139,103 +139,103 @@ GITHUB_APP_NAME="broslunas-cms"           # ← App Slug
 
 ---
 
-## 7️⃣ Instalar la App en tu Cuenta
+## 7️⃣ Install the App on Your Account
 
-### Opción A: Desde la página de la app
+### Option A: From the app page
 
-1. En la página de configuración de tu GitHub App
-2. Sidebar izquierdo → **"Install App"**
-3. Click en **"Install"** junto a tu cuenta
-4. Selecciona repositorios:
-   - ✅ **All repositories** (todos)
-   - ⭕ **Only select repositories** (específicos)
-5. Click en **"Install"**
+1. On your GitHub App configuration page.
+2. Left sidebar → **"Install App"**.
+3. Click **"Install"** next to your account.
+4. Select repositories:
+   - ✅ **All repositories**
+   - ⭕ **Only select repositories** (specific ones)
+5. Click **"Install"**.
 
-### Opción B: Desde la URL directa
+### Option B: From the direct URL
 
-Visita: `https://github.com/apps/[tu-app-slug]/installations/new`
+Visit: `https://github.com/apps/[your-app-slug]/installations/new`
 
-Ejemplo: `https://github.com/apps/broslunas-cms/installations/new`
+Example: `https://github.com/apps/broslunas-cms/installations/new`
 
 ---
 
-## 8️⃣ Verificar la Instalación
+## 8️⃣ Verify the Installation
 
-### En GitHub
+### On GitHub
 
-1. Ve a: https://github.com/settings/installations
-2. Deberías ver tu app listada
+1. Go to: https://github.com/settings/installations
+2. You should see your app listed.
 
-### En el CMS
+### In the CMS
 
-1. Reinicia el servidor de desarrollo:
+1. Restart the development server:
    ```bash
    npm run dev
    ```
 
-2. Cierra sesión si ya estabas logueado
+2. Logout if you were already logged in.
 
-3. Vuelve a hacer login
+3. Log back in.
 
-4. Deberías ir **directo al dashboard** (no a /setup) si la app está instalada
+4. You should go **directly to the dashboard** (not to /setup) if the app is installed.
 
 ---
 
 ## 9️⃣ Testing
 
-### Test 1: Verificar que la app está instalada
+### Test 1: Verify that the app is installed
 
 ```bash
-# En otra terminal, con el servidor corriendo:
+# In another terminal, with the server running:
 curl http://localhost:3000/api/check-installation
 
-# Necesitas estar logueado para que funcione
-# Respuesta esperada:
-# {"installed":true,"message":"GitHub App instalada correctamente"}
+# You need to be logged in for this to work
+# Expected response:
+# {"installed":true,"message":"GitHub App installed correctly"}
 ```
 
-### Test 2: Probar el flujo completo
+### Test 2: Test the complete flow
 
-1. **Abrir en modo incógnito** (para simular nuevo usuario)
-2. Login con GitHub
-3. Si ya instalaste la app → Va a `/dashboard`
-4. Si no la has instalado → Va a `/setup`
+1. **Open in incognito mode** (to simulate a new user).
+2. Login with GitHub.
+3. If you have already installed the app → Go to `/dashboard`.
+4. If you have not installed it → Go to `/setup`.
 
 ---
 
-## 🔄 Actualizar para Producción
+## 🔄 Update for Production
 
-Cuando subas a producción:
+When you deploy to production:
 
-### 1. Actualizar URLs en GitHub App
+### 1. Update URLs in GitHub App
 
-1. Ve a la configuración de tu GitHub App
-2. Sección **"General"**
-3. Actualiza:
-   - **Homepage URL**: `https://cms.broslunas.com`
-   - **Callback URL**: `https://cms.broslunas.com/api/auth/callback/github`
-4. Click en **"Save changes"**
+1. Go to your GitHub App configuration.
+2. **"General"** section.
+3. Update:
+   - **Homepage URL**: `https://cms.yourdomain.com`
+   - **Callback URL**: `https://cms.yourdomain.com/api/auth/callback/github`
+4. Click **"Save changes"**.
 
-### 2. Actualizar variables de entorno
+### 2. Update environment variables
 
-En tu plataforma de hosting (Vercel, Railway, etc.):
+In your hosting platform (Vercel, Railway, etc.):
 
 ```bash
-NEXTAUTH_URL="https://cms.broslunas.com"
-NEXTAUTH_SECRET="nuevo-secret-aleatorio-para-produccion"
-GITHUB_ID="Iv23li..." # (mismo que dev)
-GITHUB_SECRET="ghp_..." # (mismo que dev)
-GITHUB_APP_NAME="broslunas-cms" # (mismo que dev)
+NEXTAUTH_URL="https://cms.yourdomain.com"
+NEXTAUTH_SECRET="new-random-secret-for-production"
+GITHUB_ID="Iv23li..." # (same as dev)
+GITHUB_SECRET="ghp_..." # (same as dev)
+GITHUB_APP_NAME="broslunas-cms" # (same as dev)
 ```
 
-### 3. Cambiar visibilidad de la app (opcional)
+### 3. Change app visibility (optional)
 
-Si quieres que otros usuarios instalen tu app:
+If you want other users to install your app:
 
-1. Configuración de la app → **"General"**
-2. **"Where can this GitHub App be installed?"**
-3. Cambiar a: **"Any account"**
-4. Click en **"Save changes"**
+1. App configuration → **"General"**.
+2. **"Where can this GitHub App be installed?"**.
+3. Change to: **"Any account"**.
+4. Click **"Save changes"**.
 
 ---
 
@@ -243,68 +243,68 @@ Si quieres que otros usuarios instalen tu app:
 
 ### Error: "App is not installed"
 
-**Causa**: No has instalado la app en tu cuenta de GitHub.
+**Cause**: You have not installed the app into your GitHub account.
 
-**Solución**: Ve al paso 7 y completa la instalación.
+**Solution**: Go to step 7 and complete the installation.
 
 ### Error: "Invalid client_id"
 
-**Causa**: El `GITHUB_ID` en `.env` no coincide con el Client ID de la app.
+**Cause**: The `GITHUB_ID` in `.env` does not match the app's Client ID.
 
-**Solución**: 
-1. Ve a la configuración de tu GitHub App
-2. Verifica el Client ID
-3. Actualiza `.env`
-4. Reinicia el servidor
+**Solution**: 
+1. Go to your GitHub App configuration.
+2. Verify the Client ID.
+3. Update your `.env`.
+4. Restart the server.
 
 ### Error: "Resource not accessible by integration"
 
-**Causa**: La app no tiene los permisos correctos.
+**Cause**: The app does not have the correct permissions.
 
-**Solución**:
-1. Ve a la configuración de tu GitHub App
-2. Sección **"Permissions & events"**
-3. Verifica que **Contents** esté en **Read and write**
-4. Si cambiaste permisos, necesitas **re-instalar** la app:
-   - GitHub → Settings → Applications → Installed Apps
-   - Click en tu app → **"Configure"**
-   - Scroll hasta abajo → Click en **"Uninstall"**
-   - Vuelve a instalar (paso 7)
+**Solution**:
+1. Go to your GitHub App configuration.
+2. **"Permissions & events"** section.
+3. Verify that **Contents** is set to **Read and write**.
+4. If you changed permissions, you need to **re-install** the app:
+   - GitHub → Settings → Applications → Installed Apps.
+   - Click on your app → **"Configure"**.
+   - Scroll to the bottom → Click **"Uninstall"**.
+   - Re-install (Step 7).
 
-### La página /setup no redirige automáticamente
+### The /setup page does not redirect automatically
 
-**Verifica**:
-1. La app está realmente instalada en GitHub
-2. El navegador tiene las DevTools abiertas (puede pausar el polling)
-3. Revisa la consola del navegador por errores
-4. Verifica que `/api/check-installation` funcione
-
----
-
-## ✅ Checklist Final
-
-Antes de considerar la configuración completa:
-
-- [ ] GitHub App creada
-- [ ] Permisos: **Contents: Read and write** ✅
-- [ ] Client ID copiado a `.env`
-- [ ] Client Secret generado y copiado a `.env`
-- [ ] App Slug copiado a `.env` como `GITHUB_APP_NAME`
-- [ ] App instalada en tu cuenta de GitHub
-- [ ] Servidor reiniciado después de actualizar `.env`
-- [ ] Login funciona correctamente
-- [ ] Flujo de /setup → /dashboard funciona
-- [ ] Puedes importar repositorios
-- [ ] Puedes editar y guardar posts
+**Verify**:
+1. The app is actually installed on GitHub.
+2. The browser does not have DevTools open (which can pause polling).
+3. Check the browser console for errors.
+4. Verify that `/api/check-installation` is working.
 
 ---
 
-## 📚 Recursos Adicionales
+## ✅ Final Checklist
 
-- [Documentación oficial de GitHub Apps](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps)
-- [Permisos de GitHub Apps](https://docs.github.com/en/rest/overview/permissions-required-for-github-apps)
-- [NextAuth.js con GitHub](https://next-auth.js.org/providers/github)
+Before considering the configuration complete:
+
+- [ ] GitHub App created.
+- [ ] Permissions: **Contents: Read and write** ✅.
+- [ ] Client ID copied to `.env`.
+- [ ] Client Secret generated and copied to `.env`.
+- [ ] App Slug copied to `.env` as `GITHUB_APP_NAME`.
+- [ ] App installed in your GitHub account.
+- [ ] Server restarted after updating `.env`.
+- [ ] Login works correctly.
+- [ ] Flow from /setup → /dashboard works.
+- [ ] You can import repositories.
+- [ ] You can edit and save posts.
 
 ---
 
-**¡Listo!** Tu GitHub App está completamente configurada y lista para producción. 🚀
+## 📚 Additional Resources
+
+- [Official GitHub Apps Documentation](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps)
+- [GitHub App Permissions](https://docs.github.com/en/rest/overview/permissions-required-for-github-apps)
+- [NextAuth.js with GitHub](https://next-auth.js.org/providers/github)
+
+---
+
+**That's it!** Your GitHub App is fully configured and ready for production. 🚀

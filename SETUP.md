@@ -1,106 +1,109 @@
-# 🎯 Guía de Configuración Rápida - Broslunas CMS
+# 🎯 Quick Setup Guide - Broslunas CMS
 
-## Paso 1: MongoDB Atlas
+## Step 1: MongoDB Atlas
 
-1. Ve a https://www.mongodb.com/cloud/atlas/register
-2. Crea una cuenta gratuita
-3. Click en "Build a Database" → Selecciona M0 (Free)
-4. Elige un proveedor (AWS, Google Cloud, Azure)
-5. Click "Create"
-6. En "Security Quickstart":
+1. Go to https://www.mongodb.com/cloud/atlas/register
+2. Create a free account.
+3. Click "Build a Database" → Select M0 (Free).
+4. Choose a provider (AWS, Google Cloud, Azure).
+5. Click "Create".
+6. In "Security Quickstart":
    - Username: `astrocms`
-   - Password: Genera una contraseña segura (guárdala!)
-7. En "Where would you like to connect from?":
-   - Click "Add My Current IP Address"
-   - O agrega `0.0.0.0/0` para permitir todas las IPs (solo para desarrollo)
-8. Click "Finish and Close"
-9. Click en "Connect" → "Connect your application"
-10. Copia la connection string:
+   - Password: Generate a secure password (and save it!).
+7. In "Where would you like to connect from?":
+   - Click "Add My Current IP Address".
+   - Or add `0.0.0.0/0` to allow all IPs (for development only).
+8. Click "Finish and Close".
+9. Click "Connect" → "Connect your application".
+10. Copy the connection string:
     ```
     mongodb+srv://astrocms:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
     ```
-11. Reemplaza `<password>` con tu contraseña real
+11. Replace `<password>` with your actual password.
 
-## Paso 2: GitHub OAuth App
+## Step 2: GitHub App
 
-1. Ve a https://github.com/settings/developers
-2. Click en "OAuth Apps" → "New OAuth App"
-3. Rellena el formulario:
+1. Go to https://github.com/settings/apps/new
+2. Fill out the form:
    ```
-   Application name: Broslunas CMS Local
+   GitHub App name: Broslunas CMS Local
    Homepage URL: http://localhost:3000
-   Authorization callback URL: http://localhost:3000/api/auth/callback/github
+   Callback URL: http://localhost:3000/api/auth/callback/github
    ```
-4. Click "Register application"
-5. **Guarda tu Client ID** (aparece inmediatamente)
-6. Click en "Generate a new client secret"
-7. **Guarda tu Client Secret** (solo se muestra una vez!)
+3. Set **Repository Permissions**:
+   - **Contents**: `Read and write`
+4. Click "Create GitHub App".
+5. **Save your Client ID** (it appears immediately).
+6. Click "Generate a new client secret".
+7. **Save your Client Secret** (it's only shown once!).
+8. **Save the App Slug** (used for `GITHUB_APP_NAME`).
 
-## Paso 3: Variables de Entorno
+## Step 3: Environment Variables
 
-Crea un archivo `.env.local` en la raíz del proyecto:
+Create a `.env` file in the root of the project:
 
 ```bash
 # MongoDB
-MONGODB_URI=mongodb+srv://astrocms:TU_PASSWORD@cluster0.xxxxx.mongodb.net/astro-cms?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://astrocms:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/astro-cms?retryWrites=true&w=majority
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=TU_SECRET_GENERADO
+NEXTAUTH_SECRET=YOUR_GENERATED_SECRET
 
-# GitHub OAuth
-GITHUB_ID=tu-github-client-id
-GITHUB_SECRET=tu-github-client-secret
+# GitHub App
+GITHUB_ID=your-github-client-id
+GITHUB_SECRET=your-github-client-secret
+GITHUB_APP_NAME=your-github-app-slug
 ```
 
-### Generar NEXTAUTH_SECRET
+### Generating NEXTAUTH_SECRET
 
-**En Windows (Git Bash o WSL):**
+**On Windows (Git Bash or WSL):**
 ```bash
 openssl rand -base64 32
 ```
 
-**En Windows (PowerShell):**
+**On Windows (PowerShell):**
 ```powershell
 -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | % {[char]$_})
 ```
 
-**Online (si no tienes OpenSSL):**
-Ve a https://generate-secret.vercel.app/32
+**Online (if you don't have OpenSSL):**
+Visit: https://generate-secret.vercel.app/32
 
-## Paso 4: Instalar y Ejecutar
+## Step 4: Install and Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abre http://localhost:3000
+Open http://localhost:3000
 
-## ✅ Verificación
+## ✅ Verification
 
-1. ¿Se abre la landing page? ✓
-2. ¿Funciona "Continuar con GitHub"? ✓
-3. ¿Te redirige al dashboard después del login? ✓
-4. ¿Ves tus repositorios? ✓
+1. Does the landing page open? ✓
+2. Does "Continue with GitHub" work? ✓
+3. Are you redirected to the dashboard after login? ✓
+4. Can you see your repositories? ✓
 
-## 🐛 Problemas Comunes
+## 🐛 Common Issues
 
 ### Error: "MongooseServerSelectionError"
-- Verifica que tu IP esté permitida en MongoDB Atlas
-- Verifica que la contraseña en la URI sea correcta (sin caracteres especiales sin encodear)
+- Verify that your IP is allowed in MongoDB Atlas.
+- Check that the password in the URI is correct (no unencoded special characters).
 
 ### Error: "OAuthCallbackError"
-- Verifica que las URLs de callback en GitHub coincidan exactamente
-- Verifica que GITHUB_ID y GITHUB_SECRET sean correctos
+- Ensure that the callback URLs in GitHub match exactly.
+- Verify that `GITHUB_ID` and `GITHUB_SECRET` are correct.
 
-### Error: "No se encontraron repositorios"
-- Verifica que tengas repositorios en tu cuenta de GitHub
-- Los repositorios privados requieren el scope `repo` (ya configurado)
+### Error: "No repositories found"
+- Confirm that you have repositories in your GitHub account.
+- Note: Private repositories require the `repo` scope (already configured) and the app to be installed correctly.
 
-## 📞 Soporte
+## 📞 Support
 
-Si tienes problemas, verifica:
-1. Los logs del servidor en la terminal
-2. La consola del navegador (F12)
-3. El README.md principal para documentación completa
+If you encounter problems, check:
+1. Server logs in the terminal.
+2. Browser console (F12).
+3. The main `README.md` for full documentation.

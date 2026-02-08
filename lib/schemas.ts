@@ -1,22 +1,22 @@
 import { z } from "zod";
 
-// Schema para transcription blocks
+// Schema for transcription blocks
 export const TranscriptionBlockSchema = z.object({
   time: z.string(),
   text: z.string(),
 });
 
-// Schema para el metadata del post
+// Schema for post metadata
 export const PostMetadataSchema = z.object({
   title: z.string(),
   slug: z.string(),
   tags: z.array(z.string()).optional(),
   episodeUrl: z.string().url().optional(),
   transcription: z.array(TranscriptionBlockSchema).optional(),
-  // Agregar más campos según necesidades
+  // Add more fields as needed
 });
 
-// Schema completo del post en MongoDB
+// Complete post schema in MongoDB
 export const PostSchema = z.object({
   _id: z.string().optional(),
   userId: z.string(),
@@ -31,7 +31,7 @@ export const PostSchema = z.object({
   updatedAt: z.date(),
 });
 
-// Schema para proyectos importados
+// Schema for imported projects
 export const ProjectSchema = z.object({
   _id: z.string().optional(),
   userId: z.string(),

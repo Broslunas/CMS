@@ -1,12 +1,12 @@
 /**
- * Parsea el archivo config.ts de Astro Content Collections
- * Extrae las definiciones de schemas para cada colección
+ * Parses the Astro Content Collections config.ts file
+ * Extracts schema definitions for each collection
  */
 
 import { getFileContent } from "./octokit";
 
 export interface CollectionSchema {
-  name: string; // Nombre de la colección (blog, projects, etc.)
+  name: string; // Collection name (blog, projects, etc.)
   fields: {
     [key: string]: {
       type: string; // string, number, boolean, array, date, etc.
@@ -14,11 +14,11 @@ export interface CollectionSchema {
       description?: string;
     };
   };
-  rawSchema?: string; // Schema de Zod original (opcional)
+  rawSchema?: string; // Original Zod schema (optional)
 }
 
 /**
- * Extrae las colecciones del config.ts
+ * Extracts collections from config.ts
  */
 export async function parseContentConfig(
   accessToken: string,
@@ -26,7 +26,7 @@ export async function parseContentConfig(
   repo: string
 ): Promise<CollectionSchema[]> {
   try {
-    // Leer el archivo config.ts
+    // Read config.ts file
     const configData = await getFileContent(
       accessToken,
       owner,
@@ -41,7 +41,7 @@ export async function parseContentConfig(
 
     const content = configData.content;
 
-    // Parsear las colecciones definidas
+    // Parse defined collections
     const collections = extractCollections(content);
 
     if (collections.length === 0) {
@@ -57,13 +57,13 @@ export async function parseContentConfig(
 }
 
 /**
- * Extrae las definiciones de colecciones del contenido del config.ts
+ * Extracts collection definitions from config.ts content
  */
 function extractCollections(configContent: string): CollectionSchema[] {
   const collections: CollectionSchema[] = [];
 
-  // Regex para encontrar defineCollection
-  // Ejemplo: blog: defineCollection({ ... })
+  // Regex to find defineCollection
+  // Example: blog: defineCollection({ ... })
   const collectionRegex = /(\w+):\s*defineCollection\s*\(\s*\{([\s\S]*?)\}\s*\)/g;
 
   let match;
@@ -71,7 +71,7 @@ function extractCollections(configContent: string): CollectionSchema[] {
     const collectionName = match[1];
     const collectionBody = match[2];
 
-    // Extraer el schema del body
+    // Extract schema from body
     const schema = extractSchemaFromBody(collectionBody);
 
     collections.push({
@@ -84,12 +84,12 @@ function extractCollections(configContent: string): CollectionSchema[] {
 }
 
 /**
- * Extrae los campos del schema de una colección
+ * Extracts schema fields from a collection
  */
 function extractSchemaFromBody(body: string): CollectionSchema["fields"] {
   const fields: CollectionSchema["fields"] = {};
 
-  // Buscar z.object({ ... })
+  // Search for z.object({ ... })
   const schemaMatch = body.match(/schema:\s*z\.object\s*\(\s*\{([\s\S]*?)\}\s*\)/);
 
   if (!schemaMatch) {
@@ -98,9 +98,9 @@ function extractSchemaFromBody(body: string): CollectionSchema["fields"] {
 
   const schemaContent = schemaMatch[1];
 
-  // Parsear cada campo del schema
-  // Ejemplo: title: z.string()
-  // Ejemplo: tags: z.array(z.string()).optional()
+  // Parse each schema field
+  // Example: title: z.string()
+  // Example: tags: z.array(z.string()).optional()
   const fieldRegex = /(\w+):\s*z\.([\w.()]+)/g;
 
   let fieldMatch;
@@ -115,12 +115,12 @@ function extractSchemaFromBody(body: string): CollectionSchema["fields"] {
 }
 
 /**
- * Parsea una definición de campo de Zod
+ * Parses a Zod field definition
  */
 function parseFieldDefinition(definition: string): CollectionSchema["fields"][string] {
   const optional = definition.includes("optional()");
   
-  // Detectar tipo base
+  // Detect base type
   let type = "string";
   
   if (definition.startsWith("string")) type = "string";
@@ -137,7 +137,7 @@ function parseFieldDefinition(definition: string): CollectionSchema["fields"][st
 }
 
 /**
- * Schema por defecto si no se encuentra config.ts
+ * Default schema if config.ts is not found
  */
 function getDefaultSchema(): CollectionSchema {
   return {
@@ -153,8 +153,7 @@ function getDefaultSchema(): CollectionSchema {
 }
 
 /**
- * Convierte un archivo markdown a un objeto validado
- * usando el schema de la colección correspondiente
+ * Validates markdown metadata against a collection schema
  */
 export function validateAgainstSchema(
   metadata: any,
@@ -163,26 +162,26 @@ export function validateAgainstSchema(
   const errors: string[] = [];
   const validatedData: any = {};
 
-  // Validar cada campo del schema
+  // Validate each schema field
   for (const [fieldName, fieldDef] of Object.entries(schema.fields)) {
     const value = metadata[fieldName];
 
-    // Campo faltante (ya sea opcional o requerido, lo permitimos para editar luego)
+    // Missing field (allow for later editing)
     if (value === undefined || value === null) {
       continue;
     }
 
-    // Validar tipo
+    // Validate type
     const typeValid = validateFieldType(value, fieldDef.type);
     if (!typeValid) {
-      errors.push(`Campo ${fieldName} debe ser de tipo ${fieldDef.type}`);
+      errors.push(`Field ${fieldName} must be of type ${fieldDef.type}`);
       continue;
     }
 
     validatedData[fieldName] = value;
   }
 
-  // Agregar campos extra que no están en el schema (permisivo)
+  // Add extra fields not in schema (permissive)
   for (const [key, value] of Object.entries(metadata)) {
     if (!(key in schema.fields)) {
       validatedData[key] = value;
@@ -197,7 +196,7 @@ export function validateAgainstSchema(
 }
 
 /**
- * Valida si un valor coincide con un tipo
+ * Validates if a value matches a type
  */
 function validateFieldType(value: any, type: string): boolean {
   switch (type) {
@@ -214,16 +213,16 @@ function validateFieldType(value: any, type: string): boolean {
     case "object":
       return typeof value === "object" && !Array.isArray(value);
     default:
-      return true; // Permitir cualquier tipo desconocido
+      return true; // Allow any unknown type
   }
 }
 
 /**
- * Detecta a qué colección pertenece un archivo basándose en su ruta
+ * Detects which collection a file belongs to based on its path
  */
 export function detectCollectionFromPath(filePath: string): string {
-  // Ejemplo: src/content/blog/post.md -> "blog"
-  // Ejemplo: src/content/projects/project.md -> "projects"
+  // Example: src/content/blog/post.md -> "blog"
+  // Example: src/content/projects/project.md -> "projects"
   const match = filePath.match(/src\/content\/([^/]+)\//);
   return match ? match[1] : "blog";
 }

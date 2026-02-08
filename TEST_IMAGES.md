@@ -1,23 +1,23 @@
-# Test de Imágenes con Rutas Relativas
+# Image Test with Relative Paths
 
-Este archivo es para probar que las imágenes con rutas relativas se convierten correctamente a URLs de GitHub raw.
+This file is for testing that images with relative paths are correctly converted to raw GitHub URLs.
 
-## Ejemplos de rutas:
+## Path Examples:
 
-### 1. Ruta absoluta desde la raíz del repositorio:
+### 1. Absolute path from the repository root:
 ![Stats](/src/assets/img/posts/stats.webp)
 
-### 2. Ruta relativa sin barra inicial:
+### 2. Relative path without a leading slash:
 ![Example](src/assets/img/posts/example.png)
 
-### 3. URL completa (no debería modificarse):
+### 3. Full URL (should not be modified):
 ![Remote](https://example.com/image.jpg)
 
-### 4. Ruta relativa con ./
+### 4. Relative path with ./
 ![Local](./images/test.png)
 
-## Notas:
-- Las rutas que empiezan con `/` se convierten a: `https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/main/ruta`
-- Las rutas sin `/` también se convierten agregando `/` antes de la ruta
-- Las URLs completas (http/https) no se modifican
-- Las rutas con `./` o `../` tampoco se modifican (quedan relativas)
+## Notes:
+- Paths starting with `/` are converted to: `https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/main/path`
+- Paths without `/` are also converted by adding `/` before the path.
+- Full URLs (http/https) remain unmodified.
+- Paths with `./` or `../` are also left unmodified (they stay relative).

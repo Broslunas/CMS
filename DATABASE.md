@@ -1,23 +1,23 @@
-# 🗄️ Estructura de Base de Datos - MongoDB
+# 🗄️ Database Structure - MongoDB
 
 ## Database: `astro-cms`
 
 ---
 
-## 📊 Colecciones
+## 📊 Collections
 
 ### 1. **Collection: `posts`**
 
-Almacena cada archivo Markdown importado de los repositorios.
+Stores each Markdown file imported from the repositories.
 
 **Schema:**
 ```javascript
 {
   _id: ObjectId,
-  userId: String,              // ID del usuario de GitHub
+  userId: String,              // GitHub user ID
   repoId: String,              // "owner/repo"
   filePath: String,            // "src/content/blog/post/index.md"
-  sha: String,                 // SHA del archivo en GitHub
+  sha: String,                 // File SHA on GitHub
   metadata: {
     title: String,
     slug: String,
@@ -28,7 +28,7 @@ Almacena cada archivo Markdown importado de los repositorios.
       text: String
     }>
   },
-  content: String,             // Contenido Markdown
+  content: String,             // Markdown content
   status: String,              // "synced" | "modified" | "draft"
   lastCommitAt: Date,
   createdAt: Date,
@@ -36,53 +36,53 @@ Almacena cada archivo Markdown importado de los repositorios.
 }
 ```
 
-**Índices:**
+**Indexes:**
 ```javascript
 { userId: 1, repoId: 1, filePath: 1 } // Unique
 ```
 
-**Operaciones:**
-- **Crear/Actualizar**: `/api/import` (importar repo)
-- **Actualizar**: `/api/posts/update` (editar post)
-- **Leer**: `/api/posts` (listar posts)
+**Operations:**
+- **Create/Update**: `/api/import` (import repo)
+- **Update**: `/api/posts/update` (edit post)
+- **Read**: `/api/posts` (list posts)
 
 ---
 
 ### 2. **Collection: `projects`**
 
-Almacena información de cada repositorio importado.
+Stores information about each imported repository.
 
 **Schema:**
 ```javascript
 {
   _id: ObjectId,
-  userId: String,              // ID del usuario de GitHub
-  repoId: String,              // "owner/repo" (unique por usuario)
-  name: String,                // Nombre del repositorio
-  description: String,         // Descripción del repo
-  postsCount: Number,          // Cantidad de posts importados
-  lastSync: Date,              // Última sincronización
+  userId: String,              // GitHub user ID
+  repoId: String,              // "owner/repo" (unique per user)
+  name: String,                // Repository name
+  description: String,         // Repo description
+  postsCount: Number,          // Number of imported posts
+  lastSync: Date,              // Last synchronization
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
-**Índices:**
+**Indexes:**
 ```javascript
 { userId: 1, repoId: 1 } // Unique
 ```
 
-**Operaciones:**
-- **Crear/Actualizar**: `/api/import` (al importar posts)
-- **Leer**: `/api/projects` (listar proyectos)
+**Operations:**
+- **Create/Update**: `/api/import` (when importing posts)
+- **Read**: `/api/projects` (list projects)
 
 ---
 
 ### 3. **Collection: `users`** (NextAuth)
 
-Creada automáticamente por NextAuth con MongoDB Adapter.
+Automatically created by NextAuth with the MongoDB Adapter.
 
-**Schema básico:**
+**Basic Schema:**
 ```javascript
 {
   _id: ObjectId,
@@ -97,17 +97,17 @@ Creada automáticamente por NextAuth con MongoDB Adapter.
 
 ### 4. **Collection: `accounts`** (NextAuth)
 
-Almacena las cuentas OAuth vinculadas.
+Stores linked OAuth accounts.
 
-**Schema básico:**
+**Basic Schema:**
 ```javascript
 {
   _id: ObjectId,
-  userId: ObjectId,           // Referencia a users
+  userId: ObjectId,           // Reference to users
   type: "oauth",
   provider: "github",
   providerAccountId: String,
-  access_token: String,       // Token para GitHub API
+  access_token: String,       // Token for GitHub API
   token_type: "bearer",
   scope: String
 }
@@ -117,9 +117,9 @@ Almacena las cuentas OAuth vinculadas.
 
 ### 5. **Collection: `sessions`** (NextAuth)
 
-Almacena las sesiones activas.
+Stores active sessions.
 
-**Schema básico:**
+**Basic Schema:**
 ```javascript
 {
   _id: ObjectId,
@@ -131,13 +131,13 @@ Almacena las sesiones activas.
 
 ---
 
-## 🔗 Relaciones
+## 🔗 Relationships
 
 ```
 users (NextAuth)
   ├── _id
   └── 1:N → accounts
-            └── access_token (usado para GitHub API)
+            └── access_token (used for GitHub API)
 
 users._id
   └── 1:N → projects
@@ -148,61 +148,61 @@ users._id
 
 ---
 
-## 📍 Flujo de Datos
+## 📍 Data Flow
 
-### Importar Repositorio:
+### Import Repository:
 
 ```
-1. Usuario hace click en "Importar" en el modal
+1. User clicks "Import" in the modal
    ↓
 2. POST /api/import
    ↓
-3. Obtiene access_token de la sesión (NextAuth)
+3. Gets access_token from the session (NextAuth)
    ↓
-4. Llama a GitHub API para listar archivos .md
+4. Calls GitHub API to list .md files
    ↓
-5. Por cada archivo:
-   - Obtiene contenido
-   - Parsea frontmatter
-   - Valida con Zod
-   - Upsert en collection "posts"
+5. For each file:
+   - Gets content
+   - Parses frontmatter
+   - Validates with Zod
+   - Upsert into "posts" collection
    ↓
-6. Upsert en collection "projects"
-   - Guarda metadata del repo
-   - Actualiza postsCount
-   - Actualiza lastSync
+6. Upsert into "projects" collection
+   - Saves repo metadata
+   - Updates postsCount
+   - Updates lastSync
    ↓
-7. Retorna resultado al cliente
+7. Returns result to the client
 ```
 
-### Editar Post:
+### Edit Post:
 
 ```
-1. Usuario edita en el editor
+1. User edits in the editor
    ↓
-2. Click en "Guardar" o "Guardar y Commitear"
+2. Clicks "Save" or "Save & Commit"
    ↓
 3. PUT /api/posts/update
    ↓
-4. Actualiza en collection "posts"
-   └─ Si commitToGitHub = true:
-      ├── Llama a GitHub API (createOrUpdateFile)
-      ├── Actualiza SHA
-      └── Marca status = "synced"
-   └─ Si commitToGitHub = false:
-      └── Marca status = "modified"
+4. Updates in "posts" collection
+   └─ If commitToGitHub = true:
+      ├── Calls GitHub API (createOrUpdateFile)
+      ├── Updates SHA
+      └── Marks status = "synced"
+   └─ If commitToGitHub = false:
+      └── Marks status = "modified"
 ```
 
 ---
 
-## 🔍 Queries Útiles
+## 🔍 Useful Queries
 
-### Ver todos los posts de un usuario:
+### View all posts for a user:
 ```javascript
 db.posts.find({ userId: "github_12345" })
 ```
 
-### Ver posts de un repositorio específico:
+### View posts for a specific repository:
 ```javascript
 db.posts.find({ 
   userId: "github_12345",
@@ -210,13 +210,13 @@ db.posts.find({
 })
 ```
 
-### Ver proyectos importados por un usuario:
+### View projects imported by a user:
 ```javascript
 db.projects.find({ userId: "github_12345" })
   .sort({ updatedAt: -1 })
 ```
 
-### Contar posts pendientes de sync:
+### Count posts pending sync:
 ```javascript
 db.posts.countDocuments({
   userId: "github_12345",
@@ -224,7 +224,7 @@ db.posts.countDocuments({
 })
 ```
 
-### Ver posts sin sincronizar:
+### View unsynced posts:
 ```javascript
 db.posts.find({
   userId: "github_12345",
@@ -234,9 +234,9 @@ db.posts.find({
 
 ---
 
-## 📊 Estadísticas
+## 📊 Statistics
 
-### Total de posts por usuario:
+### Total posts per user:
 ```javascript
 db.posts.aggregate([
   { $match: { userId: "github_12345" } },
@@ -247,7 +247,7 @@ db.posts.aggregate([
 ])
 ```
 
-### Posts por proyecto:
+### Posts per project:
 ```javascript
 db.posts.aggregate([
   { $match: { userId: "github_12345" } },
@@ -260,26 +260,26 @@ db.posts.aggregate([
 
 ---
 
-## 🛠️ Mantenimiento
+## 🛠️ Maintenance
 
-### Eliminar un proyecto y sus posts:
+### Delete a project and its posts:
 ```javascript
-// 1. Eliminar posts
+// 1. Delete posts
 db.posts.deleteMany({ 
   userId: "github_12345",
   repoId: "owner/repo" 
 })
 
-// 2. Eliminar proyecto
+// 2. Delete project
 db.projects.deleteOne({ 
   userId: "github_12345",
   repoId: "owner/repo" 
 })
 ```
 
-### Limpiar posts huérfanos:
+### Clean up orphaned posts:
 ```javascript
-// Posts sin proyecto asociado
+// Posts without an associated project
 db.posts.deleteMany({
   repoId: { 
     $nin: db.projects.distinct("repoId") 
@@ -289,38 +289,38 @@ db.posts.deleteMany({
 
 ---
 
-## ⚠️ Importante
+## ⚠️ Important
 
-1. **No elimines manualmente** datos de `users`, `accounts` o `sessions` - Los maneja NextAuth
-2. **Usa upsert** en lugar de insert para evitar duplicados
-3. **Valida con Zod** antes de guardar datos en `posts`
-4. **Actualiza `postsCount`** al modificar posts en un proyecto
+1. **Do not manually delete** data from `users`, `accounts`, or `sessions` - these are handled by NextAuth.
+2. **Use upsert** instead of insert to avoid duplicates.
+3. **Validate with Zod** before saving data to `posts`.
+4. **Update `postsCount`** when modifying posts in a project.
 
 ---
 
-## 🔐 Seguridad
+## 🔐 Security
 
-Todos los queries incluyen `userId` para asegurar que:
-- Los usuarios solo vean sus propios datos
-- No haya acceso cruzado entre usuarios
-- Se mantenga la privacidad
+All queries include `userId` to ensure:
+- Users only see their own data.
+- There is no cross-access between users.
+- Privacy is maintained.
 
 ```javascript
-// ✅ CORRECTO
+// ✅ CORRECT
 db.posts.find({ userId: session.user.id, repoId: "owner/repo" })
 
-// ❌ INCORRECTO (sin filtro de usuario)
+// ❌ INCORRECT (without user filter)
 db.posts.find({ repoId: "owner/repo" })
 ```
 
 ---
 
-## 📝 Resumen
+## 📝 Summary
 
-- **`posts`**: Archivos Markdown (contenido)
-- **`projects`**: Repositorios importados (metadata)
-- **`users`**: Usuarios autenticados (NextAuth)
-- **`accounts`**: Conexiones OAuth (NextAuth)
-- **`sessions`**: Sesiones activas (NextAuth)
+- **`posts`**: Markdown files (content)
+- **`projects`**: Imported repositories (metadata)
+- **`users`**: Authenticated users (NextAuth)
+- **`accounts`**: OAuth connections (NextAuth)
+- **`sessions`**: Active sessions (NextAuth)
 
-**Total**: 5 colecciones en la base de datos `astro-cms`
+**Total**: 5 collections in the `astro-cms` database

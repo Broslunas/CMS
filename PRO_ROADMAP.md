@@ -1,50 +1,50 @@
-# 🚀 Roadmap: 50 Features para un CMS "Super Pro"
+# 🚀 Roadmap: 50 Features for a "Super Pro" CMS
 
-Esta lista está diseñada para elevar la calidad, funcionalidad y experiencia de usuario de Broslunas CMS a un nivel premium y profesional.
+This list is designed to elevate the quality, functionality, and user experience of Broslunas CMS to a premium and professional level.
 
-## 🎨 UI/UX & Experiencia Visual (Premium Feel)
-3.  **Skeleton Loaders Inteligentes**: Reemplazar spinners con esqueletos pulsantes que imitan la estructura del contenido.
-5.  **Menús Contextuales (Click Derecho)**: Acciones rápidas (Renombrar, Borrar, Duplicar) en el explorador de archivos.
-7.  **Breadcrumbs Dinámicos**: Navegación de migas de pan con dropdowns para hermanos de carpeta.
-8.  **Modo Zen (Focus Mode)**: Botón para ocultar barras laterales y centrarse solo en el editor.
-9.  **Paneles Redimensionables**: Permitir al usuario ajustar el ancho del editor vs la previsualización.
-10. **Diseño Glassmorphism**: Toques sutiles de desenfoque y transparencias en modales y barras flotantes.
+## 🎨 UI/UX & Visual Experience (Premium Feel)
+3.  **Smart Skeleton Loaders**: Replace spinners with pulsing skeletons that mimic the content structure.
+5.  **Context Menus (Right-Click)**: Rapid actions (Rename, Delete, Duplicate) in the file explorer.
+7.  **Dynamic Breadcrumbs**: Breadcrumb navigation with dropdowns for sibling folders.
+8.  **Zen Mode (Focus Mode)**: A button to hide sidebars and focus solely on the editor.
+9.  **Resizable Panels**: Allow users to adjust the width of the editor vs. the preview.
+10. **Glassmorphism Design**: Subtle blur and transparency touches in modals and floating bars.
 
-## ✍️ Editor & Gestión de Contenido (Core)
-11. **Edición Multi-curso**: Soporte para editar múltiples líneas a la vez en el editor de código/texto.
-12. **Barra de Herramientas Flotante**: Al seleccionar texto, mostrar opciones de formato (Negrita, Link, H1/H2).
-13. **Drag & Drop de Imágenes**: Arrastrar imágenes directamente al editor Markdown y subirlas automáticamente.
-14. **Pegado Inteligente**: Pegar una imagen del portapapeles y que se convierta en un archivo en `assets`.
-15. **Índice Automático (TOC)**: Generar tabla de contenidos lateral navegable para posts largos.
-16. **Comandos "Slash" (`/`)**: Menú emergente al escribir `/` para insertar componentes, imágenes o tablas.
-17. **Contador en Tiempo Real**: Palabras, caracteres y tiempo de lectura estimado mientras escribes.
-18. **Syntax Highlighting en Vivo**: Colores para bloques de código dentro del editor Markdown.
-19. **Validación de Schema Visual**: Si falta un campo requerido del frontmatter, marcarlo en rojo visualmente.
-20. **Selector de Fecha/Hora Visual**: Calendario pop-up para campos de fecha.
+## ✍️ Editor & Content Management (Core)
+11. **Multi-cursor Editing**: Support for editing multiple lines simultaneously in the code/text editor.
+12. **Floating Toolbar**: Display formatting options (Bold, Link, H1/H2) upon selecting text.
+13. **Drag & Drop Images**: Drag images directly into the Markdown editor for automatic upload.
+14. **Smart Paste**: Paste an image from the clipboard to automatically convert it into a file in `assets`.
+15. **Automatic Table of Contents (TOC)**: Generate a navigable side TOC for long posts.
+16. **Slash Commands (`/`)**: A popup menu triggered by typing `/` to insert components, images, or tables.
+17. **Real-time Counter**: Word, character, and estimated reading time counters while writing.
+18. **Live Syntax Highlighting**: Colors for code blocks within the Markdown editor.
+19. **Visual Schema Validation**: Visually highlight in red any missing required frontmatter fields.
+20. **Visual Date/Time Picker**: Pop-up calendar for date fields.
 
 ## 🐙 Git & GitHub Integration (DevFlow)
-23. **Gestión de Ramas (Branches)**: Crear, cambiar y fusionar ramas desde el dashboard.
-24. **Estado de Pull Requests**: Ver si hay PRs abiertos y su estado (aprobado, fallido).
-25. **Resolución de Conflictos UI**: Interfaz gráfica para elegir "Mine" o "Theirs" si hay conflictos de edición.
-26. **Mensajes de Commit con AI**: Generar mensajes de commit descriptivos automáticamente basados en los cambios.
-27. **Indicadores de Estado de Archivo**: Iconos de colores (🟢 Nuevo, 🟡 Modificado, 🔴 Borrado) en el árbol de archivos.
-28. **Git Blame Integrado**: Ver quién editó una línea específica y cuándo (hover en el margen).
-29. **Indicador de Sync Real-time**: Icono de estado que muestra si los cambios están sincronizados con GitHub.
-30. **Commits Selectivos**: Checkbox para elegir qué archivos incluir en un guardado (Commit por partes).
+23. **Branch Management**: Create, switch, and merge branches directly from the dashboard.
+24. **Pull Request Status**: View open PRs and their status (approved, failed).
+25. **UI Conflict Resolution**: A graphical interface to choose "Mine" or "Theirs" during editing conflicts.
+26. **AI Commit Messages**: Automatically generate descriptive commit messages based on changes.
+27. **File Status Indicators**: Colored icons (🟢 New, 🟡 Modified, 🔴 Deleted) in the file tree.
+28. **Integrated Git Blame**: See who edited a specific line and when (on hover in the margin).
+29. **Real-time Sync Indicator**: A status icon showing if changes are synchronized with GitHub.
+30. **Selective Commits**: Checkboxes to choose which files to include in a save (Partial Commits).
 
 ## 🖼️ Media & Assets
-31. **Optimización Automática**: Convertir imágenes a WebP/AVIF al subirlas.
-32. **Editor de Imágenes Básico**: Recortar, rotar y redimensionar imágenes dentro del CMS.
-33. **Librería de Medios Global**: Explorador visual de todas las imágenes del repo con búsqueda y filtros.
-34. **Previsualización de SVG**: Renderizar SVGs en lugar de mostrar el código en el explorador.
-35. **Integración Unsplash/Pexels**: Buscador de stock photos integrado para insertar directamente.
+31. **Automatic Optimization**: Convert images to WebP/AVIF upon upload.
+32. **Basic Image Editor**: Crop, rotate, and resize images within the CMS.
+33. **Global Media Library**: A visual explorer for all images in the repo with search and filters.
+34. **SVG Preview**: Render SVGs instead of showing code in the explorer.
+35. **Unsplash/Pexels Integration**: Integrated stock photo search for direct insertion.
 
-## ⚙️ Sistema & Workflow
-43. **Audit Logs**: Registro de actividad (quién entró, quién editó qué y cuándo).
-44. **Webhooks Trigger UI**: Botón para disparar un "Rebuild" en Vercel/Netlify manualmente.
-45. **Soporte PWA**: Hacer el CMS instalable como app en escritorio y móvil.
-46. **Widgets Personalizables**: Dashboard con widgets movibles (Métricas, Últimos posts, Calendario).
-47. **Soporte i18n Nativo**: UI para gestionar traducciones de campos si el contenido es multiidioma.
-48. **Bloqueo de Archivos**: Avisar si otro usuario está editando el mismo archivo (soft-lock).
-49. **Papelera de Reciclaje**: "Soft delete" que mueve archivos a una carpeta `_trash` antes de borrar permanentemente.
-50. **Onboarding Tour**: Guía interactiva paso a paso para nuevos usuarios la primera vez que entran.
+## ⚙️ System & Workflow
+43. **Audit Logs**: Activity logs (who logged in, who edited what, and when).
+44. **Webhook Trigger UI**: A button to manually trigger a "Rebuild" on Vercel/Netlify.
+45. **PWA Support**: Make the CMS installable as an app on desktop and mobile.
+46. **Customizable Widgets**: A dashboard featuring draggable widgets (Metrics, Latest posts, Calendar).
+47. **Native i18n Support**: UI for managing field translations for multi-language content.
+48. **File Locking**: Warn if another user is editing the same file (soft-lock).
+49. **Recycle Bin**: "Soft delete" that moves files to a `_trash` folder before permanent deletion.
+50. **Onboarding Tour**: An interactive step-by-step guide for first-time users.

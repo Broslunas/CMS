@@ -1,156 +1,156 @@
-# 🔐 Flujo de Instalación de GitHub App - Nuevos Usuarios
+# 🔐 GitHub App Installation Flow - New Users
 
-## 📋 Resumen
+## 📋 Overview
 
-Cuando un nuevo usuario se registra en el CMS, primero obtiene acceso básico a su cuenta (email, nombre, foto) mediante GitHub OAuth. Sin embargo, para poder gestionar contenido, **debe instalar la GitHub App** que otorga los permisos necesarios para leer y escribir en sus repositorios.
+When a new user registers with the CMS, they first obtain basic access to their account (email, name, photo) through GitHub OAuth. However, to manage content, **they must install the GitHub App**, which grants the necessary permissions to read and write to their repositories.
 
 ---
 
-## 🔄 Flujo Completo de Usuario Nuevo
+## 🔄 Complete New User Flow
 
-### 1. **Inicio de Sesión (GitHub OAuth)**
+### 1. **Login (GitHub OAuth)**
 
 ```
-Usuario → Hace clic en "Login con GitHub"
+User → Clicks "Login with GitHub"
     ↓
-NextAuth → Autentica con GitHub OAuth
+NextAuth → Authenticates with GitHub OAuth
     ↓
-Usuario → Obtiene sesión con:
+User → Obtains a session with:
     - ✅ Email
-    - ✅ Nombre
-    - ✅ Foto de perfil
+    - ✅ Name
+    - ✅ Profile Picture
     - ✅ Access Token
-    - ❌ GitHub App NO instalada (appInstalled: false)
+    - ❌ GitHub App NOT installed (appInstalled: false)
 ```
 
-### 2. **Verificación Automática**
+### 2. **Automatic Verification**
 
 ```
-Sesión creada
+Session created
     ↓
-auth.ts (callback) → Verifica si tiene la app instalada
+auth.ts (callback) → Checks if the app is installed
     ↓
-checkAppInstalled() → Consulta GitHub API
+checkAppInstalled() → Queries GitHub API
     ↓
 session.appInstalled = false
 ```
 
-### 3. **Redirección a Setup**
+### 3. **Redirection to Setup**
 
 ```
-Usuario intenta acceder a /dashboard
+User tries to access /dashboard
     ↓
-Dashboard page → Verifica session.appInstalled
+Dashboard page → Verifies session.appInstalled
     ↓
 appInstalled === false → redirect("/setup")
 ```
 
-### 4. **Página de Setup (/setup)**
+### 4. **Setup Page (/setup)**
 
-El usuario ve una página guiada con:
+The user sees a guided page with:
 
-- **Instrucciones paso a paso** para instalar la app
-- **Botón para instalar** que abre GitHub en nueva pestaña
-- **Verificación automática** cada 3 segundos
+- **Step-by-step instructions** to install the app
+- **Install button** that opens GitHub in a new tab
+- **Automatic verification** every 3 seconds
 
 ```tsx
-Setup Page muestra:
-  1. Instala la GitHub App
-  2. Selecciona tus repositorios  
-  3. ¡Comienza a trabajar!
+Setup Page shows:
+  1. Install the GitHub App
+  2. Select your repositories  
+  3. Start working!
 
-Botón: "Instalar GitHub App"
-  → Abre: https://github.com/apps/{GITHUB_APP_NAME}/installations/new
+Button: "Install GitHub App"
+  → Opens: https://github.com/apps/{GITHUB_APP_NAME}/installations/new
 ```
 
-### 5. **Instalación en GitHub**
+### 5. **Installation on GitHub**
 
 ```
-Usuario hace clic en "Instalar GitHub App"
+User clicks "Install GitHub App"
     ↓
-GitHub → Muestra página de instalación
+GitHub → Shows the installation page
     ↓
-Usuario selecciona:
-    - [ ] All repositories (todos)
-    - [ ] Only select repositories (específicos)
+User selects:
+    - [ ] All repositories
+    - [ ] Only select repositories
     ↓
-Usuario hace clic en "Install"
+User clicks "Install"
     ↓
-GitHub → Instala la app
+GitHub → Installs the app
     ↓
-Usuario cierra la pestaña / vuelve al CMS
+User closes the tab / returns to the CMS
 ```
 
-### 6. **Detección Automática**
+### 6. **Automatic Detection**
 
-Mientras el usuario está en `/setup`:
+While the user is on `/setup`:
 
 ```
 InstallationChecker (component)
     ↓
-Cada 3 segundos:
+Every 3 seconds:
     → fetch('/api/check-installation')
     → checkAppInstalled(access_token)
-    → Consulta GitHub API
+    → Queries GitHub API
     ↓
-Si installed === true:
+If installed === true:
     → router.push('/dashboard')
-    → router.refresh() // Actualiza la sesión
+    → router.refresh() // Refreshes the session
 ```
 
-### 7. **Acceso al Dashboard**
+### 7. **Dashboard Access**
 
 ```
-Usuario redirigido a /dashboard
+User redirected to /dashboard
     ↓
-auth() → Nueva sesión con appInstalled: true
+auth() → New session with appInstalled: true
     ↓
-Dashboard → Muestra proyectos
+Dashboard → Displays projects
     ↓
-Usuario puede:
-    ✅ Importar repositorios
-    ✅ Editar posts
-    ✅ Hacer commits a GitHub
+User can:
+    ✅ Import repositories
+    ✅ Edit posts
+    ✅ Commit to GitHub
 ```
 
 ---
 
-## 🏗️ Arquitectura Implementada
+## 🏗️ Implemented Architecture
 
-### **Archivos Creados/Modificados**
+### **Created/Modified Files**
 
-#### 1. **lib/github-app.ts** (Nuevo)
-Utilidades para verificar la instalación:
+#### 1. **lib/github-app.ts** (New)
+Utilities to verify the installation:
 
 ```typescript
 - checkAppInstalled(accessToken: string): Promise<boolean>
-  → Verifica si el usuario tiene la app instalada
+  → Verifies if the user has the app installed
   
 - getAppInstallUrl(): string
-  → Genera la URL de instalación
+  → Generates the installation URL
   
 - getInstallationId(accessToken: string): Promise<number | null>
-  → Obtiene el ID de instalación (para uso futuro)
+  → Retrieves the installation ID (for future use)
 ```
 
-#### 2. **app/setup/page.tsx** (Nuevo)
-Página de configuración inicial:
+#### 2. **app/setup/page.tsx** (New)
+Initial setup page:
 
-- Muestra instrucciones paso a paso
-- Botón para instalar la app
-- Componente de verificación automática
-- Diseño premium y claro
+- Shows step-by-step instructions.
+- Provides a button to install the app.
+- Includes an automatic verification component.
+- Features a clear and premium design.
 
-#### 3. **components/InstallationChecker.tsx** (Nuevo)
-Componente client-side que:
+#### 3. **components/InstallationChecker.tsx** (New)
+Client-side component that:
 
-- Hace polling cada 3 segundos
-- Verifica el endpoint `/api/check-installation`
-- Redirige automáticamente cuando detecta instalación
-- Muestra indicador de "Verificando instalación..."
+- Polls every 3 seconds.
+- Verifies the `/api/check-installation` endpoint.
+- Automatically redirects when it detects the installation.
+- Displays a "Verifying installation..." indicator.
 
-#### 4. **app/api/check-installation/route.ts** (Nuevo)
-Endpoint API:
+#### 4. **app/api/check-installation/route.ts** (New)
+API Endpoint:
 
 ```typescript
 GET /api/check-installation
@@ -160,14 +160,14 @@ Response: {
 }
 ```
 
-#### 5. **lib/auth.ts** (Modificado)
-Callback de sesión actualizado:
+#### 5. **lib/auth.ts** (Modified)
+Updated session callback:
 
 ```typescript
 async session({ session, token }) {
-  // ... código existente ...
+  // ... existing code ...
   
-  // Verificar instalación de la app
+  // Verify app installation
   if (session.access_token) {
     session.appInstalled = await checkAppInstalled(session.access_token);
   }
@@ -176,8 +176,8 @@ async session({ session, token }) {
 }
 ```
 
-#### 6. **app/dashboard/page.tsx** (Modificado)
-Verificación agregada:
+#### 6. **app/dashboard/page.tsx** (Modified)
+Added verification:
 
 ```typescript
 if (!session.appInstalled) {
@@ -185,8 +185,8 @@ if (!session.appInstalled) {
 }
 ```
 
-#### 7. **types/next-auth.d.ts** (Modificado)
-Tipo extendido:
+#### 7. **types/next-auth.d.ts** (Modified)
+Extended type:
 
 ```typescript
 interface Session {
@@ -196,8 +196,8 @@ interface Session {
 }
 ```
 
-#### 8. **.env + .env.example** (Modificado)
-Nueva variable:
+#### 8. **.env + .env.example** (Modified)
+New variable:
 
 ```bash
 GITHUB_APP_NAME=broslunas-cms
@@ -205,9 +205,9 @@ GITHUB_APP_NAME=broslunas-cms
 
 ---
 
-## 🔍 Verificaciones Técnicas
+## 🔍 Technical Verifications
 
-### **¿Cómo se verifica la instalación?**
+### **How is the installation verified?**
 
 ```typescript
 // lib/github-app.ts
@@ -217,203 +217,203 @@ const ourApp = installations.installations.find(
   (installation) => installation.app_slug === process.env.GITHUB_APP_NAME
 );
 
-return !!ourApp; // true si está instalada
+return !!ourApp; // true if installed
 ```
 
-### **¿Cuándo se actualiza el estado?**
+### **When is the state updated?**
 
-1. **Al iniciar sesión** → `auth.ts` callback verifica automáticamente
-2. **Al recargar página** → Sesión se regenera, verifica nuevamente
-3. **En /setup** → Polling cada 3 segundos
-4. **Al navegar a /dashboard** → Server-side verifica antes de renderizar
+1. **At login** → `auth.ts` callback verifies automatically.
+2. **On page reload** → The session is regenerated and verified again.
+3. **On /setup** → Polling occurs every 3 seconds.
+4. **When navigating to /dashboard** → Server-side verification before rendering.
 
 ---
 
-## 🎯 Beneficios del Flujo
+## 🎯 Benefits of the Flow
 
-### ✅ **Seguridad**
-- Permisos granulares (solo repos seleccionados)
-- Token con scope correcto
-- Verificación en cada request importante
+### ✅ **Security**
+- Granular permissions (only selected repos).
+- Token with the correct scope.
+- Verification on every critical request.
 
-### ✅ **UX Mejorada**
-- Detección automática de instalación
-- Sin necesidad de refrescar manualmente
-- Instrucciones claras y visuales
-- Feedback en tiempo real
+### ✅ **Improved UX**
+- Automatic installation detection.
+- No need for manual refreshing.
+- Clear and visual instructions.
+- Real-time feedback.
 
-### ✅ **Escalable**
-- Fácil agregar más comprobaciones
-- Reutilizable para otras features
-- Separación de responsabilidades
+### ✅ **Scalable**
+- Easy to add more checks.
+- Reusable for other features.
+- Clear separation of concerns.
 
 ---
 
-## 🚨 Casos Edge
+## 🚨 Edge Cases
 
-### **Usuario ya tiene la app instalada**
+### **User already has the app installed**
 
 ```
-Login → auth callback verifica
+Login → auth callback verifies
   ↓
 appInstalled = true
   ↓
-Redirige directo a /dashboard
+Redirects directly to /dashboard
 ```
 
-### **Usuario instala la app pero no recarga**
+### **User installs the app but does not reload**
 
 ```
-InstallationChecker → Polling activo
+InstallationChecker → Polling is active
   ↓
-Detecta instalación
+Detects installation
   ↓
-Redirige automáticamente
+Redirects automatically
 ```
 
-### **Usuario desinstala la app después**
+### **User subsequently uninstalls the app**
 
 ```
-Próximo login → checkAppInstalled() retorna false
+Next login → checkAppInstalled() returns false
   ↓
 session.appInstalled = false
   ↓
-Redirige a /setup nuevamente
+Redirects back to /setup
 ```
 
-### **Error de API de GitHub**
+### **GitHub API Error**
 
 ```
 checkAppInstalled() → catch error
   ↓
-return false (modo seguro)
+return false (safe mode)
   ↓
-Usuario ve /setup
+User sees /setup
 ```
 
 ---
 
-## 📊 Estados de Usuario
+## 📊 User States
 
-| Estado | appInstalled | Puede acceder a | Redirige a |
-|--------|--------------|-----------------|------------|
-| **Sin login** | - | `/` | `/` |
-| **Login sin app** | `false` | `/setup` | `/setup` |
-| **Login con app** | `true` | Todo | `/dashboard` |
+| State | appInstalled | Access To | Redirect To |
+|-------|--------------|-----------|-------------|
+| **Not logged in** | - | `/` | `/` |
+| **Logged in without app** | `false` | `/setup` | `/setup` |
+| **Logged in with app** | `true` | All | `/dashboard` |
 
 ---
 
-## 🔧 Variables de Entorno Necesarias
+## 🔧 Necessary Environment Variables
 
 ```bash
-# GitHub OAuth (para autenticación)
+# GitHub OAuth (for authentication)
 GITHUB_ID=your-github-app-client-id
 GITHUB_SECRET=your-github-app-client-secret
 
-# GitHub App Name (para verificar instalación)
+# GitHub App Name (to verify installation)
 GITHUB_APP_NAME=your-github-app-slug
 ```
 
-**Importante:** El `GITHUB_APP_NAME` debe ser el **slug** de la app (el que aparece en la URL), no el display name.
+**Important:** `GITHUB_APP_NAME` must be the app **slug** (the one that appears in the URL), not the display name.
 
-Ejemplo:
+Example:
 - ❌ Display Name: "Broslunas CMS"
 - ✅ App Slug: `broslunas-cms`
 
 ---
 
-## 🎨 UI/UX de /setup
+## 🎨 UI/UX of /setup
 
-### **Diseño**
-- Card centrado con gradiente de fondo
-- Icono de GitHub prominente
-- 3 pasos numerados claramente
-- Sección de permisos con icono de check
-- 2 botones de acción (instalar / ya instalé)
+### **Design**
+- Centered card with a background gradient.
+- Prominent GitHub icon.
+- 3 clearly numbered steps.
+- Permissions section with a check icon.
+- 2 action buttons (Install / I've already installed).
 
-### **Comportamiento**
-- Verificación automática en background
-- Indicador sutil de "Verificando instalación..."
-- Smooth transitions al redirigir
+### **Behavior**
+- Automatic background verification.
+- Subtle "Verifying installation..." indicator.
+- Smooth transitions upon redirection.
 
 ### **Responsive**
-- Mobile-first
-- Botones apilados en móvil
-- Layout horizontal en desktop
+- Mobile-first approach.
+- Stacked buttons on mobile.
+- Horizontal layout on desktop.
 
 ---
 
-## 🧪 Testing del Flujo
+## 🧪 Flow Testing
 
-### **Test 1: Usuario Nuevo**
-1. Crear cuenta nueva en GitHub (o usar modo incógnito)
-2. Login en el CMS → Debe ir a `/setup`
-3. No instalar app → Debe quedarse en `/setup`
-4. Click "Instalar GitHub App" → Debe abrir GitHub
-5. Instalar app + volver al CMS → Debe redirigir a `/dashboard` automáticamente
+### **Test 1: New User**
+1. Create a new GitHub account (or use incognito mode).
+2. Login to the CMS → Should go to `/setup`.
+3. Do not install the app → Should remain on `/setup`.
+4. Click "Install GitHub App" → Should open GitHub.
+5. Install the app + return to CMS → Should automatically redirect to `/dashboard`.
 
-### **Test 2: Usuario Existente**
-1. Login con cuenta que ya tiene la app
-2. Debe ir directo a `/dashboard`
-3. No debe ver `/setup`
+### **Test 2: Existing User**
+1. Login with an account that already has the app.
+2. Should go directly to `/dashboard`.
+3. Should not see `/setup`.
 
-### **Test 3: Desinstalación**
-1. Usuario con app instalada
-2. Ir a GitHub → Desinstalar la app
-3. Cerrar sesión en CMS
-4. Volver a hacer login → Debe ir a `/setup`
+### **Test 3: Uninstallation**
+1. User with the app installed.
+2. Go to GitHub → Uninstall the app.
+3. Logout from the CMS.
+4. Log back in → Should go to `/setup`.
 
 ---
 
-## 📝 Próximos Pasos Posibles
+## 📝 Possible Next Steps
 
-### **Mejoras Futuras**
+### **Future Improvements**
 
-1. **Webhook de instalación**
-   - GitHub puede notificar cuando la app se instala
-   - Elimina necesidad de polling
-   - Más eficiente
+1. **Installation Webhook**
+   - GitHub can notify when the app is installed.
+   - Eliminates the need for polling.
+   - More efficient.
 
-2. **Página de configuración de permisos**
-   - Mostrar qué repos tienen acceso
-   - Permitir agregar/quitar repos
-   - Ver installation ID
+2. **Permissions Configuration Page**
+   - Display which repositories have access.
+   - Allow adding/removing repositories.
+   - View installation ID.
 
-3. **Sincronización automática**
-   - Detectar cuando se agregan nuevos repos
-   - Auto-importar repos permitidos
-   - Notificar sobre cambios de permisos
+3. **Automatic Synchronization**
+   - Detect when new repositories are added.
+   - Auto-import allowed repositories.
+   - Notify about permission changes.
 
 4. **Analytics**
-   - Trackear cuántos usuarios completan setup
-   - Tiempo promedio de instalación
-   - Tasa de abandono en setup
+   - Track how many users complete the setup.
+   - Average installation time.
+   - Abandonment rate during setup.
 
 ---
 
-## ✅ Checklist de Implementación
+## ✅ Implementation Checklist
 
-- [x] Variable `GITHUB_APP_NAME` en .env
-- [x] Utilidades en `lib/github-app.ts`
-- [x] Type `appInstalled` en NextAuth
-- [x] Callback de verificación en `auth.ts`
-- [x] Página `/setup` con instrucciones
-- [x] Componente `InstallationChecker`
-- [x] Endpoint `/api/check-installation`
-- [x] Verificación en `/dashboard`
-- [x] Documentación completa
+- [x] `GITHUB_APP_NAME` variable in .env.
+- [x] Utilities in `lib/github-app.ts`.
+- [x] `appInstalled` type in NextAuth.
+- [x] Verification callback in `auth.ts`.
+- [x] `/setup` page with instructions.
+- [x] `InstallationChecker` component.
+- [x] `/api/check-installation` endpoint.
+- [x] Verification in `/dashboard`.
+- [x] Complete documentation.
 
 ---
 
-## 🎉 Resultado Final
+## 🎉 Final Result
 
-**Flujo completo y automático** donde:
+**A complete and automatic flow** where:
 
-1. ✅ Nuevos usuarios son guiados a instalar la app
-2. ✅ Detección automática sin intervención manual
-3. ✅ UX fluida con feedback visual
-4. ✅ Verificación de permisos en cada sesión
-5. ✅ Código limpio y mantenible
-6. ✅ Preparado para escalar
+1. ✅ New users are guided to install the app.
+2. ✅ Automatic detection occurs without manual intervention.
+3. ✅ Fluid UX with visual feedback.
+4. ✅ Permission verification on every session.
+5. ✅ Clean and maintainable code.
+6. ✅ Scalable preparation.
 
-**El CMS ahora requiere explícitamente la instalación de la GitHub App antes de permitir la gestión de contenido.** 🚀
+**The CMS now explicitly requires the installation of the GitHub App before allowing content management.** 🚀

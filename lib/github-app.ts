@@ -1,9 +1,9 @@
 import { Octokit } from "@octokit/rest";
 
 /**
- * Verifica si el usuario tiene instalada la GitHub App
- * @param accessToken - Token de acceso del usuario
- * @returns true si la app está instalada, false en caso contrario
+ * Checks if the user has the GitHub App installed
+ * @param accessToken - User access token
+ * @returns true if the app is installed, false otherwise
  */
 export async function checkAppInstalled(accessToken: string): Promise<boolean> {
   try {
@@ -21,7 +21,7 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
       }
     });
     
-    // Debug: Verificar el usuario autenticado
+    // Debug: Verify authenticated user
     try {
       const { data: user } = await octokit.rest.users.getAuthenticated();
       console.log(`Authenticated as: ${user.login} (${user.id})`);
@@ -38,7 +38,7 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
       return false;
     }
     
-    // Obtener todas las instalaciones de apps del usuario
+    // Get all user app installations
     const { data: installations } = await octokit.apps.listInstallationsForAuthenticatedUser({
       per_page: 100,
     });
@@ -46,11 +46,11 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
     const appName = process.env.GITHUB_APP_NAME;
 
     if (!appName) {
-      console.error('GITHUB_APP_NAME no está definido en las variables de entorno');
+      console.error('GITHUB_APP_NAME is not defined in environment variables');
       return false;
     }
 
-    // Verificar si nuestra app está en la lista
+    // Check if our app is in the list
     const ourApp = (installations as any).installations?.find(
       (installation: any) => installation.app_slug === appName
     );
@@ -74,22 +74,22 @@ export async function checkAppInstalled(accessToken: string): Promise<boolean> {
 }
 
 /**
- * Obtiene la URL para instalar la GitHub App
- * @returns URL de instalación de la GitHub App
+ * Gets the URL to install the GitHub App
+ * @returns GitHub App installation URL
  */
 export function getAppInstallUrl(): string {
   const appName = process.env.GITHUB_APP_NAME;
   if (!appName) {
-    console.error('GITHUB_APP_NAME no está definido en las variables de entorno');
+    console.error('GITHUB_APP_NAME is not defined in environment variables');
     return 'https://github.com/apps'; // Fallback URL
   }
   return `https://github.com/apps/${appName}/installations/new`;
 }
 
 /**
- * Obtiene el installation ID de la GitHub App para el usuario
- * @param accessToken - Token de acceso del usuario
- * @returns Installation ID o null si no está instalada
+ * Gets the GitHub App installation ID for the user
+ * @param accessToken - User access token
+ * @returns Installation ID or null if not installed
  */
 export async function getInstallationId(accessToken: string): Promise<number | null> {
   try {

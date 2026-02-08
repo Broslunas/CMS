@@ -1,65 +1,65 @@
-# 🖼️ Conversión Automática de Rutas de Imágenes
+# 🖼️ Automatic Image Path Conversion
 
-## Descripción
-El editor ahora convierte automáticamente las rutas relativas de imágenes a URLs completas de GitHub raw durante la vista previa.
+## Overview
+The editor now automatically converts relative image paths to full raw GitHub URLs during preview.
 
-## ¿Cómo funciona?
+## How it Works
 
-Cuando escribes markdown con imágenes usando rutas relativas en tu repositorio, el editor las convierte automáticamente para mostrarlas en el preview.
+When you write Markdown with images using relative paths in your repository, the editor automatically converts them for display in the preview pane.
 
-### Ejemplos de conversión:
+### Conversion Examples:
 
-#### 1. **Ruta absoluta desde la raíz del repo**
+#### 1. **Absolute path from the repository root**
 ```markdown
 ![Stats](/src/assets/img/posts/stats.webp)
 ```
-Se convierte a:
+Converts to:
 ```
 https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/main/src/assets/img/posts/stats.webp
 ```
 
-#### 2. **Ruta relativa sin barra inicial**
+#### 2. **Relative path without a leading slash**
 ```markdown
 ![Example](src/assets/img/posts/example.png)
 ```
-Se convierte a:
+Converts to:
 ```
 https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/main/src/assets/img/posts/example.png
 ```
 
-#### 3. **URLs absolutas (no se modifican)**
+#### 3. **Absolute URLs (Unmodified)**
 ```markdown
 ![Remote](https://example.com/image.jpg)
 ```
-Permanece igual:
+Remains the same:
 ```
 https://example.com/image.jpg
 ```
 
-#### 4. **Rutas relativas con ./ o ../ (no se modifican)**
+#### 4. **Relative paths with ./ or ../ (Unmodified)**
 ```markdown
 ![Local](./images/test.png)
 ```
-Permanece igual (relativa al documento actual):
+Remains the same (relative to the actual document):
 ```
 ./images/test.png
 ```
 
-## Características
+## Features
 
-✅ **Dinámico por repositorio**: El `owner` y `repo` se obtienen automáticamente del repositorio actual
-✅ **No invasivo**: Solo afecta la vista previa, no modifica tu markdown
-✅ **Inteligente**: Detecta qué tipo de ruta es y solo convierte las que necesitan conversión
-✅ **Compatible**: Funciona en las vistas Preview y Split del editor de contenido
-✅ **Metadata**: También funciona en los campos de metadata que contienen imágenes (coverImage, avatar, etc.)
+✅ **Repository-specific**: The `owner` and `repo` are automatically retrieved from the current repository context.
+✅ **Non-invasive**: Only affects the preview; it does not modify your Markdown source.
+✅ **Smart Detection**: Detects the path type and only converts those that require it.
+✅ **Compatible**: Works in both Preview and Split views of the content editor.
+✅ **Metadata Support**: Also works for metadata fields containing images (e.g., `coverImage`, `avatar`).
 
-## Detalles técnicos
+## Technical Details
 
-### Componentes afectados
-- `components/post-editor/ContentEditor.tsx` - Para el contenido markdown
-- `components/post-editor/MetadataField.tsx` - Para los campos de metadata con imágenes
+### Affected Components
+- `components/post-editor/ContentEditor.tsx` - For Markdown content.
+- `components/post-editor/MetadataField.tsx` - For metadata fields containing images.
 
-### Función principal
+### Main Function
 ```typescript
 const convertToGitHubRawUrl = (
   src: string, 
@@ -67,59 +67,59 @@ const convertToGitHubRawUrl = (
 ): string
 ```
 
-### Parámetros
-- `src`: La ruta original de la imagen
-- `repoId`: ID del repositorio en formato `"owner/repo"` (ejemplo: `"Broslunas/portfolio-old"`)
+### Parameters
+- `src`: The original image path.
+- `repoId`: Repository ID in `"owner/repo"` format (e.g., `"Broslunas/portfolio-old"`).
 
-### Lógica de conversión
-1. Si `src` es un Blob o undefined → No hace nada
-2. Si `src` es una URL completa (http/https) → No hace nada
-3. Si `src` empieza con `/` → Añade `https://raw.githubusercontent.com/{repoId}/refs/heads/main{src}`
-4. Si `src` no empieza con `/`, `./`, o `../` → Añade `https://raw.githubusercontent.com/{repoId}/refs/heads/main/{src}`
-5. Si `src` empieza con `./` o `../` → No hace nada (mantiene ruta relativa)
+### Conversion Logic
+1. If `src` is a Blob or undefined → Returns as is.
+2. If `src` is a full URL (http/https) → Returns as is.
+3. If `src` starts with `/` → Prepends `https://raw.githubusercontent.com/{repoId}/refs/heads/main`.
+4. If `src` does not start with `/`, `./`, or `../` → Prepends `https://raw.githubusercontent.com/{repoId}/refs/heads/main/`.
+5. If `src` starts with `./` or `../` → Returns as is (maintains relative path).
 
-## Uso
+## Usage
 
-No requiere ninguna acción adicional. Simplemente escribe tu markdown con las rutas de imágenes como lo harías normalmente:
+No additional action is required. Simply write your Markdown with image paths as you normally would:
 
 ```markdown
-# Mi Post
+# My Post
 
-Aquí está mi gráfico de estadísticas:
+Here is my statistics chart:
 
-![Estadísticas](/src/assets/img/posts/stats.webp)
+![Statistics](/src/assets/img/posts/stats.webp)
 
-Y aquí otra imagen:
+And here is another image:
 
-![Ejemplo](assets/images/example.png)
+![Example](assets/images/example.png)
 ```
 
-El editor se encargará automáticamente de convertir las rutas para que las imágenes se visualicen correctamente en el preview.
+The editor will automatically handle the conversion so that images display correctly in the preview.
 
-## Uso en Metadata
+## Metadata Usage
 
-La conversión también funciona automáticamente en los campos de metadata que contienen imágenes. Por ejemplo:
+Conversion also works automatically for metadata fields that contain images. For example:
 
-### Campo `coverImage`:
+### `coverImage` Field:
 ```yaml
 ---
-title: Mi Artículo
+title: My Article
 coverImage: /src/assets/img/posts/calc.webp
 ---
 ```
 
-La imagen de preview se mostrará automáticamente usando:
+The preview image will be shown using:
 ```
 https://raw.githubusercontent.com/{owner}/{repo}/refs/heads/main/src/assets/img/posts/calc.webp
 ```
 
-### Otros campos compatibles:
+### Other Supported Fields:
 - `coverImage`, `cover`, `image`
 - `avatar`, `thumbnail`, `banner`
 - `poster`, `logo`, `icon`, `bg`
-- Cualquier campo con "image" o "img" en el nombre
+- Any field containing "image" or "img" in its name.
 
-## Notas
-- La conversión solo ocurre en la vista previa del editor
-- El contenido markdown guardado **no se modifica**
-- Esto permite que las rutas funcionen tanto en el CMS como cuando el contenido se renderiza en tu sitio web
+## Notes
+- Conversion only occurs within the editor's preview view.
+- Saved Markdown content **is not modified**.
+- This allows paths to function correctly in both the CMS and when the content is rendered on your website.

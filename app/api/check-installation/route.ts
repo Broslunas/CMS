@@ -3,7 +3,7 @@ import { checkAppInstalled } from "@/lib/github-app";
 import { NextResponse } from "next/server";
 
 /**
- * Endpoint para verificar si el usuario tiene la GitHub App instalada
+ * Endpoint to verify if the user has the GitHub App installed
  * GET /api/check-installation
  */
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 
     if (!session?.access_token) {
       return NextResponse.json(
-        { error: "No autorizado" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -22,13 +22,13 @@ export async function GET() {
     return NextResponse.json({
       installed: isInstalled,
       message: isInstalled 
-        ? "GitHub App instalada correctamente" 
-        : "GitHub App no instalada"
+        ? "GitHub App installed correctly" 
+        : "GitHub App not installed"
     });
   } catch (error) {
     console.error("Error checking installation:", error);
     return NextResponse.json(
-      { error: "Error al verificar la instalación" },
+      { error: "Error verifying installation" },
       { status: 500 }
     );
   }

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         }
     }
 
-    // Verificar si ya existe un post con ese filePath en ese repo
+    // Verify if a post with that filePath already exists in that repo
     const existingPost = await targetCollection.findOne({
       repoId,
       filePath,
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "A post with this file path already exists." }, { status: 409 });
     }
 
-    // Preparar el nuevo documento
+    // Prepare the new document
     const newPost: any = {
       type: "post",
       userId: effectiveUserId, // Always set to Data Owner logic
@@ -80,16 +80,16 @@ export async function POST(request: NextRequest) {
     let createdSha = null;
     let commitSha = null;
 
-    // Si se solicita commit a GitHub
+    // If GitHub commit is requested
     if (commitToGitHub) {
       const accessToken = session.access_token as string;
       const [owner, repo] = repoId.split("/");
 
-      // Serializar a markdown
+      // Serialize to markdown
       const markdownContent = serializeMarkdown(metadata, content);
 
       try {
-        // Crear en GitHub
+        // Create in GitHub
         const result = await updateFile(
             accessToken,
             owner,
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Insertar en MongoDB
+    // Insert into MongoDB
     const result = await targetCollection.insertOne(newPost);
 
     const [owner, repo] = repoId.split("/");

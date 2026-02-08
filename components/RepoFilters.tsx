@@ -12,7 +12,7 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Estados iniciales desde URL
+  // Initial states from URL
   const initialSearch = searchParams.get("q") || "";
   const initialStatus = searchParams.get("status") || "all";
   const initialCollection = searchParams.get("collection") || "all";
@@ -21,10 +21,10 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
   const [status, setStatus] = useState(initialStatus);
   const [collection, setCollection] = useState(initialCollection);
 
-  // Debounce para búsqueda (300ms)
+  // Debounce for search (300ms)
   const [debouncedSearch] = useDebounce(search, 300);
 
-  // Efecto para actualizar URL
+  // Effect to update URL
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
 
@@ -40,7 +40,7 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
     if (collection && collection !== "all") params.set("collection", collection);
     else params.delete("collection");
 
-    // Mantener repoId
+    // Keep repoId
     const repo = searchParams.get("repo");
     if (repo) params.set("repo", repo);
 
@@ -54,7 +54,7 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
-      {/* Buscador */}
+      {/* Search Bar */}
       <div className="flex-1 relative">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
@@ -78,9 +78,9 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
         />
       </div>
 
-      {/* Selectores */}
+      {/* Selectors */}
       <div className="flex gap-4">
-        {/* Filtro por Colección */}
+        {/* Collection Filter */}
         <select
           value={collection}
           onChange={(e) => setCollection(e.target.value)}
@@ -94,7 +94,7 @@ export default function RepoFilters({ collections }: RepoFiltersProps) {
           ))}
         </select>
 
-        {/* Filtro por Estado */}
+        {/* Status Filter */}
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}

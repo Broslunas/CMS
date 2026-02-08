@@ -1,163 +1,133 @@
-Documentación Técnica: Broslunas CMS
+# Technical Documentation: Broslunas CMS
 
-1. Resumen Ejecutivo
+## 1. Executive Summary
 
-Broslunas CMS es una plataforma de gestión de contenidos (CMS) basada en Git diseñada específicamente para el ecosistema Astro. Permite a los usuarios gestionar sus Content Collections mediante una interfaz visual intuitiva, sincronizando los datos directamente con sus repositorios de GitHub sin necesidad de bases de datos externas de contenido, pero utilizando MongoDB como capa de caché y persistencia de estado intermedio.
+Broslunas CMS is a Git-based content management system (CMS) designed specifically for the Astro ecosystem. It allows users to manage their Content Collections through an intuitive visual interface, syncing data directly with their GitHub repositories without the need for external content databases, while using MongoDB as a cache and intermediate state persistence layer.
 
-2. Arquitectura del Sistema
+## 2. System Architecture
 
-El flujo de información se basa en un modelo de Sincronización Bidireccional:
+The information flow is based on a Bidirectional Synchronization model:
 
-Capa de Autenticación: NextAuth.js gestiona el flujo OAuth con GitHub y persiste la sesión en MongoDB.
+- **Authentication Layer**: NextAuth.js manages the OAuth flow with GitHub and persists the session in MongoDB.
+- **Persistence Layer (Cache/State)**: MongoDB stores a copy of the parsed text files (Markdown/MDX) in JSON format for fast searching and fluid editing.
+- **Communication Layer (Git)**: Octokit acts as the bridge between the Next.js server and the GitHub API to perform read and write operations (commits).
 
-Capa de Persistencia (Caché/Estado): MongoDB almacena una copia de los archivos de texto (Markdown/MDX) parseados en formato JSON para búsquedas rápidas y edición fluida.
+## 3. Data Model (MongoDB)
 
-Capa de Comunicación (Git): Octokit actúa como el puente entre el servidor de Next.js y la API de GitHub para realizar operaciones de lectura y escritura (commits).
+To support Astro's flexibility, we use a schema that divides "Frontmatter" from "Content".
 
-3. Modelo de Datos (MongoDB)
+**Collection**: `posts`
 
-Para soportar la flexibilidad de Astro, utilizaremos un esquema que divida el "Frontmatter" del "Contenido".
-
-Colección: posts
-
+```json
 {
-  _id: ObjectId,
-  userId: ObjectId,      // Relación con el usuario de NextAuth
-  repoId: String,        // ID o nombre completo del repo (owner/repo)
-  filePath: String,      // Ruta relativa en el repo: "src/content/blog/post.md"
-  sha: String,           // El SHA actual del archivo en GitHub (vital para updates)
+  "_id": "ObjectId",
+  "userId": "ObjectId",      // Relation with NextAuth user
+  "repoId": "String",        // ID or full name of the repo (owner/repo)
+  "filePath": "String",      // Relative path in the repo: "src/content/blog/post.md"
+  "sha": "String",           // Current SHA of the file on GitHub (vital for updates)
   
-  // Frontmatter Estructurado
-  metadata: {
-    title: String,
-    slug: String,
-    tags: [String],
-    episodeUrl: String,
-    transcription: [{
-      time: String,
-      text: String
+  // Structured Frontmatter
+  "metadata": {
+    "title": "String",
+    "slug": "String",
+    "tags": ["String"],
+    "episodeUrl": "String",
+    "transcription": [{
+      "time": "String",
+      "text": "String"
     }]
   },
   
-  content: String,       // El cuerpo del Markdown (después del segundo ---)
-  status: "synced" | "draft" | "modified",
-  lastCommitAt: Date,
-  createdAt: Date,
-  updatedAt: Date
+  "content": "String",       // Markdown body (after the second ---)
+  "status": "synced" | "draft" | "modified",
+  "lastCommitAt": "Date",
+  "createdAt": "Date",
+  "updatedAt": "Date"
 }
+```
 
+## 4. Main Logical Flows
 
-4. Flujos Lógicos Principales
+### A. Initial Synchronization (Import)
 
-A. Sincronización Inicial (Importación)
+When a user links a repository:
 
-Cuando un usuario vincula un repositorio:
+1. **Scan**: The application traverses `src/content/` looking for `.md` or `.mdx` files.
+2. **Parsing**: For each file, the raw content is downloaded.
+3. **Extraction**: The `gray-matter` library is used to separate Frontmatter from content.
+4. **Upsert**: The document is saved/updated in MongoDB with the SHA provided by the GitHub API.
 
-Escaneo: La aplicación recorre src/content/ buscando archivos .md o .mdx.
+### B. Editing and Saving Process
 
-Parsing: Por cada archivo, se descarga el contenido raw.
+1. **UI Editing**: The user modifies the transcription array in a dynamic form.
+2. **DB Saving**: The document is updated in MongoDB immediately (state: `modified`).
+3. **Serialization (JSON to Markdown)**:
+   - The metadata object is taken and converted to YAML.
+   - It is concatenated with the content.
+4. **GitHub Commit**:
+   - The new base64 content is sent to the GitHub API.
+   - GitHub returns a new SHA.
+   - The document in MongoDB is updated with the new SHA and state: `synced`.
 
-Extracción: Se usa la librería gray-matter para separar el Frontmatter del contenido.
+## 5. Implementation with Next.js
 
-Upsert: Se guarda/actualiza el documento en MongoDB con el sha proporcionado por la API de GitHub.
+### NextAuth.js Integration
 
-B. Proceso de Edición y Guardado
+It is essential to configure the necessary scopes so the application can perform commits.
 
-Edición en UI: El usuario modifica el array de transcription en un formulario dinámico.
-
-Guardado en DB: Se actualiza el documento en MongoDB inmediatamente (estado modified).
-
-Serialización (JSON to Markdown):
-
-Se toma el objeto metadata y se convierte a YAML.
-
-Se concatena con el content.
-
-Commit a GitHub:
-
-Se envía el nuevo contenido base64 a la API de GitHub.
-
-GitHub devuelve un nuevo sha.
-
-Se actualiza el documento en MongoDB con el nuevo sha y estado synced.
-
-5. Implementación con Next.js
-
-Integración de NextAuth.js
-
-Es fundamental configurar los scopes necesarios para que la aplicación pueda realizar commits.
-
-// Scope requerido: 'repo' o 'public_repo'
+```javascript
+// Required Scope: 'repo' or 'public_repo'
 GitHubProvider({
   clientId: process.env.GITHUB_ID,
   clientSecret: process.env.GITHUB_SECRET,
   authorization: { params: { scope: 'repo' } },
 })
+```
 
+### Markdown Serializer (Core Logic)
 
-Serializador de Markdown (Lógica Core)
+Since you want to handle complex data types, the serializer must be robust:
 
-Dado que quieres manejar tipos de datos complejos, el serializador debe ser robusto:
-
+```javascript
 import matter from 'gray-matter';
 
 /**
- * Convierte los datos de MongoDB al formato de archivo físico de Astro
+ * Converts MongoDB data to Astro's physical file format
  */
 function serializePost(postData) {
   const { metadata, content } = postData;
   
-  // matter.stringify genera el bloque --- de frontmatter y lo une al contenido
+  // matter.stringify generates the frontmatter --- block and joins it to the content
   return matter.stringify(content, metadata);
 }
+```
 
+## 6. Technical Challenges and Solutions
 
-6. Desafíos Técnicos y Soluciones
+| Challenge | Suggested Solution |
+| :--- | :--- |
+| **Editing Conflicts** | When committing, always send the SHA stored in MongoDB. If GitHub returns a 409 (Conflict) error, it means someone edited the file outside the CMS; the user should be asked to refresh the data. |
+| **GitHub Rate Limits** | Use MongoDB for all UI reads. Only query the GitHub API during the initial import or when forcing a sync. |
+| **Astro Typing** | Implement Zod validation on the Next.js server that replicates the user's Content Collections `config.ts` to avoid build errors in production. |
+| **Image Management** | Allow image uploads to a `/public/assets/cms/` folder in the repo using the same commit flow, returning the relative path for the Markdown. |
 
-Desafío
+## 7. Development Roadmap
 
-Solución Sugerida
+### Phase 1: MVP (2-3 weeks)
 
-Conflictos de Edición
+- [x] Configuration of Next.js, NextAuth, and MongoDB.
+- [x] Connection with Octokit and repository listing.
+- [x] Basic Markdown file import to MongoDB.
+- [x] Simple text editor + Basic metadata editing (title, slug).
 
-Al hacer el commit, enviar siempre el sha almacenado en MongoDB. Si GitHub devuelve un error 409 (Conflict), significa que alguien editó el archivo fuera del CMS; se debe pedir al usuario que refresque los datos.
+### Phase 2: Advanced Functionality
 
-Rate Limits de GitHub
+- [x] Implementation of dynamic forms for transcription and tags.
+- [x] Automatic commit logic on save.
+- [x] Synchronization status dashboard.
 
-Usar MongoDB para todas las lecturas de la interfaz de usuario. Solo consultar la API de GitHub en la importación inicial o al forzar una sincronización.
+### Phase 3: UX and Optimization
 
-Tipado de Astro
-
-Implementar validación con Zod en el servidor de Next.js que replique el config.ts de las Content Collections del usuario para evitar errores de build en producción.
-
-Manejo de Imágenes
-
-Permitir la subida de imágenes a una carpeta /public/assets/cms/ del repo mediante el mismo flujo de commits, devolviendo la ruta relativa para el Markdown.
-
-7. Roadmap de Desarrollo
-
-Fase 1: MVP (2-3 semanas)
-
-[ ] Configuración de Next.js, NextAuth y MongoDB.
-
-[ ] Conexión con Octokit y listado de repositorios.
-
-[ ] Importación básica de archivos Markdown a MongoDB.
-
-[ ] Editor de texto simple + Edición de metadatos básicos (title, slug).
-
-Fase 2: Funcionalidad Avanzada
-
-[ ] Implementación de formularios dinámicos para transcription y tags.
-
-[ ] Lógica de commits automáticos al guardar.
-
-[ ] Dashboard de estado de sincronización.
-
-Fase 3: UX y Optimización
-
-[ ] Webhooks de GitHub para actualización en tiempo real.
-
-[ ] Media Library (gestión de imágenes).
-
-[ ] Previsualización en vivo (integración con Vercel/Netlify previews).
+- [ ] GitHub webhooks for real-time updates.
+- [x] Media Library (image management).
+- [ ] Live preview (integration with Vercel/Netlify previews).

@@ -1,27 +1,27 @@
-# � Configuración de GitHub App - Solución al Error 403
+# 🔐 GitHub App Configuration - Solving Error 403
 
-## ❌ Error Actual
+## ❌ Current Error
 
 ```
 Error: Resource not accessible by integration
 Status: 403
 ```
 
-**Causa:** GitHub OAuth Apps **NO tienen permisos** para escribir en repositorios.
+**Cause:** GitHub OAuth Apps **DO NOT have permissions** to write to repositories.
 
 ---
 
-## ✅ Solución: Crear una GitHub App
+## ✅ Solution: Create a GitHub App
 
-### Paso 1: Crear la GitHub App
+### Step 1: Create the GitHub App
 
-1. **Ve a:** https://github.com/settings/apps/new
+1. **Go to:** https://github.com/settings/apps/new
 
-2. **Configura los campos:**
+2. **Configure the fields:**
 
 ```
 GitHub App name: Broslunas CMS-CMS-App
-Description: CMS para gestionar contenido Astro mediante Git
+Description: CMS for managing Astro content via Git
 Homepage URL: http://localhost:3000
 ```
 
@@ -32,16 +32,16 @@ http://localhost:3000/api/auth/callback/github
 
 4. **Webhook:**
 ```
-☐ Active (déjalo DESACTIVADO)
+☐ Active (leave it DISABLED)
 ```
 
-5. **Permisos de Repositorio:**
+5. **Repository Permissions:**
 
-Scroll hasta "Repository permissions":
+Scroll to "Repository permissions":
 
 ```
-Contents: Read and write     ✅ MUY IMPORTANTE
-Metadata: Read-only          ✅ Automático
+Contents: Read and write     ✅ VERY IMPORTANT
+Metadata: Read-only          ✅ Automatic
 ```
 
 6. **Where can this GitHub App be installed?**
@@ -53,76 +53,76 @@ Metadata: Read-only          ✅ Automático
 
 ---
 
-### Paso 2: Configurar Credenciales
+### Step 2: Configure Credentials
 
-1. **Después de crear, verás la página de configuración**
+1. **After creation, you will see the settings page.**
 
 2. **Client ID:**
-   - Copia el "Client ID" (está visible)
+   - Copy the "Client ID" (it is visible).
 
 3. **Client secrets:**
-   - Click "Generate a new client secret"
-   - **COPIA EL SECRET INMEDIATAMENTE** (solo se muestra una vez)
+   - Click "Generate a new client secret".
+   - **COPY THE SECRET IMMEDIATELY** (it is only shown once).
 
-4. **Private key (NO necesario para OAuth flow)**
-   - No lo necesitas para este caso
+4. **Private key (NOT required for the OAuth flow):**
+   - You do not need this for this case.
 
 ---
 
-### Paso 3: Actualizar .env.local
+### Step 3: Update .env.local
 
-Actualiza tu archivo `.env.local`:
+Update your `.env.local` file:
 
 ```bash
 # MongoDB
-MONGODB_URI=tu-mongodb-uri-aqui
+MONGODB_URI=your-mongodb-uri-here
 
 # NextAuth
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=tu-secret-aqui
+NEXTAUTH_SECRET=your-secret-here
 
-# GitHub App (NUEVOS VALORES)
-GITHUB_ID=tu_nuevo_client_id_aqui
-GITHUB_SECRET=tu_nuevo_client_secret_aqui
+# GitHub App (NEW VALUES)
+GITHUB_ID=your_new_client_id_here
+GITHUB_SECRET=your_new_client_secret_here
 ```
 
 ---
 
-### Paso 4: Instalar la App en tu cuenta
+### Step 4: Install the App on your account
 
-1. **Ve a:** Settings de tu GitHub App
-2. **Click en "Install App" (sidebar izquierdo)**
-3. **Selecciona tu cuenta**
-4. **Elige:**
-   - ● All repositories (o)
-   - ○ Only select repositories (selecciona los repos de Astro)
+1. **Go to:** Settings of your GitHub App.
+2. **Click on "Install App" (left sidebar).**
+3. **Select your account.**
+4. **Choose:**
+   - ● All repositories (or)
+   - ○ Only select repositories (select your Astro repos)
 5. **Click "Install"**
 
 ---
 
-### Paso 5: Probar
+### Step 5: Test
 
-1. **Reinicia el servidor:**
+1. **Restart the server:**
 ```bash
 npm run dev
 ```
 
-2. **Cierra sesión y vuelve a iniciar**
-   - Esto generará un nuevo access token con los permisos correctos
+2. **Logout and log back in:**
+   - This will generate a new access token with the correct permissions.
 
-3. **Intenta hacer un commit**
-   - Ahora debería funcionar ✅
+3. **Try making a commit:**
+   - It should now work ✅.
 
 ---
 
-## 🔍 Diferencias: OAuth App vs GitHub App
+## 🔍 Differences: OAuth App vs GitHub App
 
 | Feature | OAuth App | GitHub App |
 |---------|-----------|------------|
-| **Permisos de escritura** | ❌ Limitado | ✅ Completo |
-| **Scopes granulares** | ❌ No | ✅ Sí |
-| **Rate limit** | 5,000/hora | 15,000/hora |
-| **Mejor para** | Solo lectura | CMS, CI/CD |
+| **Write Permissions** | ❌ Limited | ✅ Full |
+| **Granular Scopes** | ❌ No | ✅ Yes |
+| **Rate Limit** | 5,000/hour | 15,000/hour |
+| **Best For** | Read-only | CMS, CI/CD |
 
 ---
 
@@ -130,78 +130,78 @@ npm run dev
 
 ### Error: "App is not installed"
 
-**Solución:**
-1. Ve a https://github.com/settings/installations
-2. Verifica que tu App esté instalada
-3. Re-instala si es necesario
+**Solution:**
+1. Go to https://github.com/settings/installations.
+2. Verify that your App is installed.
+3. Re-install if necessary.
 
 ### Error: "Invalid client_id"
 
-**Solución:**
-1. Verifica que copiaste el Client ID correcto
-2. No confundas el Client ID con el App ID
-3. Reinicia el servidor después de cambiar .env.local
+**Solution:**
+1. Verify that you copied the correct Client ID.
+2. Do not confuse the Client ID with the App ID.
+3. Restart the server after changing `.env.local`.
 
-### Todavía da error 403
+### Still getting error 403
 
-**Solución:**
-1. Verifica que los permisos sean "Read and write" (no solo "Read")
-2. Asegúrate de haber instalado la app en tu cuenta
-3. Cierra sesión y vuelve a iniciar sesión en el CMS
+**Solution:**
+1. Verify that permissions are "Read and write" (not just "Read").
+2. Ensure you have installed the app on your account.
+3. Logout and log back in to the CMS.
 
 ---
 
-## 📝 Verificación de Permisos
+## 📝 Permission Verification
 
-Para verificar que todo está bien configurado:
+To ensure everything is correctly configured:
 
-1. **Ve a tu GitHub App:**
-   - https://github.com/settings/apps/[tu-app-name]
+1. **Go to your GitHub App:**
+   - `https://github.com/settings/apps/[your-app-name]`
 
-2. **Verifica en "Permissions":**
+2. **Check in "Permissions":**
    ```
    Repository permissions:
    ✅ Contents: Read & write
    ✅ Metadata: Read-only
    ```
 
-3. **Verifica en "Install App":**
-   - Debe aparecer instalada en tu cuenta
-   - Debe tener acceso a tus repos de Astro
+3. **Check in "Install App":**
+   - It must appear as installed on your account.
+   - It must have access to your Astro repos.
 
 ---
 
-## ✅ Checklist Final
+## ✅ Final Checklist
 
-Antes de probar:
+Before testing:
 
-- [ ] GitHub App creada
-- [ ] Client ID copiado
-- [ ] Client Secret generado y copiado
-- [ ] Permisos "Contents: Read & write" activados
-- [ ] App instalada en tu cuenta GitHub
-- [ ] .env.local actualizado con nuevas credenciales
-- [ ] Servidor reiniciado
-- [ ] Sesión cerrada y reiniciada en el CMS
-
----
-
-## 🎯 Resultado Esperado
-
-Después de estos pasos:
-
-✅ Podrás importar repos  
-✅ Podrás editar posts  
-✅ Podrás hacer commits a GitHub  
-✅ No más errores 403
+- [ ] GitHub App created.
+- [ ] Client ID copied.
+- [ ] Client Secret generated and copied.
+- [ ] "Contents: Read & write" permissions enabled.
+- [ ] App installed on your GitHub account.
+- [ ] `.env.local` updated with new credentials.
+- [ ] Server restarted.
+- [ ] Session closed and restarted in the CMS.
 
 ---
 
-## 💡 Nota Importante
+## 🎯 Expected Result
 
-**GitHub Apps** son la forma moderna y recomendada de integrar con GitHub. Son más seguras y tienen mejores permisos que las OAuth Apps tradicionales.
+After these steps:
 
-**Para producción:**
-- Cambia los URLs de `localhost:3000` a tu dominio real
-- Regenera el NEXTAUTH_SECRET para producción
-- Considera usar variables de entorno separadas para dev/prod
+✅ You will be able to import repos.  
+✅ You will be able to edit posts.  
+✅ You will be able to make commits to GitHub.  
+✅ No more 403 errors.
+
+---
+
+## 💡 Important Note
+
+**GitHub Apps** are the modern and recommended way to integrate with GitHub. They are more secure and have better permissions than traditional OAuth Apps.
+
+**For production:**
+- Change the URLs from `localhost:3000` to your real domain.
+- Regenerate the `NEXTAUTH_SECRET` for production.
+- Consider using separate environment variables for dev and prod.

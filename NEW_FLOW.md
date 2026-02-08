@@ -1,69 +1,69 @@
-# 🔄 Nuevo Flujo de Trabajo - Dashboard con Proyectos
+# 🔄 New Workflow - Dashboard with Projects
 
-## ✅ Cambios Implementados
+## ✅ Implemented Changes
 
-Se ha rediseñado completamente el flujo del dashboard para mostrar **proyectos importados** con un sistema más intuitivo.
-
----
-
-## 📋 Flujo Anterior vs Nuevo
-
-### ❌ Flujo Anterior
-1. Login → Dashboard
-2. Dashboard muestra selector de repositorios
-3. Click en "Importar" → Importa y redirige a posts
-
-### ✅ Flujo Nuevo
-1. Login → Dashboard
-2. **Dashboard muestra proyectos ya importados** (como cards)
-3. Click en botón **"Importar Repositorio"** → Abre modal
-4. Modal muestra lista de repos de GitHub
-5. Click en "Importar" en el modal → Importa y cierra modal
-6. Dashboard se actualiza mostrando el nuevo proyecto
-7. Click en cualquier proyecto → Ver posts del proyecto
+The dashboard workflow has been completely redesigned to display **imported projects** using a more intuitive system.
 
 ---
 
-## 🗂️ Nuevas Funcionalidades
+## 📋 Old vs. New Workflow
 
-### 1. **Modelo de Datos: Proyectos**
+### ❌ Old Workflow
+1. Login → Dashboard
+2. Dashboard displays a repository selector.
+3. Click "Import" → Imports and redirects to the posts list.
 
-Se creó un nuevo schema en `lib/schemas.ts`:
+### ✅ New Workflow
+1. Login → Dashboard
+2. **Dashboard displays already imported projects** (as cards).
+3. Click the **"Import Repository"** button → Opens a modal.
+4. Modal displays a list of GitHub repositories.
+5. Click "Import" within the modal → Imports and closes the modal.
+6. The dashboard updates to show the new project.
+7. Click any project → View the project's posts.
+
+---
+
+## 🗂️ New Functionalities
+
+### 1. **Data Model: Projects**
+
+A new schema has been created in `lib/schemas.ts`:
 
 ```typescript
 export const ProjectSchema = z.object({
   _id: z.string().optional(),
   userId: z.string(),
   repoId: z.string(),        // "owner/repo"
-  name: z.string(),          // Nombre del repo
+  name: z.string(),          // Repository name
   description: z.string().optional(),
-  postsCount: z.number(),    // Cantidad de posts
-  lastSync: z.date(),        // Última sincronización
+  postsCount: z.number(),    // Number of posts
+  lastSync: z.date(),        // Last synchronization
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 ```
 
-### 2. **Colección MongoDB: projects**
+### 2. **MongoDB Collection: `projects`**
 
-Nueva colección que almacena:
-- Información del repositorio importado
-- Cantidad de posts
-- Fecha de última sincronización
-- Relación con el usuario
+A new collection that stores:
+- Information about the imported repository.
+- The number of posts.
+- The date of the last synchronization.
+- Relation to the user.
 
 ### 3. **API: `/api/projects`**
 
-**GET** - Lista todos los proyectos del usuario autenticado
+**GET** - Lists all projects for the authenticated user.
 
 ```typescript
 GET /api/projects
 Response: Project[]
 ```
 
-### 4. **API Actualizada: `/api/import`**
+### 4. **Updated API: `/api/import`**
 
-Ahora también recibe `name` y `description` y guarda el proyecto:
+Now also accepts `name` and `description` and saves the project:
 
 ```typescript
 POST /api/import
@@ -75,34 +75,34 @@ Body: {
 }
 ```
 
-Después de importar posts:
-1. Crea/actualiza el proyecto en la colección `projects`
-2. Guarda `postsCount`, `lastSync`, etc.
+After importing posts:
+1. Creates/updates the project in the `projects` collection.
+2. Saves `postsCount`, `lastSync`, etc.
 
 ---
 
-## 🎨 Componentes Nuevos
+## 🎨 New Components
 
 ### 1. **ImportButton** (`components/ImportButton.tsx`)
 
-Botón client-side que abre el modal:
+A client-side button that opens the modal:
 
 ```tsx
 <ImportButton />
 ```
 
-- Estilo: Blanco/negro (acción primaria)
-- Icono de "+"
-- Abre el modal al hacer click
+- Style: Black/white (primary action).
+- "+" Icon.
+- Opens the modal on click.
 
 ### 2. **ImportModal** (`components/ImportModal.tsx`)
 
-Modal completo con:
-- Lista de repositorios de GitHub
-- Búsqueda y scroll
-- Estado de loading
-- Importación inline
-- Cierra automáticamente al importar
+A complete modal featuring:
+- A list of GitHub repositories.
+- Search and scroll functionality.
+- Loading states.
+- Inline importing.
+- Automatic closing upon import.
 
 **Props:**
 ```typescript
@@ -114,164 +114,164 @@ Modal completo con:
 
 ---
 
-## 📄 Dashboard Rediseñado
+## 📄 Redesigned Dashboard
 
-### Características:
+### Features:
 
 1. **Header**
-   - Logo + nombre de usuario
-   - Botón de cerrar sesión
+   - Logo + username.
+   - Logout button.
 
-2. **Título con contador**
-   - "Mis Proyectos"
-   - Contador de proyectos importados
-   - Botón "Importar Repositorio" (top-right)
+2. **Title with counter**
+   - "My Projects".
+   - Counter of imported projects.
+   - "Import Repository" button (top-right).
 
-3. **Estado vacío**
-   - Icono grande (📦)
-   - Mensaje amigable
-   - Botón de importar centrado
+3. **Empty State**
+   - Large icon (📦).
+   - Friendly message.
+   - Centered import button.
 
-4. **Grid de Proyectos**
-   - Layout: 3 columnas en desktop, 2 en tablet, 1 en móvil
-   - Cards clickeables que llevan a `/dashboard/repos?repo={repoId}`
+4. **Project Grid**
+   - Layout: 3 columns on desktop, 2 on tablet, 1 on mobile.
+   - Clickable cards leading to `/dashboard/repos?repo={repoId}`.
    
-**Cada card muestra:**
-- Nombre del proyecto
-- Repo ID (owner/repo)
-- Descripción (si existe)
-- Estadísticas:
-  - 📝 Cantidad de posts
-  - 🔄 Fecha de última sincronización
+**Each card displays:**
+- Project name.
+- Repo ID (owner/repo).
+- Description (if available).
+- Statistics:
+  - 📝 Number of posts.
+  - 🔄 Date of last synchronization.
 
 ---
 
-## 🔄 Flujo Completo de Usuario
+## 🔄 Complete User Flow
 
-### Primera vez (sin proyectos):
+### First Time (no projects):
 
 ```
-1. Login con GitHub
+1. Login with GitHub
    ↓
-2. Dashboard → Estado vacío
-   "No hay proyectos aún"
+2. Dashboard → Empty State
+   "No projects yet"
    ↓
-3. Click en "Importar Repositorio"
+3. Click "Import Repository"
    ↓
-4. Modal se abre mostrando repos
+4. Modal opens showing repos
    ↓
-5. Click en "Importar" en un repo
+5. Click "Import" for a repo
    ↓
-6. Mensaje: "✅ Importado: X de Y archivos"
+6. Message: "✅ Imported: X of Y files"
    ↓
-7. Modal se cierra
+7. Modal closes
    ↓
-8. Dashboard se actualiza → Muestra proyecto
+8. Dashboard updates → Shows the project
 ```
 
-### Usuario recurrente (con proyectos):
+### Recurring User (with projects):
 
 ```
 1. Login
    ↓
-2. Dashboard → Grid de proyectos
+2. Dashboard → Project Grid
    ↓
-3. Click en un proyecto
+3. Click on a project
    ↓
-4. Lista de posts del proyecto
+4. List of the project's posts
    ↓
-5. Click en un post
+5. Click on a post
    ↓
 6. Editor
 ```
 
-### Importar proyecto adicional:
+### Importing an additional project:
 
 ```
-1. Desde Dashboard
+1. From the Dashboard
    ↓
-2. Click en "Importar Repositorio" (top-right)
+2. Click "Import Repository" (top-right)
    ↓
-3. Modal → Seleccionar repo
+3. Modal → Select repo
    ↓
-4. Importar
+4. Import
    ↓
-5. Dashboard actualizado con nuevo proyecto
+5. Dashboard updated with the new project
 ```
 
 ---
 
-## 🎯 Ventajas del Nuevo Flujo
+## 🎯 Advantages of the New Flow
 
-1. **Más Intuitivo**
-   - Dashboard muestra lo importante: tus proyectos
-   - No necesitas importar cada vez que entras
+1. **More Intuitive**
+   - Dashboard shows what's important: your projects.
+   - No need to import every time you log in.
 
-2. **Mejor UX**
-   - Modal no interrumpe el flujo
-   - Puedes ver proyectos antes de importar nuevos
+2. **Improved UX**
+   - Modal does not interrupt the flow.
+   - You can view projects before importing new ones.
 
-3. **Persistencia**
-   - Los proyectos quedan guardados
-   - Se trackea última sincronización
+3. **Persistence**
+   - Projects are saved.
+   - Last synchronization is tracked.
 
-4. **Escalable**
-   - Fácil agregar más acciones (re-sync, delete, etc.)
-   - Grid se adapta a muchos proyectos
+4. **Scalable**
+   - Easy to add more actions (re-sync, delete, etc.).
+   - Grid adapts to many projects.
 
-5. **Organizado**
-   - Cada proyecto es un contenedor de posts
-   - Vista de alto nivel primero
+5. **Organized**
+   - Each project is a container for posts.
+   - High-level view first.
 
 ---
 
-## 📊 Estructura de Archivos
+## 📊 File Structure
 
 ```
 app/
 ├── api/
-│   ├── import/route.ts         # ✨ Actualizado - Guarda proyecto
-│   └── projects/route.ts       # 🆕 Lista proyectos
+│   ├── import/route.ts         # ✨ Updated - Saves project
+│   └── projects/route.ts       # 🆕 Lists projects
 ├── dashboard/
-│   ├── page.tsx                # ✨ Rediseñado - Muestra proyectos
-│   ├── repos/page.tsx          # (Sin cambios - Lista posts)
-│   └── editor/[id]/page.tsx    # (Sin cambios - Editor)
+│   ├── page.tsx                # ✨ Redesigned - Displays projects
+│   ├── repos/page.tsx          # (No changes - Lists posts)
+│   └── editor/[id]/page.tsx    # (No changes - Editor)
 components/
-├── ImportButton.tsx            # 🆕 Botón para abrir modal
-├── ImportModal.tsx             # 🆕 Modal de importación
-├── RepoSelector.tsx            # (Ya no se usa en dashboard)
+├── ImportButton.tsx            # 🆕 Button to open modal
+├── ImportModal.tsx             # 🆕 Import modal
+├── RepoSelector.tsx            # (No longer used in dashboard)
 ├── LoginButton.tsx
 └── PostEditor.tsx
 lib/
-└── schemas.ts                  # ✨ Actualizado - ProjectSchema
+└── schemas.ts                  # ✨ Updated - ProjectSchema
 ```
 
 ---
 
-## 🎨 Diseño Visual
+## 🎨 Visual Design
 
-### Modal de Importación
-- Fondo oscuro con overlay (`bg-black/80`)
-- Card central en `bg-zinc-900`
-- Header con título y botón de cerrar
-- Lista scrolleable de repos
-- Footer con botón cancelar
+### Import Modal
+- Dark background with overlay (`bg-black/80`).
+- Central card in `bg-zinc-900`.
+- Header with title and close button.
+- Scrollable list of repos.
+- Footer with cancel button.
 
-### Cards de Proyectos
-- `bg-zinc-900` con border `zinc-800`
-- Hover: border cambia a `zinc-700`
-- Grid responsive
-- Stats en footer de cada card
+### Project Cards
+- `bg-zinc-900` with `zinc-800` border.
+- Hover: border changes to `zinc-700`.
+- Responsive grid.
+- Stats in the footer of each card.
 
 ---
 
 ## ✅ Build Status
 
-- **TypeScript**: ✅ No errors
-- **Build**: ✅ Successful  
-- **Archivos nuevos**: 3
-- **Archivos modificados**: 3
+- **TypeScript**: ✅ No errors.
+- **Build**: ✅ Success.  
+- **New files**: 3.
+- **Modified files**: 3.
 
 ---
 
-**Resultado**: Dashboard profesional tipo project manager que muestra todos tus repositorios importados de un vistazo, con importación fácil mediante modal. 🚀
+**Result**: A professional project-manager style dashboard that displays all your imported repositories at a glance, with easy importing via modal. 🚀

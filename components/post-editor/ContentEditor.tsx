@@ -6,33 +6,33 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import { Bold, Italic, Heading1, List, Quote, Code, Link as LinkIcon, Image as ImageIcon, Wand2, Sparkles } from "lucide-react";
 
-// Función para convertir rutas relativas a URLs de GitHub raw
+// Function to convert relative paths to raw GitHub URLs
 const convertToGitHubRawUrl = (src: string | Blob | undefined, repoId?: string): string | Blob | undefined => {
-  // Si no hay src o es un Blob, devolverlo tal cual
+  // If no src is provided or it's a Blob, return as is
   if (!src || src instanceof Blob) {
     return src;
   }
   
-  // Si es una cadena de texto (string)
+  // If it's a string
   if (typeof src === 'string') {
-    // Si ya es una URL completa, no hacer nada
+    // If it's already a full URL, do nothing
     if (src.startsWith('http://') || src.startsWith('https://')) {
       return src;
     }
     
-    // Construir la URL base dinámicamente desde repoId
+    // Build the base URL dynamically from repoId
     let baseUrl = 'https://raw.githubusercontent.com/Broslunas/portfolio-old/refs/heads/main';
     if (repoId) {
-      // repoId viene en formato "owner/repo"
+      // repoId comes in "owner/repo" format
       baseUrl = `https://raw.githubusercontent.com/${repoId}/refs/heads/main`;
     }
     
-    // Si es una ruta relativa que empieza con /
+    // If it's a relative path starting with /
     if (src.startsWith('/')) {
       return `${baseUrl}${src}`;
     }
     
-    // Si es una ruta relativa sin / al inicio
+    // If it's a relative path without a leading /
     if (!src.startsWith('./') && !src.startsWith('../')) {
       return `${baseUrl}/${src}`;
     }

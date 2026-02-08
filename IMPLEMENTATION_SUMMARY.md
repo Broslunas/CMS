@@ -1,336 +1,335 @@
-# ✅ Resumen de Implementación - GitHub App Flow
+# ✅ Implementation Summary - GitHub App Flow
 
-## 🎯 Objetivo Completado
+## 🎯 Objective Completed
 
-Se ha implementado un **flujo completo de instalación de GitHub App** para nuevos usuarios. Ahora, cuando un usuario se registra:
+A **complete GitHub App installation flow** has been implemented for new users. Now, when a user registers:
 
-1. ✅ Obtiene acceso básico (email, nombre, foto) mediante GitHub OAuth
-2. ✅ Es redirigido a `/setup` si no tiene la app instalada
-3. ✅ Ve instrucciones claras para instalar la GitHub App
-4. ✅ La instalación se detecta automáticamente sin refrescar
-5. ✅ Es redirigido automáticamente a `/dashboard` cuando instala la app
+1. ✅ They obtain basic access (email, name, photo) through GitHub OAuth.
+2. ✅ They are redirected to `/setup` if the app is not installed.
+3. ✅ They see clear instructions for installing the GitHub App.
+4. ✅ Installation is detected automatically without refreshing.
+5. ✅ They are automatically redirected to the `/dashboard` upon installation.
 
 ---
 
-## 📦 Archivos Creados
+## 📦 Files Created
 
-### Backend / Lógica
+### Backend / Logic
 
-| Archivo | Descripción |
+| File | Description |
 |---------|-------------|
-| `lib/github-app.ts` | Utilidades para verificar instalación de la app |
-| `app/api/check-installation/route.ts` | Endpoint API para verificar estado |
+| `lib/github-app.ts` | Utilities for verifying the app's installation status. |
+| `app/api/check-installation/route.ts` | API endpoint for status verification. |
 
 ### Frontend / UI
 
-| Archivo | Descripción |
+| File | Description |
 |---------|-------------|
-| `app/setup/page.tsx` | Página de configuración inicial (instrucciones) |
-| `components/InstallationChecker.tsx` | Componente que detecta instalación automáticamente |
+| `app/setup/page.tsx` | Initial setup page containing instructions. |
+| `components/InstallationChecker.tsx` | Component that automatically detects installation. |
 
-### Configuración
+### Configuration
 
-| Archivo | Descripción |
+| File | Description |
 |---------|-------------|
-| `.env` | Agregada variable `GITHUB_APP_NAME` |
-| `.env.example` | Actualizado con nueva variable |
-| `types/next-auth.d.ts` | Agregado campo `appInstalled` |
+| `.env` | Added the `GITHUB_APP_NAME` variable. |
+| `.env.example` | Updated with the new variable. |
+| `types/next-auth.d.ts` | Added the `appInstalled` field. |
 
-### Documentación
+### Documentation
 
-| Archivo | Descripción |
+| File | Description |
 |---------|-------------|
-| `GITHUB_APP_FLOW.md` | Documentación completa del flujo |
-| `SETUP_QUICKSTART.md` | Guía rápida de inicio |
-| `GITHUB_APP_SETUP.md` | Guía para configurar la GitHub App |
+| `GITHUB_APP_FLOW.md` | Full documentation of the implementation flow. |
+| `SETUP_QUICKSTART.md` | Quick start guide for administrators. |
+| `GITHUB_APP_SETUP.md` | Guide for configuring the GitHub App. |
 
 ---
 
-## 🔧 Archivos Modificados
+## 🔧 Files Modified
 
-| Archivo | Cambio |
+| File | Change |
 |---------|--------|
-| `lib/auth.ts` | Agregado callback para verificar instalación en cada login |
-| `app/dashboard/page.tsx` | Agregada verificación que redirige a `/setup` si no tiene app |
+| `lib/auth.ts` | Added a callback to verify installation on every login. |
+| `app/dashboard/page.tsx` | Added verification to redirect to `/setup` if the app is missing. |
 
 ---
 
-## 🌊 Flujo Visual
+## 🌊 Visual Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    NUEVO USUARIO LOGIN                       │
+│                    NEW USER LOGIN                           │
 └─────────────────────────────────────────────────────────────┘
                            │
                            ▼
-              ┌────────────────────────┐
-              │  GitHub OAuth (Login)  │
-              └────────────────────────┘
+               ┌────────────────────────┐
+               │  GitHub OAuth (Login)  │
+               └────────────────────────┘
                            │
                            ▼
-              ┌────────────────────────┐
-              │ Verifica app instalada │
-              │  (checkAppInstalled)  │
-              └────────────────────────┘
+               ┌────────────────────────┐
+               │ Verifies installed app │
+               │  (checkAppInstalled)  │
+               └────────────────────────┘
                            │
-              ┌────────────┴────────────┐
-              │                         │
-              ▼                         ▼
-      ┌──────────────┐        ┌──────────────┐
-      │ No instalada │        │   Instalada  │
-      │ appInstalled │        │ appInstalled │
-      │   = false    │        │    = true    │
-      └──────────────┘        └──────────────┘
-              │                         │
-              ▼                         ▼
-      ┌──────────────┐        ┌──────────────┐
-      │ /setup       │        │ /dashboard   │
-      │ (instruccio- │        │ (proyectos)  │
-      │  nes)        │        └──────────────┘
-      └──────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ Usuario ve:          │
-      │ 1. Pasos             │
-      │ 2. Botón instalar    │
-      │ 3. Verificación auto │
-      └──────────────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ Click "Instalar      │
-      │ GitHub App"          │
-      └──────────────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ Nueva pestaña:       │
-      │ GitHub instalación   │
-      └──────────────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ Usuario selecciona   │
-      │ repos + Install      │
-      └──────────────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ Vuelve al CMS        │
-      │ (pestaña original)   │
-      └──────────────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ InstallationChecker  │
-      │ detecta (polling 3s) │
-      └──────────────────────┘
-              │
-              ▼
-      ┌──────────────────────┐
-      │ Auto-redirige a:     │
-      │ /dashboard           │
-      └──────────────────────┘
+               ┌────────────┴────────────┐
+               │                         │
+               ▼                         ▼
+       ┌──────────────┐        ┌──────────────┐
+       │ Not installed│        │   Installed  │
+       │ appInstalled │        │ appInstalled │
+       │   = false    │        │    = true    │
+       └──────────────┘        └──────────────┘
+               │                         │
+               ▼                         ▼
+       ┌──────────────┐        ┌──────────────┐
+       │ /setup       │        │ /dashboard   │
+       │ (instructions)        │ (projects)   │
+       └──────────────┘        └──────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ User sees:           │
+       │ 1. Steps             │
+       │ 2. Install button    │
+       │ 3. Auto verification │
+       └──────────────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ Clicks "Install      │
+       │ GitHub App"          │
+       └──────────────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ New tab:             │
+       │ GitHub installation  │
+       └──────────────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ User selects         │
+       │ repos + Install      │
+       └──────────────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ Returns to CMS       │
+       │ (original tab)       │
+       └──────────────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ InstallationChecker  │
+       │ detects (polling 3s) │
+       └──────────────────────┘
+               │
+               ▼
+       ┌──────────────────────┐
+       │ Auto-redirects to:   │
+       │ /dashboard           │
+       └──────────────────────┘
 ```
 
 ---
 
-## 🔑 Variables de Entorno Necesarias
+## 🔑 Necessary Environment Variables
 
 ```bash
-# Ya existentes
+# Existing variables
 MONGODB_URI="..."
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="..."
 GITHUB_ID="..."
 GITHUB_SECRET="..."
 
-# 🆕 NUEVA (REQUERIDA)
-GITHUB_APP_NAME="broslunas-cms"  # El slug de tu GitHub App
+# 🆕 NEW (REQUIRED)
+GITHUB_APP_NAME="broslunas-cms"  # Your GitHub App's slug
 ```
 
 ---
 
-## 🚀 Cómo Probarlo
+## 🚀 How to Test
 
-### 1. Asegúrate de tener el GitHub App Name
+### 1. Ensure the GitHub App Name is set
 
-Verifica que `GITHUB_APP_NAME` en `.env` tenga el valor correcto (el slug de tu app).
+Verify that `GITHUB_APP_NAME` in your `.env` has the correct value (your app's slug).
 
-### 2. Reinicia el servidor
+### 2. Restart the server
 
 ```bash
 npm run dev
 ```
 
-### 3. Prueba con usuario sin app instalada
+### 3. Test with a user lacking the app
 
 ```bash
-# Abre en modo incógnito
+# Open in incognito mode
 http://localhost:3000
 
-# Login con GitHub
-# Deberías ir a /setup automáticamente
+# Login with GitHub
+# You should be automatically redirected to /setup
 ```
 
-### 4. Instala la app
+### 4. Install the app
 
-- Click en "Instalar GitHub App"
-- Selecciona repos
-- Install
-- Vuelve al CMS
-- **Debería redirigir automáticamente a /dashboard en ~3 segundos**
+- Click "Install GitHub App".
+- Select repositories.
+- Install.
+- Return to the CMS.
+- **It should automatically redirect to the /dashboard in about 3 seconds.**
 
-### 5. Prueba con usuario que ya tiene la app
+### 5. Test with a user who already has the app
 
-- Login normal
-- **Debería ir directo a /dashboard** (sin pasar por /setup)
+- Login normally.
+- **You should go directly to the /dashboard** (skipping /setup).
 
 ---
 
-## 📊 Testing Completo
+## 📊 Full Testing
 
-### ✅ Casos Cubiertos
+### ✅ Cases Covered
 
-| Caso | Comportamiento Esperado | Estado |
+| Case | Expected Behavior | Status |
 |------|------------------------|--------|
-| Usuario nuevo sin app | Redirige a `/setup` | ✅ |
-| Usuario con app instalada | Redirige a `/dashboard` | ✅ |
-| Instalación en progreso | Detecta automáticamente | ✅ |
-| Usuario cierra sin instalar | Se queda en `/setup` | ✅ |
-| Usuario desinstala app después | Próximo login → `/setup` | ✅ |
-| Error de API | Modo seguro (asume no instalada) | ✅ |
+| New user without the app | Redirect to `/setup` | ✅ |
+| User with the app installed | Redirect to `/dashboard` | ✅ |
+| Installation in progress | Automatic detection | ✅ |
+| User closes without installing | Remains on `/setup` | ✅ |
+| User subsequently uninstalls app | Next login → `/setup` | ✅ |
+| API Error | Safe mode (assumes not installed) | ✅ |
 
 ---
 
-## 🎨 UI/UX Implementada
+## 🎨 UI/UX Implementation
 
-### Página `/setup`
+### `/setup` Page
 
-- ✅ Card centrado con gradiente de fondo
-- ✅ Icono de GitHub prominente
-- ✅ 3 pasos claramente numerados
-- ✅ Sección de permisos explicada
-- ✅ Botón primario "Instalar GitHub App"
-- ✅ Botón secundario "Ya instalé la app"
-- ✅ Indicador de "Verificando instalación..." (bottom-right)
-- ✅ Responsive (mobile-first)
+- ✅ Centered card with a background gradient.
+- ✅ Prominent GitHub icon.
+- ✅ 3 clearly numbered steps.
+- ✅ Permissions section explained.
+- ✅ Primary "Install GitHub App" button.
+- ✅ Secondary "I have already installed the app" button.
+- ✅ "Verifying installation..." indicator (bottom-right).
+- ✅ Responsive design (mobile-first).
 
-### Componente `InstallationChecker`
+### `InstallationChecker` Component
 
-- ✅ Polling cada 3 segundos
-- ✅ Indicador visual discreto
-- ✅ Auto-redirige sin intervención del usuario
-- ✅ Se limpia correctamente al desmontar
-
----
-
-## 🔐 Seguridad
-
-### ✓ Verificaciones en Múltiples Capas
-
-1. **Sesión** - `auth.ts` verifica en cada login
-2. **Dashboard** - Verifica antes de renderizar
-3. **Setup** - Solo muestra si no instalada
-4. **API** - Endpoint protegido con autenticación
-
-### ✓ Tokens Seguros
-
-- Access token nunca expuesto al cliente
-- Solo se usa server-side
-- Scope mínimo requerido
+- ✅ Polling every 3 seconds.
+- ✅ Discrete visual indicator.
+- ✅ Auto-redirects without user intervention.
+- ✅ Cleans up correctly upon unmounting.
 
 ---
 
-## 📈 Próximos Pasos Opcionales
+## 🔐 Security
 
-### Mejoras Sugeridas (No implementadas)
+### ✓ Multi-layer Verification
 
-1. **Webhook de instalación**
-   - Eliminar polling
-   - Detección instantánea
-   - Más eficiente
+1. **Session** - `auth.ts` verifies on every login.
+2. **Dashboard** - Verifies before rendering.
+3. **Setup** - Only displays if the app is not installed.
+4. **API** - Endpoint protected by authentication.
 
-2. **Página de gestión de instalación**
-   - Ver repos con acceso
-   - Agregar/quitar repos
-   - Ver installation ID
+### ✓ Secure Tokens
+
+- The access token is never exposed to the client.
+- It is only used server-side.
+- Minimum required scope.
+
+---
+
+## 📈 Optional Next Steps
+
+### Suggested Improvements (Not yet implemented)
+
+1. **Installation Webhook**
+   - Eliminate polling.
+   - Instant detection.
+   - More efficient.
+
+2. **Installation Management Page**
+   - See repositories with access.
+   - Add/remove repositories.
+   - View installation ID.
 
 3. **Analytics**
-   - Trackear tasa de conversión
-   - Tiempo promedio de setup
-   - Abandono en setup
+   - Track conversion rate.
+   - Average setup time.
+   - Abandonment rate during setup.
 
-4. **Onboarding mejorado**
-   - Tour guiado después de instalar
-   - Tips para primer uso
-   - Ejemplos de repos compatibles
-
----
-
-## 🐛 Known Issues / Limitaciones
-
-### Polling cada 3 segundos
-
-- **Impacto**: Consume requests mientras el usuario está en /setup
-- **Mitigación**: Se detiene cuando detecta instalación o usuario sale de la página
-- **Mejora futura**: Implementar webhooks
-
-### Cache de sesión
-
-- **Impacto**: El `appInstalled` se cachea en el JWT
-- **Mitigación**: Se refresca en cada login y al navegar
-- **Mejora futura**: Invalidar cache al detectar cambios
+4. **Improved Onboarding**
+   - Guided tour after installation.
+   - Tips for first use.
+   - Examples of compatible repositories.
 
 ---
 
-## 📝 Checklist de Producción
+## 🐛 Known Issues / Limitations
 
-Antes de deployear:
+### Polling every 3 seconds
 
-- [ ] `GITHUB_APP_NAME` configurado correctamente en producción
-- [ ] GitHub App tiene callback URL de producción
-- [ ] Permisos de la app: **Contents: Read & Write**
-- [ ] App instalada en al menos una cuenta de prueba
-- [ ] Flujo probado end-to-end
-- [ ] Variables de entorno actualizadas en hosting
-- [ ] `NEXTAUTH_SECRET` único para producción
+- **Impact**: Consumes requests while the user is on /setup.
+- **Mitigation**: Stops once installation is detected or the user leaves the page.
+- **Future Improvement**: Implement webhooks.
+
+### Session Caching
+
+- **Impact**: `appInstalled` is cached in the JWT.
+- **Mitigation**: Refreshed on every login and during navigation.
+- **Future Improvement**: Invalidate the cache when changes are detected.
 
 ---
 
-## 📚 Documentación Disponible
+## 📝 Production Checklist
 
-| Archivo | Para quién | Contenido |
+Before deploying:
+
+- [ ] `GITHUB_APP_NAME` correctly configured in production.
+- [ ] GitHub App has the production callback URL.
+- [ ] App permissions: **Contents: Read & Write**.
+- [ ] App installed on at least one test account.
+- [ ] Flow tested end-to-end.
+- [ ] Environment variables updated in the hosting platform.
+- [ ] Unique `NEXTAUTH_SECRET` for production.
+
+---
+
+## 📚 Available Documentation
+
+| File | For Who | Content |
 |---------|-----------|-----------|
-| `GITHUB_APP_FLOW.md` | Desarrolladores | Arquitectura completa del flujo |
-| `SETUP_QUICKSTART.md` | Admins/DevOps | Guía rápida de configuración |
-| `GITHUB_APP_SETUP.md` | Admins | Crear GitHub App desde cero |
-| Este archivo | Project Manager | Resumen ejecutivo |
+| `GITHUB_APP_FLOW.md` | Developers | Full flow architecture |
+| `SETUP_QUICKSTART.md` | Admins/DevOps | Quick configuration guide |
+| `GITHUB_APP_SETUP.md` | Admins | Create GitHub App from scratch |
+| This file | Project Manager | Executive summary |
 
 ---
 
-## ✨ Resultado Final
+## ✨ Final Result
 
-**El CMS ahora tiene un flujo completo y profesional de onboarding que:**
+**The CMS now features a professional onboarding flow that:**
 
-- ✅ Guía a nuevos usuarios paso a paso
-- ✅ Verifica permisos antes de permitir acceso
-- ✅ Detecta automáticamente la instalación
-- ✅ Proporciona una UX fluida y sin fricción
-- ✅ Está completamente documentado
-- ✅ Es mantenible y escalable
+- ✅ Guides new users step-by-step.
+- ✅ Verifies permissions before granting access.
+- ✅ Automatically detects installation.
+- ✅ Provides a friction-less, fluid UX.
+- ✅ Is fully documented.
+- ✅ Is maintainable and scalable.
 
-**Build Status**: ✅ Exitoso (sin errores)
+**Build Status**: ✅ Success (no errors)
 
-**TypeScript**: ✅ Sin errores de tipos
+**TypeScript**: ✅ No type errors
 
-**Archivos creados**: 7
+**Files created**: 7
 
-**Archivos modificados**: 4
+**Files modified**: 4
 
-**Líneas de código**: ~600
+**Lines of code**: ~600
 
 ---
 
-🎉 **Implementación completa y lista para usar!**
+🎉 **Implementation complete and ready for use!**

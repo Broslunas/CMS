@@ -74,17 +74,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      // Pasar el access token a la sesión
+      // Pass the access token to the session
       session.access_token = token.accessToken as string;
       session.error = token.error as string;
 
-      // Note: En NextAuth v5, el user.id viene del token sub
+      // Note: In NextAuth v5, user.id comes from the token sub
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }
       
-      // Verificar si el usuario tiene la app instalada
-      // Ahora usamos el valor cacheado en el token para evitar llamadas a la API en cada request
+      // Check if the user has the app installed
+      // Now we use the value cached in the token to avoid API calls on every request
       if (token.appInstalled !== undefined) {
          session.appInstalled = token.appInstalled as boolean;
       }
@@ -101,11 +101,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 });
 
 /**
- * Función para refrescar el access token de GitHub
+ * Function to refresh the GitHub access token
  */
 async function refreshAccessToken(token: any) {
   try {
-    console.log("Intentando refrescar el token de GitHub...");
+    console.log("Attempting to refresh GitHub token...");
     
     const response = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
@@ -124,20 +124,20 @@ async function refreshAccessToken(token: any) {
     const tokens = await response.json();
 
     if (!response.ok) {
-      console.error("Error en la respuesta de GitHub al refrescar token:", tokens);
+      console.error("Error in GitHub response when refreshing token:", tokens);
       throw tokens;
     }
 
-    console.log("Token refrescado exitosamente.");
+    console.log("Token refreshed successfully.");
 
     return {
       ...token,
       accessToken: tokens.access_token,
       expiresAt: Math.floor(Date.now() / 1000 + (tokens.expires_in ?? 28800)), // Default 8h if missing
-      refreshToken: tokens.refresh_token ?? token.refreshToken, // Si no viene uno nuevo, conservar el anterior
+      refreshToken: tokens.refresh_token ?? token.refreshToken, // If no new one is provided, keep the previous one
     };
   } catch (error) {
-    console.error("Error al refrescar el access token:", error);
+    console.error("Error refreshing access token:", error);
     return {
       ...token,
       error: "RefreshAccessTokenError",

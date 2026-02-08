@@ -1,7 +1,7 @@
 import matter from "gray-matter";
 
 /**
- * Parsea un archivo Markdown y separa el frontmatter del contenido
+ * Parses a Markdown file and separates the frontmatter from the content
  */
 export function parseMarkdown(rawContent: string) {
   const { data: metadata, content } = matter(rawContent);
@@ -9,15 +9,15 @@ export function parseMarkdown(rawContent: string) {
 }
 
 /**
- * Serializa metadata y contenido de vuelta a formato Markdown
+ * Serializes metadata and content back to Markdown format
  */
 export function serializeMarkdown(metadata: Record<string, any>, content: string) {
-  // Serializar usando gray-matter
+  // Serialize using gray-matter
   const stringified = matter.stringify(content, metadata);
 
-  // Post-procesar para quitar comillas a fechas con formato "YYYY-MM-DD"
-  // Solo lo hacemos en el bloque de frontmatter para evitar tocar el contenido.
-  // El frontmatter está delimitado por ---
+  // Post-process to remove quotes from dates in "YYYY-MM-DD" format
+  // We only do this in the frontmatter block to avoid touching the content.
+  // The frontmatter is delimited by ---
   return stringified.replace(/^---([\s\S]*?)\n---/m, (match, frontmatter) => {
     const cleanFrontmatter = frontmatter.replace(/([:-]\s*)["'](\d{4}-\d{2}-\d{2})["']/g, '$1$2');
     return `---${cleanFrontmatter}\n---`;
@@ -25,11 +25,11 @@ export function serializeMarkdown(metadata: Record<string, any>, content: string
 }
 
 /**
- * Valida que el metadata tenga la estructura esperada
- * (Esto se puede extender con Zod para validación más robusta)
+ * Validates that the metadata has the expected structure
+ * (This can be extended with Zod for more robust validation)
  */
 export function validateMetadata(metadata: any): boolean {
-  // Validación básica - se puede mejorar con Zod
+  // Basic validation - can be improved with Zod
   if (!metadata.title || typeof metadata.title !== "string") {
     return false;
   }

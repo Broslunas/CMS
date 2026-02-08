@@ -1,184 +1,184 @@
-# ⚡ Quick Start - Instalación GitHub App
+# ⚡ Quick Start - GitHub App Installation
 
-## 🎯 Para el Administrador (Una sola vez)
+## 🎯 For the Administrator (One-time setup)
 
-### 1. Asegúrate de tener el nombre correcto de tu GitHub App
+### 1. Ensure your GitHub App Name is correct
 
-En `.env`:
+In your `.env`:
 ```bash
-GITHUB_APP_NAME="broslunas-cms"  # Debe ser el slug, no el display name
+GITHUB_APP_NAME="broslunas-cms"  # Must be the slug, not the display name
 ```
 
-**¿Dónde encontrar el slug?**
-- Ve a: https://github.com/settings/apps
-- Click en tu app
-- El slug está en la URL: `github.com/settings/apps/[ESTE-ES-EL-SLUG]`
+**Where to find the slug?**
+- Go to: https://github.com/settings/apps
+- Click on your app.
+- The slug is in the URL: `github.com/settings/apps/[THIS-IS-THE-SLUG]`
 
 ---
 
-## 👤 Para Nuevos Usuarios
+## 👤 For New Users
 
-### Flujo Automático
+### Automatic Flow
 
 ```mermaid
 graph TD
-    A[Login con GitHub] --> B{¿App instalada?}
-    B -->|No| C[Redirige a /setup]
-    B -->|Sí| D[Redirige a /dashboard]
-    C --> E[Usuario ve instrucciones]
-    E --> F[Click: Instalar GitHub App]
-    F --> G[GitHub: Seleccionar repos]
+    A[Login with GitHub] --> B{App installed?}
+    B -->|No| C[Redirect to /setup]
+    B -->|Yes| D[Redirect to /dashboard]
+    C --> E[User sees instructions]
+    E --> F[Click: Install GitHub App]
+    F --> G[GitHub: Select repos]
     G --> H[Click: Install]
-    H --> I[Verificación automática cada 3s]
-    I --> J{¿Detectada?}
+    H --> I[Automatic verification every 3s]
+    I --> J{Detected?}
     J -->|No| I
-    J -->|Sí| D
-    D --> K[Usuario puede trabajar]
+    J -->|Yes| D
+    D --> K[User can start working]
 ```
 
-### Vista del Usuario
+### User View
 
-1. **Primera vez (sin app)**
+1. **First time (no app)**
    ```
    Login → /setup
    
-   Pantalla muestra:
+   Screen shows:
    ┌─────────────────────────────────┐
-   │  🐙 Bienvenido al CMS!          │
+   │  🐙 Welcome to the CMS!         │
    │                                 │
-   │  Para comenzar:                 │
-   │  1. Instala la GitHub App       │
-   │  2. Selecciona tus repos        │
-   │  3. ¡Comienza a trabajar!       │
+   │  To get started:                │
+   │  1. Install the GitHub App      │
+   │  2. Select your repos           │
+   │  3. Start working!              │
    │                                 │
-   │  [Instalar GitHub App] →        │
+   │  [Install GitHub App] →         │
    └─────────────────────────────────┘
    ```
 
-2. **Durante instalación**
+2. **During installation**
    ```
-   • Pestaña se abre en GitHub
-   • Usuario instala la app
-   • Vuelve al CMS (pestaña original)
-   • ✨ Redirige automáticamente a /dashboard
+   • Tab opens on GitHub
+   • User installs the app
+   • User returns to the CMS (original tab)
+   • ✨ Automatically redirects to /dashboard
    ```
 
-3. **Siguientes logins**
+3. **Subsequent logins**
    ```
-   Login → /dashboard (directo)
+   Login → /dashboard (direct)
    
-   Ya no ve /setup
+   /setup is no longer shown
    ```
 
 ---
 
-## 🔧 Verificación Manual
+## 🔧 Manual Verification
 
-### Probar el flujo
+### Testing the flow
 
 ```bash
-# 1. Iniciar el servidor dev
+# 1. Start the dev server
 npm run dev
 
-# 2. Abrir en navegador modo incógnito
+# 2. Open in incognito mode
 # http://localhost:3000
 
-# 3. Login con una cuenta GitHub que NO tenga la app
+# 3. Login with a GitHub account that does NOT have the app
 
-# 4. Deberías ver /setup automáticamente
+# 4. You should see /setup automatically
 
-# 5. Instalar la app desde /setup
+# 5. Install the app from /setup
 
-# 6. Volver a la pestaña del CMS
+# 6. Return to the CMS tab
 
-# 7. En ~3 segundos → Redirige a /dashboard
+# 7. In ~3 seconds → Redirects to /dashboard
 ```
 
 ---
 
 ## 📋 FAQ
 
-### ¿Qué pasa si el usuario cierra la pestaña sin instalar?
+### What happens if the user closes the tab without installing?
 
-Se queda en `/setup` y puede intentar de nuevo cuando quiera.
+They remain on `/setup` and can try again whenever they want.
 
-### ¿Cómo verifico que la app está instalada?
+### How do I verify that the app is installed?
 
 ```bash
-# En el backend
+# On the backend
 GET /api/check-installation
 
 # Response:
 {
   "installed": true,
-  "message": "GitHub App instalada correctamente"
+  "message": "GitHub App installed correctly"
 }
 ```
 
-### ¿Puedo saltarme /setup?
+### Can I skip /setup?
 
-No, el dashboard verifica `session.appInstalled` y redirige si es `false`.
+No, the dashboard verifies `session.appInstalled` and redirects if it is `false`.
 
-### ¿Qué pasa si el usuario desinstala la app después?
+### What happens if the user subsequently uninstalls the app?
 
-El próximo login detectará `appInstalled: false` y lo enviará a `/setup` nuevamente.
+The next login will detect `appInstalled: false` and send them back to `/setup`.
 
-### ¿Necesito configurar webhooks?
+### Do I need to configure webhooks?
 
-No, el polling cada 3 segundos es suficiente para una buena UX.
+No, 3-second polling is sufficient for a good UX.
 
 ---
 
-## 🎨 Personalización
+## 🎨 Personalization
 
-### Cambiar el intervalo de verificación
+### Adjusting the verification interval
 
-En `components/InstallationChecker.tsx`:
+In `components/InstallationChecker.tsx`:
 
 ```typescript
-// Cambiar de 3000ms (3s) a otro valor
+// Change from 3000ms (3s) to another value
 const interval = setInterval(async () => {
   // ...
-}, 3000); // ← Cambiar aquí
+}, 3000); // ← Change here
 ```
 
-### Personalizar el mensaje de setup
+### Personalizing the setup message
 
-En `app/setup/page.tsx`, editar el contenido del `CardHeader` y `CardContent`.
+In `app/setup/page.tsx`, edit the content of `CardHeader` and `CardContent`.
 
 ---
 
-## ✅ Checklist de Producción
+## ✅ Production Checklist
 
-Antes de llevar a producción:
+Before going live:
 
-- [ ] `GITHUB_APP_NAME` está correctamente configurado
-- [ ] La GitHub App tiene permisos: **Contents: Read & Write**
-- [ ] La GitHub App está publicada (no en borrador)
-- [ ] `NEXTAUTH_URL` apunta a tu dominio de producción
-- [ ] `NEXTAUTH_SECRET` es diferente al de desarrollo
-- [ ] Probaste el flujo completo en staging
+- [ ] `GITHUB_APP_NAME` is correctly configured.
+- [ ] The GitHub App has permissions: **Contents: Read & Write**.
+- [ ] The GitHub App is published (not in draft mode).
+- [ ] `NEXTAUTH_URL` points to your production domain.
+- [ ] `NEXTAUTH_SECRET` is different from the development one.
+- [ ] You have tested the complete flow in a staging environment.
 
 ---
 
 ## 🚀 Deploy
 
-Las variables de entorno necesarias en producción:
+Necessary environment variables in production:
 
 ```bash
 # MongoDB
-MONGODB_URI=tu-mongodb-uri
+MONGODB_URI=your-mongodb-uri
 
 # NextAuth
-NEXTAUTH_URL=https://tu-dominio.com
-NEXTAUTH_SECRET=tu-secret-seguro
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=your-secure-secret
 
 # GitHub App
-GITHUB_ID=tu-client-id
-GITHUB_SECRET=tu-client-secret
-GITHUB_APP_NAME=tu-app-slug
+GITHUB_ID=your-client-id
+GITHUB_SECRET=your-client-secret
+GITHUB_APP_NAME=your-app-slug
 ```
 
 ---
 
-**¡Listo!** El CMS ahora requiere explícitamente que los usuarios instalen la GitHub App antes de poder gestionar contenido. 🎉
+**Success!** The CMS now explicitly requires users to install the GitHub App before they can manage content. 🎉

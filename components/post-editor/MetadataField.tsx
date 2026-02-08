@@ -10,26 +10,26 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Sparkles, Wand2, X } from "lucide-react";
 
-// Función para convertir rutas relativas a URLs de GitHub raw
+// Function to convert relative paths to raw GitHub URLs
 const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
-  // Si ya es una URL completa, no hacer nada
+  // If it's already a full URL, do nothing
   if (src.startsWith('http://') || src.startsWith('https://')) {
     return src;
   }
   
-  // Construir la URL base dinámicamente desde repoId
+  // Build the base URL dynamically from repoId
   let baseUrl = 'https://raw.githubusercontent.com/Broslunas/portfolio-old/refs/heads/main';
   if (repoId) {
-    // repoId viene en formato "owner/repo"
+    // repoId comes in "owner/repo" format
     baseUrl = `https://raw.githubusercontent.com/${repoId}/refs/heads/main`;
   }
   
-  // Si es una ruta relativa que empieza con /
+  // If it's a relative path starting with /
   if (src.startsWith('/')) {
     return `${baseUrl}${src}`;
   }
   
-  // Si es una ruta relativa sin / al inicio
+  // If it's a relative path without a leading /
   if (!src.startsWith('./') && !src.startsWith('../')) {
     return `${baseUrl}/${src}`;
   }

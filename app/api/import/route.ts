@@ -31,12 +31,12 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
     const repoId = `${owner}/${repo}`;
 
-    // 1. Parsear el config.ts para obtener los schemas
-    console.log("Parseando config.ts...");
+    // 1. Parse the config.ts to get the schemas
+    console.log("Parsing config.ts...");
     const schemas = await parseContentConfig(accessToken, owner, repo);
-    console.log(`Encontrados ${schemas.length} schemas:`, schemas.map(s => s.name));
+    console.log(`Found ${schemas.length} schemas:`, schemas.map(s => s.name));
 
-    // 2. Listar archivos de contenido
+    // 2. List content files
     const files = await listContentFiles(accessToken, owner, repo);
 
     if (files.length === 0) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 2. Conectar a MongoDB
+    // 3. Connect to MongoDB
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     let imported = 0;
     const errors: string[] = [];
 
-    // 3. Procesar todos los archivos en paralelo para mayor velocidad
+    // 4. Process all files in parallel for better performance
     const processResults = await Promise.all(
       files.map(async (filePath) => {
         try {
@@ -78,14 +78,14 @@ export async function POST(request: NextRequest) {
             return { success: false, error: `Could not fetch ${filePath}` };
           }
 
-          // 4. Parsear el markdown
+          // 5. Parse the markdown
           const { metadata, content } = parseMarkdown(fileData.content);
 
-          // 5. Detectar a qué colección pertenece
+          // 6. Detect which collection it belongs to
           const collectionName = detectCollectionFromPath(filePath);
           const schema = schemas.find((s) => s.name === collectionName) || schemas[0];
 
-          // 6. Validar contra el schema de la colección
+          // 7. Validate against the collection schema
           const validationResult = validateAgainstSchema(metadata, schema);
 
           if (!validationResult.valid) {
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
             };
           }
 
-          // 7. Preparar el documento para MongoDB
+          // 8. Prepare the document for MongoDB
           return {
             success: true,
             document: {
@@ -120,14 +120,14 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    // Separar resultados exitosos de errores
+    // Separate successful results from errors
     const successfulDocs = processResults.filter(r => r.success);
     const failedResults = processResults.filter(r => !r.success);
     
-    // Agregar errores
+    // Add errors
     errors.push(...failedResults.map(r => r.error!));
 
-    // 8. Guardar todos los documentos en lote (bulkWrite es más eficiente)
+    // 9. Save all documents in bulk (bulkWrite is more efficient)
     if (successfulDocs.length > 0) {
       const bulkOps = successfulDocs.map((result: any) => ({
         updateOne: {
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       imported = successfulDocs.length;
     }
 
-    // 8. Guardar los schemas de las colecciones
+    // 10. Save collection schemas
     for (const schema of schemas) {
       await targetCollection.updateOne(
         { type: "schema", userId: effectiveUserId, repoId, collectionName: schema.name },
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 9. Guardar/actualizar el proyecto en user collection
+    // 11. Save/update the project in user collection
     await targetCollection.updateOne(
       { type: "project", userId: effectiveUserId, repoId },
       {

@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  // Verificar si el usuario tiene la app instalada
+  // Check if the user has the app installed
   if (!session.appInstalled) {
     redirect("/setup");
   }
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
         return dateB - dateA;
   });
 
-  // Serializar proyectos para pasar al cliente
+  // Serialize projects for client consumption
   const serializedProjects = allProjects.map((project: any) => ({
     _id: project._id.toString(),
     repoId: project.repoId,
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
   return (
     <main className="container max-w-7xl mx-auto px-4 py-12 md:py-20">
       <div className="space-y-12">
-        {/* Header con botón de importar */}
+        {/* Header with import button */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border pb-8">
           <div>
             <h2 className="text-4xl font-black tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">

@@ -40,7 +40,7 @@ export default async function ReposPage({
   const status = params.status || "all";
   const collectionFilter = params.collection || "all";
 
-  // Obtener posts del repositorio
+  // Get repository posts
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const userCollection = db.collection(getUserCollectionName(session.user.id));
@@ -68,10 +68,10 @@ export default async function ReposPage({
     .sort({ updatedAt: -1 })
     .toArray();
 
-  // Obtener colecciones únicas antes de filtrar
+  // Get unique collections before filtering
   const uniqueCollections = Array.from(new Set(posts.map(p => p.collection || "blog")));
 
-  // Aplicar filtros en memoria
+  // Apply in-memory filters
   if (query) {
     posts = posts.filter(post => {
       const title = post.metadata.title || "";
@@ -135,10 +135,10 @@ export default async function ReposPage({
            </div>
         </div>
 
-        {/* Invitación de GitHub (solo se muestra si hay una pendiente para este repo) */}
+        {/* GitHub Invitation (only shown if there is a pending one for this repo) */}
         <RepoInvitationAlert repoId={repoId} />
 
-        {/* Filtros */}
+        {/* Filters */}
         <RepoFilters collections={uniqueCollections} />
 
         {/* Posts List */}

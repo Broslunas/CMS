@@ -1,11 +1,11 @@
 import { Octokit } from "@octokit/rest";
 import { getAppOctokit } from "@/lib/github-app-auth";
 
-// Caché en memoria para verificaciones de Astro (evita llamadas repetidas)
+// In-memory cache for Astro checks (avoids repeated calls)
 const astroRepoCache = new Map<string, boolean>();
 
 /**
- * Ejecuta promesas con un límite de concurrencia para evitar rate limiting
+ * Executes promises with a concurrency limit to avoid rate limiting
  */
 export async function promiseAllWithLimit<T>(
   items: T[],
@@ -43,7 +43,7 @@ export function getOctokit(accessToken: string) {
 }
 
 /**
- * Lista los repositorios del usuario autenticado
+ * Lists the authenticated user's repositories
  */
 export async function listUserRepos(accessToken: string) {
   const octokit = getOctokit(accessToken);
@@ -57,7 +57,7 @@ export async function listUserRepos(accessToken: string) {
 }
 
 /**
- * Verifica si un repositorio usa Astro
+ * Checks if a repository uses Astro
  */
 export async function isAstroRepo(
   accessToken: string,
@@ -66,7 +66,7 @@ export async function isAstroRepo(
 ): Promise<boolean> {
   const cacheKey = `${owner}/${repo}`;
   
-  // Verificar si ya tenemos el resultado en caché
+  // Check if we already have the result in cache
   if (astroRepoCache.has(cacheKey)) {
     return astroRepoCache.get(cacheKey)!;
   }
@@ -74,7 +74,7 @@ export async function isAstroRepo(
   const octokit = getOctokit(accessToken);
   
   try {
-    // Intentar obtener package.json
+    // Attempt to get package.json
     const { data } = await octokit.repos.getContent({
       owner,
       repo,
@@ -85,30 +85,30 @@ export async function isAstroRepo(
       const content = Buffer.from(data.content, "base64").toString("utf-8");
       const packageJson = JSON.parse(content);
       
-      // Verificar si tiene astro en dependencies o devDependencies
+      // Check if it has astro in dependencies or devDependencies
       const deps = packageJson.dependencies || {};
       const devDeps = packageJson.devDependencies || {};
       
       const isAstro = "astro" in deps || "astro" in devDeps;
       
-      // Guardar en caché
+      // Save in cache
       astroRepoCache.set(cacheKey, isAstro);
       
       return isAstro;
     }
     
-    // No es un archivo, guardar false en caché
+    // Not a file, save false in cache
     astroRepoCache.set(cacheKey, false);
     return false;
   } catch (error) {
-    // Si no hay package.json, no es un proyecto Astro, guardar en caché
+    // If there is no package.json, it is not an Astro project, save in cache
     astroRepoCache.set(cacheKey, false);
     return false;
   }
 }
 
 /**
- * Obtiene el contenido de un archivo del repositorio
+ * Gets the content of a file from the repository
  */
 export async function getFileContent(
   accessToken: string,
@@ -127,7 +127,7 @@ export async function getFileContent(
       ref,
     });
 
-    // Verificar que sea un archivo y no un directorio
+    // Verify it is a file and not a directory
     if (!Array.isArray(data) && data.type === "file") {
       return {
         content: Buffer.from(data.content, "base64").toString("utf-8"),
@@ -143,7 +143,7 @@ export async function getFileContent(
 }
 
 /**
- * Lista los commits de un archivo específico
+ * Lists the commits of a specific file
  */
 export async function listFileCommits(
   accessToken: string,
@@ -158,13 +158,13 @@ export async function listFileCommits(
       owner,
       repo,
       path,
-      per_page: 20, // Limitamos a los últimos 20 cambios
+      per_page: 20, // We limit to the last 20 changes
     });
 
     return data.map(commit => ({
       sha: commit.sha,
       message: commit.commit.message,
-      author: commit.commit.author?.name || "Desconocido",
+      author: commit.commit.author?.name || "Unknown",
       date: commit.commit.author?.date,
       html_url: commit.html_url,
     }));
@@ -175,7 +175,7 @@ export async function listFileCommits(
 }
 
 /**
- * Lista archivos .md y .mdx en el directorio content
+ * Lists .md and .mdx files in the content directory
  */
 export async function listContentFiles(
   accessToken: string,
@@ -195,14 +195,14 @@ export async function listContentFiles(
     const files: string[] = [];
 
     if (Array.isArray(data)) {
-      // Separar archivos y directorios
+      // Separate files and directories
       const immediateFiles = data
         .filter(item => item.type === "file" && (item.name.endsWith(".md") || item.name.endsWith(".mdx")))
         .map(item => item.path);
       
       files.push(...immediateFiles);
 
-      // Procesar subdirectorios en paralelo
+      // Process subdirectories in parallel
       const directories = data.filter(item => item.type === "dir");
       
       if (directories.length > 0) {
@@ -210,7 +210,7 @@ export async function listContentFiles(
           directories.map(dir => listContentFiles(accessToken, owner, repo, dir.path))
         );
         
-        // Aplanar el array de arrays
+        // Flatten the array of arrays
         subFilesArrays.forEach(subFiles => files.push(...subFiles));
       }
     }
@@ -228,7 +228,7 @@ const COMMIT_AUTHOR = {
 };
 
 /**
- * Actualiza o crea un archivo en el repositorio
+ * Updates or creates a file in the repository
  */
 export async function updateFile(
   accessToken: string,
@@ -255,7 +255,7 @@ export async function updateFile(
     path,
     message,
     content: Buffer.from(content).toString("base64"),
-    sha, // Si existe, actualiza; si no, crea
+    sha, // If it exists, update; otherwise, create
   };
 
   // Only force author if NOT using the App AND strategy is 'bot' (fallback mode)
@@ -274,7 +274,7 @@ export async function updateFile(
 }
 
 /**
- * Elimina un archivo del repositorio
+ * Deletes a file from the repository
  */
 export async function deleteFile(
   accessToken: string,
@@ -313,7 +313,7 @@ export async function deleteFile(
 }
 
 /**
- * Invita a un colaborador a un repositorio de GitHub
+ * Invites a collaborator to a GitHub repository
  */
 export async function inviteCollaborator(
   accessToken: string,
@@ -339,7 +339,7 @@ export async function inviteCollaborator(
 }
 
 /**
- * Lista las invitaciones pendientes de repositorios para el usuario autenticado
+ * Lists pending repository invitations for the authenticated user
  */
 export async function listUserRepoInvitations(accessToken: string) {
   const octokit = getOctokit(accessToken);
@@ -354,7 +354,7 @@ export async function listUserRepoInvitations(accessToken: string) {
 }
 
 /**
- * Acepta una invitación de repositorio
+ * Accepts a repository invitation
  */
 export async function acceptRepoInvitation(
   accessToken: string,

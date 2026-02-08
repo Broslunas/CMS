@@ -17,7 +17,7 @@ let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
 if (process.env.NODE_ENV === 'development') {
-  // En desarrollo, usar una variable global para mantener la conexión
+  // In development, use a global variable to maintain the connection
   let globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>;
   };
@@ -28,7 +28,7 @@ if (process.env.NODE_ENV === 'development') {
   }
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
-  // En producción, crear una nueva conexión
+  // In production, create a new connection
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }
