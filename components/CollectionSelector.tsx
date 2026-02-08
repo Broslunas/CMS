@@ -20,9 +20,9 @@ export default function CollectionSelector({ schemas, repoId }: CollectionSelect
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="max-w-4xl w-full space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-foreground">Elige una Colección</h1>
+          <h1 className="text-4xl font-bold text-foreground">Choose a Collection</h1>
           <p className="text-muted-foreground text-lg">
-            ¿Qué tipo de contenido quieres crear en <span className="text-foreground font-mono">{repoId}</span>?
+            What type of content do you want to create in <span className="text-foreground font-mono">{repoId}</span>?
           </p>
         </div>
 
@@ -45,7 +45,7 @@ export default function CollectionSelector({ schemas, repoId }: CollectionSelect
                     {schema.name}
                   </h3>
                   <p className="text-muted-foreground mt-2 text-sm line-clamp-2">
-                    {Object.keys(schema.fields).length} campos definidos
+                    {Object.keys(schema.fields).length} fields defined
                   </p>
                 </div>
 
@@ -69,7 +69,7 @@ export default function CollectionSelector({ schemas, repoId }: CollectionSelect
             href={`/dashboard/repos?repo=${encodeURIComponent(repoId)}`}
             className="text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
-            ← Cancelar y volver
+            ← Cancel and go back
           </Link>
         </div>
       </div>

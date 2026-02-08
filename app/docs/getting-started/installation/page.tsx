@@ -13,10 +13,10 @@ export default function InstallationPage() {
             <p className="text-sm font-medium text-primary">Getting Started</p>
         </div>
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Instalación de la GitHub App
+          GitHub App Installation
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed">
-          Para que Broslunas CMS pueda leer y escribir en tus repositorios, necesitas instalar nuestra aplicación oficial de GitHub. Este proceso es seguro y te da control total sobre qué repositorios compartes.
+          For Broslunas CMS to read and write to your repositories, you need to install our official GitHub application. This process is secure and gives you total control over which repositories you share.
         </p>
       </div>
       
@@ -24,37 +24,37 @@ export default function InstallationPage() {
         <section className="space-y-4">
             <h2 className="text-2xl font-bold tracking-tight border-b pb-2 flex items-center gap-2">
                 <span className="bg-primary text-primary-foreground text-sm rounded-full w-6 h-6 flex items-center justify-center">1</span>
-                Iniciar sesión
+                Sign In
             </h2>
             <p className="text-muted-foreground">
-                Comienza iniciando sesión en Broslunas CMS con tu cuenta de GitHub. Esto nos permite autenticarte, pero <strong>no otorga acceso al código todavía</strong>.
+                Start by signing into Broslunas CMS with your GitHub account. This allows us to authenticate you, but it <strong>does not grant access to your code yet</strong>.
             </p>
         </section>
 
         <section className="space-y-4">
             <h2 className="text-2xl font-bold tracking-tight border-b pb-2 flex items-center gap-2">
                 <span className="bg-primary text-primary-foreground text-sm rounded-full w-6 h-6 flex items-center justify-center">2</span>
-                Instalar la App
+                Install the App
             </h2>
             <p className="text-muted-foreground">
-                Dirígete a tu Dashboard. Si aún no has configurado la integración, verás un aviso destacado.
+                Go to your Dashboard. If you haven't configured the integration yet, you will see a prominent notice.
             </p>
             <div className="bg-card p-6 rounded-xl border shadow-sm">
-                <p className="font-mono text-sm mb-4 bg-muted p-2 rounded w-fit">Click en "Instalar GitHub App"</p>
-                <p className="text-sm text-muted-foreground mb-4">Serás redirigido a GitHub para autorizar la instalación. Tendrás dos opciones:</p>
+                <p className="font-mono text-sm mb-4 bg-muted p-2 rounded w-fit">Click on "Install GitHub App"</p>
+                <p className="text-sm text-muted-foreground mb-4">You will be redirected to GitHub to authorize the installation. You will have two options:</p>
                 <div className="grid gap-3">
                     <div className="p-3 border rounded-lg flex items-start gap-3 bg-background/50">
                         <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5" />
                         <div>
                             <strong className="block text-sm font-semibold">All repositories</strong>
-                            <span className="text-xs text-muted-foreground">Otorga permiso a todos tus repositorios actuales y futuros.</span>
+                            <span className="text-xs text-muted-foreground">Grants permission to all your current and future repositories.</span>
                         </div>
                     </div>
                     <div className="p-3 border rounded-lg flex items-start gap-3 bg-primary/5 border-primary/20">
                         <CheckCircle2 className="w-5 h-5 text-primary mt-0.5" />
                         <div>
-                            <strong className="block text-sm font-semibold text-primary">Only select repositories (Recomendado)</strong>
-                            <span className="text-xs text-muted-foreground">Selecciona manualmente qué repositorios quieres gestionar. Es la opción más segura.</span>
+                            <strong className="block text-sm font-semibold text-primary">Only select repositories (Recommended)</strong>
+                            <span className="text-xs text-muted-foreground">Manually select which repositories you want to manage. This is the most secure option.</span>
                         </div>
                     </div>
                 </div>
@@ -64,10 +64,10 @@ export default function InstallationPage() {
         <section className="space-y-4">
              <h2 className="text-2xl font-bold tracking-tight border-b pb-2 flex items-center gap-2">
                 <span className="bg-primary text-primary-foreground text-sm rounded-full w-6 h-6 flex items-center justify-center">3</span>
-                Confirmación
+                Confirmation
             </h2>
              <p className="text-muted-foreground">
-              Una vez completada la instalación en GitHub, serás redirigido automáticamente a tu Dashboard. Tus repositorios seleccionados aparecerán listos para ser vinculados.
+              Once the installation on GitHub is complete, you will be automatically redirected to your Dashboard. Your selected repositories will appear ready to be linked.
             </p>
         </section>
       </div>
@@ -75,12 +75,12 @@ export default function InstallationPage() {
       <div className="flex justify-between pt-8 border-t">
          <Link href="/docs">
            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
-             <ChevronLeft className="mr-2 h-4 w-4" /> Introducción
+             <ChevronLeft className="mr-2 h-4 w-4" /> Introduction
            </Button>
          </Link>
          <Link href="/docs/getting-started/linking-repos">
            <Button className="pr-4 hover:pr-6 transition-all">
-             Vincular Repositorios <ChevronRight className="ml-2 h-4 w-4" />
+             Linking Repositories <ChevronRight className="ml-2 h-4 w-4" />
            </Button>
          </Link>
       </div>

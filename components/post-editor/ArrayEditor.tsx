@@ -256,7 +256,8 @@ export function ArrayEditor({
                                                 return rest;
                                             }
                                             return item;
-                                        });
+                                            }
+                                        );
                                         onChange(cleaned);
                                         setIsJsonMode(false);
                                         setJsonError("");
@@ -494,7 +495,7 @@ function SortableItem({
                                                         value={item[subKey] || ""} 
                                                         onChange={(e) => onUpdate(subKey, e.target.value)}
                                                         className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-4 focus:ring-primary/5 focus:border-primary focus:outline-none transition-all pr-12"
-                                                        placeholder="https://ejemplo.com/imagen.webp"
+                                                        placeholder="https://example.com/image.webp"
                                                     />
                                                     <button 
                                                         type="button"

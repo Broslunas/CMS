@@ -50,9 +50,9 @@ export default function RepoSelector() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`✅ Importado: ${result.imported} de ${result.total} archivos`);
+        alert(`✅ Imported: ${result.imported} of ${result.total} files`);
         
-        // Redirigir a la vista de posts
+        // Redirect to posts view
         router.push(`/dashboard/repos?repo=${encodeURIComponent(fullName)}`);
       } else {
         const error = await response.json();
@@ -60,7 +60,7 @@ export default function RepoSelector() {
       }
     } catch (error) {
       console.error("Import error:", error);
-      alert("❌ Error al importar");
+      alert("❌ Error importing");
     } finally {
       setImporting(false);
       setSelectedRepo(null);
@@ -78,12 +78,12 @@ export default function RepoSelector() {
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-white">
-        Tus Repositorios
+        Your Repositories
       </h3>
 
       {repos.length === 0 ? (
         <div className="text-center p-12 bg-zinc-900 rounded-lg border border-zinc-800">
-          <p className="text-zinc-400">No se encontraron repositorios</p>
+          <p className="text-zinc-400">No repositories found</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -104,7 +104,7 @@ export default function RepoSelector() {
                     </p>
                   )}
                   <p className="text-xs text-zinc-600 mt-3">
-                    Actualizado: {new Date(repo.updated_at).toLocaleDateString()}
+                    Updated: {new Date(repo.updated_at).toLocaleDateString()}
                   </p>
                 </div>
 
@@ -116,10 +116,10 @@ export default function RepoSelector() {
                   {importing && selectedRepo === repo.full_name ? (
                     <span className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-3 w-3 border-2 border-black border-t-transparent"></div>
-                      Importando...
+                      Importing...
                     </span>
                   ) : (
-                    "Importar"
+                    "Import"
                   )}
                 </button>
               </div>

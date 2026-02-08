@@ -13,25 +13,25 @@ export default function LinkingReposPage() {
             <p className="text-sm font-medium text-primary">Getting Started</p>
         </div>
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Vincular Repositorios
+          Linking Repositories
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed">
-          Aprende cómo importar tus proyectos de Astro existentes a la plataforma. El proceso es rápido y preserva la integridad de tu código.
+          Learn how to import your existing Astro projects into the platform. The process is fast and preserves the integrity of your code.
         </p>
       </div>
       
       <div className="space-y-8">
         <div className="bg-card border rounded-xl p-6 shadow-sm">
-             <h3 className="font-semibold text-lg mb-4">Cómo funciona el proceso</h3>
+             <h3 className="font-semibold text-lg mb-4">How the process works</h3>
              <div className="grid gap-6">
                 <div className="flex items-start gap-4">
                     <div className="p-2 bg-muted rounded-md">
                         <ScanSearch className="h-5 w-5 text-foreground" />
                     </div>
                     <div>
-                        <h4 className="font-medium">1. Detección Automática</h4>
+                        <h4 className="font-medium">1. Automatic Detection</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                             El sistema escanea tus repositorios conectados en busca de una carpeta <code>src/content</code> definida. Si detectamos un proyecto Astro válido, lo marcaremos como "Compatible".
+                             The system scans your connected repositories for a defined <code>src/content</code> folder. If we detect a valid Astro project, we will mark it as "Compatible".
                         </p>
                     </div>
                 </div>
@@ -40,9 +40,9 @@ export default function LinkingReposPage() {
                         <DownloadCloud className="h-5 w-5 text-foreground" />
                     </div>
                     <div>
-                        <h4 className="font-medium">2. Importación Inicial</h4>
+                        <h4 className="font-medium">2. Initial Import</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                             Al hacer clic en "Importar", clonamos una referencia superficial de tu repositorio y cacheamos tus archivos <code>.md</code> y <code>.mdx</code>. Esto suele tomar de 2 a 10 segundos.
+                             When you click "Import", we clone a shallow reference of your repository and cache your <code>.md</code> and <code>.mdx</code> files. This usually takes 2 to 10 seconds.
                         </p>
                     </div>
                 </div>
@@ -51,9 +51,9 @@ export default function LinkingReposPage() {
                         <FileX className="h-5 w-5 text-foreground" />
                     </div>
                     <div>
-                        <h4 className="font-medium">3. Filtrado (Opcional)</h4>
+                        <h4 className="font-medium">3. Filtering (Optional)</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                             Por defecto importamos todo el contenido. Puedes usar un archivo <code>.cmsignore</code> (feature en beta) para excluir carpetas específicas.
+                             By default, we import all content. You can use a <code>.cmsignore</code> file (beta feature) to exclude specific folders.
                         </p>
                     </div>
                 </div>
@@ -61,18 +61,18 @@ export default function LinkingReposPage() {
         </div>
 
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Resolución de Problemas</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Troubleshooting</h2>
             <div className="grid gap-4 md:grid-cols-2">
                 <div className="border p-4 rounded-lg bg-card hover:border-primary/50 transition-colors">
-                    <h4 className="font-semibold text-sm mb-2">No veo mi repositorio</h4>
+                    <h4 className="font-semibold text-sm mb-2">I can't see my repository</h4>
                     <p className="text-xs text-muted-foreground">
-                        Asegúrate de haberle dado permisos a la GitHub App. Ve a Settings en GitHub y revisa la sección "Applications".
+                        Make sure you have granted permissions to the GitHub App. Go to Settings on GitHub and check the "Applications" section.
                     </p>
                 </div>
                  <div className="border p-4 rounded-lg bg-card hover:border-primary/50 transition-colors">
-                    <h4 className="font-semibold text-sm mb-2">Error de parsing</h4>
+                    <h4 className="font-semibold text-sm mb-2">Parsing error</h4>
                     <p className="text-xs text-muted-foreground">
-                        Si tu <code>config.ts</code> usa funciones muy complejas o dinámicas, el parser estático podría fallar. Intenta simplificar las definiciones de colecciones.
+                        If your <code>config.ts</code> uses very complex or dynamic functions, the static parser might fail. Try simplifying the collection definitions.
                     </p>
                 </div>
             </div>
@@ -82,7 +82,7 @@ export default function LinkingReposPage() {
       <div className="flex justify-between pt-8 border-t">
          <Link href="/docs/getting-started/installation">
            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
-             <ChevronLeft className="mr-2 h-4 w-4" /> Instalación
+             <ChevronLeft className="mr-2 h-4 w-4" /> Installation
            </Button>
          </Link>
          <Link href="/docs/core-concepts/collections">

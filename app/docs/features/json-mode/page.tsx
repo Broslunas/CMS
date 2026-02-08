@@ -13,18 +13,18 @@ export default function JSONModePage() {
             <p className="text-sm font-medium text-primary">Features</p>
         </div>
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Modo JSON
+          JSON Mode
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed">
-           Para cuando los inputs estándar no son suficientes. Edita estructuras de datos complejas o usa nuestros editores especializados.
+           For when standard inputs aren't enough. Edit complex data structures or use our specialized editors.
         </p>
       </div>
       
       <div className="space-y-8">
         <section className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Editores Especializados</h2>
+            <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Specialized Editors</h2>
             <p className="text-muted-foreground">
-                Hemos creado interfaces visuales para manejar arrays de objetos comunes en estructuras de contenido avanzado.
+                We've created visual interfaces to handle common arrays of objects in advanced content structures.
             </p>
             
             <div className="grid gap-6 md:grid-cols-2 mt-4">
@@ -36,7 +36,7 @@ export default function JSONModePage() {
                         <h3 className="font-bold text-lg">Transcription Editor</h3>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
-                        Perfecto para podcasts o entrevistas. Interfaz optimizada para añadir bloques de tiempo y texto rápidamente.
+                        Perfect for podcasts or interviews. Optimized interface for adding time blocks and text quickly.
                     </p>
                      <code className="block bg-muted p-2 rounded text-xs font-mono text-muted-foreground">
                         transcription: [ &#123; time: "00:00", text: "..." &#125; ]
@@ -51,7 +51,7 @@ export default function JSONModePage() {
                         <h3 className="font-bold text-lg">Sections Editor</h3>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4">
-                        Construye landing pages modulares. Añade, reordena y edita secciones de contenido con título y cuerpo.
+                        Build modular landing pages. Add, reorder, and edit content sections with title and body.
                     </p>
                     <code className="block bg-muted p-2 rounded text-xs font-mono text-muted-foreground">
                         sections: [ &#123; title: "Intro", body: "..." &#125; ]
@@ -63,8 +63,8 @@ export default function JSONModePage() {
         <section className="space-y-4">
              <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Raw JSON Input</h2>
              <p className="text-muted-foreground">
-                ¿Tienes los datos en otro archivo? Todos los modales de edición compleja tienen un botón <strong>"Import JSON"</strong>. 
-                Pega tu JSON crudo y nosotros lo convertiremos en la interfaz visual automáticamente.
+                Have the data in another file? All complex editing modals have an <strong>"Import JSON"</strong> button. 
+                Paste your raw JSON and we'll automatically convert it into the visual interface.
              </p>
         </section>
       </div>
@@ -77,7 +77,7 @@ export default function JSONModePage() {
          </Link>
          <Link href="/docs/architecture">
            <Button className="pr-4 hover:pr-6 transition-all">
-             Arquitectura <ChevronRight className="ml-2 h-4 w-4" />
+             Architecture <ChevronRight className="ml-2 h-4 w-4" />
            </Button>
          </Link>
       </div>

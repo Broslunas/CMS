@@ -21,7 +21,7 @@ export default function SyncButton({ repoId }: SyncButtonProps) {
     setSyncing(true);
     const [owner, repo] = repoId.split("/");
 
-    const toastId = toast.loading("Sincronizando repositorio...");
+    const toastId = toast.loading("Syncing repository...");
 
     try {
       const response = await fetch("/api/import", {
@@ -33,18 +33,18 @@ export default function SyncButton({ repoId }: SyncButtonProps) {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success(`Sincronización completada: ${result.imported} archivos procesados`, {
+        toast.success(`Synchronization complete: ${result.imported} files processed`, {
           id: toastId,
         });
         router.refresh();
       } else {
-        toast.error(`Error al sincronizar: ${result.error}`, {
+        toast.error(`Error syncing: ${result.error}`, {
           id: toastId,
         });
       }
     } catch (error) {
       console.error("Sync error:", error);
-      toast.error("Error de conexión", {
+      toast.error("Connection error", {
         id: toastId,
       });
     } finally {
@@ -61,26 +61,26 @@ export default function SyncButton({ repoId }: SyncButtonProps) {
         className="gap-2"
       >
         <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-        {syncing ? "Sincronizando..." : "Sincronizar"}
+        {syncing ? "Syncing..." : "Sync"}
       </Button>
 
       <Modal
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
-        title="Sincronizar Repositorio"
-        description="Esta acción buscará archivos nuevos y actualizados en GitHub. Si hay cambios locales no guardados, podrían sobrescribirse."
+        title="Sync Repository"
+        description="This action will fetch new and updated files from GitHub. If there are unsaved local changes, they might be overwritten."
         footer={
           <>
             <Button
               variant="ghost"
               onClick={() => setShowConfirm(false)}
             >
-              Cancelar
+              Cancel
             </Button>
             <Button
               onClick={handleSync}
             >
-              Confirmar Sincronización
+              Confirm Synchronization
             </Button>
           </>
         }

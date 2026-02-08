@@ -112,12 +112,12 @@ export default async function ReposPage({
              <Link href="/dashboard">
                 <Button variant="ghost" size="sm" className="gap-2">
                    <ArrowLeft className="h-4 w-4" />
-                   Volver
+                   Back
                 </Button>
              </Link>
              <div className="h-4 w-px bg-border hidden md:block" />
              <div>
-                <h1 className="text-xl font-bold tracking-tight">Contenido</h1>
+                <h1 className="text-xl font-bold tracking-tight">Content</h1>
                 <p className="text-sm text-muted-foreground font-mono">{repoId}</p>
              </div>
            </div>
@@ -127,7 +127,7 @@ export default async function ReposPage({
               <Link href={`/dashboard/editor/new?repo=${encodeURIComponent(repoId)}`}>
                  <Button className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Crear Nuevo Post
+                    New post
                  </Button>
               </Link>
               <SyncButton repoId={repoId} />
@@ -144,13 +144,13 @@ export default async function ReposPage({
         {/* Posts List */}
         <div className="space-y-1">
            <div className="text-sm text-muted-foreground pb-2 ml-1">
-              {posts.length} {posts.length === 1 ? "resultado" : "resultados"}
+              {posts.length} {posts.length === 1 ? "result" : "results"}
            </div>
 
           {posts.length === 0 ? (
             <div className="text-center p-12 rounded-lg border border-dashed border-border">
               <p className="text-muted-foreground">
-                No se encontraron posts con estos filtros
+                No posts were found with these filters.
               </p>
             </div>
           ) : (

@@ -14,7 +14,7 @@ export default async function SetupPage() {
     redirect("/");
   }
 
-  // Si ya tiene la app instalada, redirigir al dashboard
+  // If the app is already installed, redirect to the dashboard
   if (session.appInstalled) {
     redirect("/dashboard");
   }
@@ -29,9 +29,9 @@ export default async function SetupPage() {
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Github className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl">¡Bienvenido al CMS!</CardTitle>
+          <CardTitle className="text-3xl">Welcome to the CMS!</CardTitle>
           <CardDescription className="text-base">
-            Para comenzar, necesitas instalar nuestra aplicación de GitHub
+            To get started, you need to install our GitHub application
           </CardDescription>
         </CardHeader>
 
@@ -41,10 +41,10 @@ export default async function SetupPage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-destructive">Error de configuración</p>
+                  <p className="text-sm font-medium text-destructive">Configuration Error</p>
                   <p className="text-xs text-destructive/80 mt-1">
-                    La variable de entorno <code className="bg-destructive/20 px-1 rounded">GITHUB_APP_NAME</code> no está configurada.
-                    Por favor, configura las variables de entorno en tu plataforma de hosting.
+                    The environment variable <code className="bg-destructive/20 px-1 rounded">GITHUB_APP_NAME</code> is not configured.
+                    Please configure the environment variables in your hosting platform.
                   </p>
                 </div>
               </div>
@@ -57,10 +57,10 @@ export default async function SetupPage() {
                 1
               </div>
               <div className="space-y-1">
-                <h3 className="font-semibold">Instala la GitHub App</h3>
+                <h3 className="font-semibold">Install the GitHub App</h3>
                 <p className="text-sm text-muted-foreground">
-                  Haz clic en el botón de abajo para instalar la aplicación en tu cuenta de GitHub.
-                  Esto nos permitirá acceder a tus repositorios de forma segura.
+                  Click the button below to install the application on your GitHub account.
+                  This will allow us to access your repositories securely.
                 </p>
               </div>
             </div>
@@ -70,10 +70,10 @@ export default async function SetupPage() {
                 2
               </div>
               <div className="space-y-1">
-                <h3 className="font-semibold">Selecciona tus repositorios</h3>
+                <h3 className="font-semibold">Select your repositories</h3>
                 <p className="text-sm text-muted-foreground">
-                  Elige qué repositorios quieres gestionar con el CMS. Puedes seleccionar todos
-                  o solo algunos específicos.
+                  Choose which repositories you want to manage with the CMS. You can select all
+                  or just specific ones.
                 </p>
               </div>
             </div>
@@ -83,10 +83,10 @@ export default async function SetupPage() {
                 3
               </div>
               <div className="space-y-1">
-                <h3 className="font-semibold">¡Comienza a trabajar!</h3>
+                <h3 className="font-semibold">Start working!</h3>
                 <p className="text-sm text-muted-foreground">
-                  Una vez instalada la app, serás redirigido automáticamente al dashboard
-                  para empezar a gestionar tu contenido.
+                  Once the app is installed, you will be automatically redirected to the dashboard
+                  to start managing your content.
                 </p>
               </div>
             </div>
@@ -96,10 +96,10 @@ export default async function SetupPage() {
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium">Permisos necesarios</p>
+                <p className="text-sm font-medium">Required Permissions</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  La app necesita permiso para leer y escribir en tus repositorios.
-                  Esto nos permite sincronizar tu contenido de forma segura.
+                  The app needs permission to read and write to your repositories.
+                  This allows us to sync your content securely.
                 </p>
               </div>
             </div>
@@ -110,19 +110,19 @@ export default async function SetupPage() {
           <Button asChild size="lg" className="w-full sm:flex-1">
             <a href={installUrl} target="_blank" rel="noopener noreferrer">
               <Download className="mr-2 h-5 w-5" />
-              Instalar GitHub App
+              Install GitHub App
             </a>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:flex-1">
             <Link href="/dashboard">
-              Ya instalé la app
+              I already installed the app
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </CardFooter>
       </Card>
 
-      {/* Componente que verifica automáticamente la instalación */}
+      {/* Component that automatically checks the installation */}
       <InstallationChecker />
     </div>
   );

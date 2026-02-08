@@ -13,10 +13,10 @@ export default function SecurityPage() {
             <p className="text-sm font-medium text-primary">Technical Reference</p>
         </div>
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Seguridad y Privacidad
+          Security & Privacy
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed">
-           Diseñado bajo el principio de menor privilegio. Tu código nunca es nuestro, solo lo tomamos prestado cuando tú dices.
+           Designed under the principle of least privilege. Your code is never ours; we only borrow it when you say so.
         </p>
       </div>
       
@@ -26,40 +26,40 @@ export default function SecurityPage() {
                 <div className="text-primary mb-4 bg-primary/10 w-fit p-2 rounded-lg">
                     <Lock className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">Tokens Efímeros</h3>
+                <h3 className="font-bold text-lg mb-2">Ephemeral Tokens</h3>
                 <p className="text-sm text-muted-foreground">
-                    Nunca guardamos tu Access Token personal permanentemente. Usamos tokens de instalación de GitHub Apps que rotan cada hora y solo son válidos para los repositorios que has autorizado.
+                    We never store your personal Access Token permanently. We use GitHub App installation tokens that rotate every hour and are only valid for the repositories you have authorized.
                 </p>
             </div>
              <div className="border bg-card p-6 rounded-xl">
                  <div className="text-primary mb-4 bg-primary/10 w-fit p-2 rounded-lg">
                     <Fingerprint className="w-5 h-5" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">Acceso Granular</h3>
+                <h3 className="font-bold text-lg mb-2">Granular Access</h3>
                 <p className="text-sm text-muted-foreground">
-                    A diferencia de OAuth, la GitHub App te permite seleccionar repo por repo. No tienes que darnos las llaves de toda tu organización si solo quieres editar un blog.
+                    Unlike OAuth, the GitHub App allows you to select repo by repo. You don't have to give us the keys to your entire organization if you only want to edit a blog.
                 </p>
             </div>
         </div>
 
         <section className="space-y-4">
-             <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Privacidad de Datos</h2>
+             <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Data Privacy</h2>
              <div className="space-y-4">
                  <div className="flex gap-4 items-start">
                     <EyeOff className="w-5 h-5 mt-1 text-muted-foreground" />
                     <div>
-                        <h4 className="font-semibold text-foreground">Tu contenido es tuyo</h4>
+                        <h4 className="font-semibold text-foreground">Your content is yours</h4>
                         <p className="text-sm text-muted-foreground">
-                            No utilizamos tu código para entrenar modelos de IA ni lo compartimos con terceros. La caché de MongoDB está aislada y protegida.
+                            We do not use your code to train AI models or share it with third parties. The MongoDB cache is isolated and protected.
                         </p>
                     </div>
                  </div>
                  <div className="flex gap-4 items-start">
                     <ShieldCheck className="w-5 h-5 mt-1 text-muted-foreground" />
                     <div>
-                        <h4 className="font-semibold text-foreground">Revocación Inmediata</h4>
+                        <h4 className="font-semibold text-foreground">Immediate Revocation</h4>
                         <p className="text-sm text-muted-foreground">
-                            Al desinstalar la App en GitHub, perdemos acceso instantáneamente. Nuestro sistema detecta la revocación y borra los datos cacheados asociados.
+                            When you uninstall the App on GitHub, we lose access instantly. Our system detects the revocation and deletes the associated cached data.
                         </p>
                     </div>
                  </div>
@@ -70,7 +70,7 @@ export default function SecurityPage() {
       <div className="flex justify-start mt-12 pt-8 border-t">
          <Link href="/docs/architecture">
            <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
-             <ChevronLeft className="mr-2 h-4 w-4" /> Arquitectura
+             <ChevronLeft className="mr-2 h-4 w-4" /> Architecture
            </Button>
          </Link>
       </div>

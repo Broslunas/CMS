@@ -49,10 +49,10 @@ export function Countdown({ targetDate, className }: CountdownProps) {
 
   return (
     <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8", className)}>
-      <TimeUnit value={timeLeft.days} label="Días" />
-      <TimeUnit value={timeLeft.hours} label="Horas" />
-      <TimeUnit value={timeLeft.minutes} label="Minutos" />
-      <TimeUnit value={timeLeft.seconds} label="Segundos" />
+      <TimeUnit value={timeLeft.days} label="Days" />
+      <TimeUnit value={timeLeft.hours} label="Hours" />
+      <TimeUnit value={timeLeft.minutes} label="Minutes" />
+      <TimeUnit value={timeLeft.seconds} label="Seconds" />
     </div>
   );
 }

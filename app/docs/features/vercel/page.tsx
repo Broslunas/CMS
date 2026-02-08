@@ -13,18 +13,18 @@ export default function VercelPage() {
             <p className="text-sm font-medium text-primary">Features</p>
         </div>
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Integración con Vercel
+          Vercel Integration
         </h1>
         <p className="text-xl text-muted-foreground leading-relaxed">
-          Monitoriza tus despliegues directamente desde el CMS. Ve el estado de tus builds sin salir del editor.
+          Monitor your deployments directly from the CMS. View your build status without leaving the editor.
         </p>
       </div>
       
       <div className="space-y-8">
         <section className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Conectando tu Proyecto</h2>
+            <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Connecting Your Project</h2>
             <p className="text-muted-foreground">
-                Para activar la integración, ve a los ajustes de tu repositorio en Broslunas CMS.
+                To activate the integration, go to your repository settings in Broslunas CMS.
             </p>
             <div className="space-y-4 mt-6">
                 <div className="flex gap-4 items-start">
@@ -32,7 +32,7 @@ export default function VercelPage() {
                     <div className="space-y-1">
                         <h3 className="font-semibold">Project ID</h3>
                         <p className="text-sm text-muted-foreground">
-                            Necesitas el ID de tu proyecto en Vercel. Puedes encontrarlo en <code>Settings &gt; General</code> en tu dashboard de Vercel.
+                            You need your Vercel Project ID. You can find it in <code>Settings &gt; General</code> on your Vercel dashboard.
                         </p>
                         <div className="text-xs bg-muted p-2 rounded mt-2 font-mono">prj_...</div>
                     </div>
@@ -42,7 +42,7 @@ export default function VercelPage() {
                     <div className="space-y-1">
                         <h3 className="font-semibold">Access Token</h3>
                         <p className="text-sm text-muted-foreground">
-                            Genera un token de acceso personal en Vercel con permisos de lectura.
+                            Generate a personal access token in Vercel with read permissions.
                         </p>
                     </div>
                 </div>
@@ -50,10 +50,10 @@ export default function VercelPage() {
             
             <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mt-4">
                 <p className="text-sm font-medium text-primary flex items-center gap-2">
-                    <Terminal className="h-4 w-4" /> Feature: Auto-detección
+                    <Terminal className="h-4 w-4" /> Feature: Auto-detection
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                    Si proporcionas un Token válido, podemos intentar autodetectar el Project ID asociado a tu repositorio de GitHub.
+                    If you provide a valid Token, we can attempt to auto-detect the Project ID associated with your GitHub repository.
                 </p>
             </div>
         </section>
@@ -61,7 +61,7 @@ export default function VercelPage() {
         <section className="space-y-4">
             <h2 className="text-2xl font-bold tracking-tight border-b pb-2">Status Widget</h2>
             <p className="text-muted-foreground">
-                Una vez conectado, verás un widget en la cabecera de tu repositorio que muestra el último deploy.
+                Once connected, you will see a widget in your repository header showing the latest deployment.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
                  <div className="flex items-center gap-2 p-3 border rounded bg-green-500/10 text-green-700 border-green-200">

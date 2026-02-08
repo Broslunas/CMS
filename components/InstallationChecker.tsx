@@ -5,15 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 /**
- * Componente que verifica periódicamente si la GitHub App ha sido instalada
- * y redirige automáticamente al dashboard cuando se detecta la instalación
+ * Component that periodically checks if the GitHub App has been installed
+ * and automatically redirects to the dashboard when installation is detected
  */
 export function InstallationChecker() {
   const router = useRouter();
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    // Verificar cada 3 segundos si la app fue instalada
+    // Check every 3 seconds if the app was installed
     const interval = setInterval(async () => {
       try {
         setChecking(true);
@@ -21,7 +21,7 @@ export function InstallationChecker() {
         const data = await response.json();
 
         if (data.installed) {
-          // App instalada, redirigir al dashboard
+          // App installed, redirect to dashboard
           clearInterval(interval);
           router.push('/dashboard');
           router.refresh();
@@ -42,7 +42,7 @@ export function InstallationChecker() {
     <div className="fixed bottom-4 right-4 bg-card border border-border rounded-lg shadow-lg p-4 flex items-center gap-3">
       <Loader2 className="h-4 w-4 animate-spin text-primary" />
       <span className="text-sm text-muted-foreground">
-        Verificando instalación...
+        Verifying installation...
       </span>
     </div>
   );
