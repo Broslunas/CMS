@@ -8,7 +8,6 @@ import { Octokit } from "@octokit/rest";
 export async function checkAppInstalled(accessToken: string): Promise<boolean> {
   try {
     if (!accessToken) {
-      console.error('No access token provided to checkAppInstalled');
       return false;
     }
 
