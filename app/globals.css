@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @plugin "../node_modules/tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -222,4 +223,322 @@ body {
 .animate-gradient-xy {
   background-size: 400% 400%;
   animation: gradient-xy 15s ease infinite;
+}
+
+/* ═══════════════════════════════════════════════════
+   Manual Viewer Styles
+   ═══════════════════════════════════════════════════ */
+
+.manual-content {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+/* ── Headings ─────────────────────────────────────── */
+.manual-heading {
+  position: relative;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  scroll-margin-top: 1rem;
+}
+
+.manual-h1 {
+  font-size: 1.75rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.manual-h2 {
+  font-size: 1.35rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.manual-h3 {
+  font-size: 1.1rem;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.manual-h4 {
+  font-size: 0.95rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.manual-anchor {
+  position: absolute;
+  left: -1.5rem;
+  color: var(--primary);
+  opacity: 0;
+  text-decoration: none;
+  font-weight: 400;
+  transition: opacity 0.2s;
+}
+
+.manual-heading:hover .manual-anchor {
+  opacity: 0.6;
+}
+
+.manual-anchor:hover {
+  opacity: 1 !important;
+}
+
+/* ── Tables ───────────────────────────────────────── */
+.manual-table-wrapper {
+  overflow-x: auto;
+  margin: 1.25rem 0;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+}
+
+.manual-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.manual-thead {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.manual-th {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  border-bottom: 2px solid color-mix(in srgb, var(--primary) 70%, black 30%);
+}
+
+.manual-td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.manual-tr:last-child .manual-td {
+  border-bottom: none;
+}
+
+.manual-tr:nth-child(even) {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+}
+
+.manual-tr:hover {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.dark .manual-tr:nth-child(even) {
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
+}
+
+.dark .manual-tr:hover {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+/* ── Links ────────────────────────────────────────── */
+.manual-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.manual-link:hover {
+  border-bottom-color: var(--primary);
+}
+
+.manual-link-internal {
+  cursor: pointer;
+}
+
+.manual-link-internal::before {
+  content: "§ ";
+  opacity: 0.5;
+  font-size: 0.85em;
+}
+
+/* ── Blockquotes ──────────────────────────────────── */
+.manual-blockquote {
+  margin: 1.25rem 0;
+  padding: 0.85rem 1.25rem;
+  border-left: 4px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 5%, var(--background));
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--foreground);
+  font-size: 0.87rem;
+}
+
+.manual-blockquote p {
+  margin: 0.25rem 0;
+}
+
+.dark .manual-blockquote {
+  background: color-mix(in srgb, var(--primary) 8%, var(--background));
+}
+
+/* ── Code ─────────────────────────────────────────── */
+.manual-code-inline {
+  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
+  color: var(--primary);
+  padding: 0.15em 0.45em;
+  border-radius: 0.35rem;
+  font-size: 0.82em;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.manual-code-block {
+  display: block;
+  background: var(--muted);
+  padding: 1rem 1.25rem;
+  border-radius: 0.65rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  border: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+/* ── Horizontal Rule ──────────────────────────────── */
+.manual-hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--border),
+    var(--primary),
+    var(--border),
+    transparent
+  );
+  margin: 2rem 0;
+  opacity: 0.6;
+}
+
+/* ── Lists ────────────────────────────────────────── */
+.manual-ul {
+  list-style: none;
+  padding-left: 1.25rem;
+  margin: 0.75rem 0;
+}
+
+.manual-ul .manual-li {
+  position: relative;
+  padding-left: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.manual-ul .manual-li::before {
+  content: "";
+  position: absolute;
+  left: -0.85rem;
+  top: 0.65em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.7;
+}
+
+.manual-ol {
+  padding-left: 1.5rem;
+  margin: 0.75rem 0;
+  counter-reset: manual-ol-counter;
+  list-style: none;
+}
+
+.manual-ol .manual-li {
+  position: relative;
+  padding-left: 0.5rem;
+  margin-bottom: 0.4rem;
+  counter-increment: manual-ol-counter;
+}
+
+.manual-ol .manual-li::before {
+  content: counter(manual-ol-counter) ".";
+  position: absolute;
+  left: -1.25rem;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.85em;
+}
+
+/* ── TOC ──────────────────────────────────────────── */
+.manual-toc {
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.manual-toc-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  padding: 0.3rem 0.75rem;
+  border-radius: 0.4rem;
+  transition: all 0.15s;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.manual-toc-item:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+/* ── General spacing inside manual ────────────────── */
+.manual-content > p,
+.manual-blockquote > p {
+  margin: 0.75rem 0;
+}
+
+.manual-content > *:first-child {
+  margin-top: 0;
+}
+
+/* ── Strong / Bold inside tables for better visibility ── */
+.manual-td strong {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.manual-td code {
+  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
+  color: var(--primary);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  font-size: 0.8em;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  border: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.manual-th:first-child {
+  border-radius: 0.5rem 0 0 0;
+}
+
+.manual-th:last-child {
+  border-radius: 0 0.5rem 0 0;
 }

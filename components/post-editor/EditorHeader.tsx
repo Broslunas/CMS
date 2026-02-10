@@ -1,6 +1,8 @@
 "use client";
 
 import { Link } from "next-view-transitions";
+import RepoManualButton from "@/components/RepoManualButton";
+import { BookOpen } from "lucide-react";
 
 interface EditorHeaderProps {
     repoId: string;
@@ -41,6 +43,15 @@ export function EditorHeader({
           </Link>
 
           <div className="flex items-center gap-3">
+              <RepoManualButton 
+                  repoId={repoId} 
+                  variant="ghost" 
+                  size="icon" 
+                  className="w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  >
+                   <BookOpen className="h-5 w-5" />
+              </RepoManualButton>
+
              <div className="w-px h-6 bg-border mx-1" />
 
             <button

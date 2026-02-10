@@ -6,9 +6,11 @@ import ImportButton from "@/components/ImportButton";
 import DeleteRepoButton from "@/components/DeleteRepoButton";
 import ShareProjectButton from "@/components/ShareProjectButton";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, RefreshCw, FolderGit2, Users, Settings } from "lucide-react";
+import { FileText, RefreshCw, FolderGit2, Users, Settings, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ObjectId } from "mongodb";
+import DashboardManual from "@/components/DashboardManual"; // Keep if needed or remove later
+import RepoManualButton from "@/components/RepoManualButton";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -16,7 +18,6 @@ export default async function DashboardPage() {
   if (!session?.user || session.error === "RefreshAccessTokenError") {
     redirect("/login");
   }
-
 
 
   const client = await clientPromise;
@@ -150,6 +151,15 @@ export default async function DashboardPage() {
                               </div>
                           )}
                             
+                            <RepoManualButton 
+                                repoId={project.repoId} 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors hover:bg-primary/10"
+                            >
+                                <BookOpen className="h-4 w-4" />
+                            </RepoManualButton>
+
                             {!project.isShared && (
                                 <>
                                     <ShareProjectButton repoId={project.repoId} repoName={project.name} />
