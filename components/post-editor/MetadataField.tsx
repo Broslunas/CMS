@@ -8,8 +8,9 @@ import { ArrayEditor } from "./ArrayEditor";
 import { SocialLinksEditor } from "../SocialLinksEditor";
 import { DateTimePicker } from "./DateTimePicker";
 import { Switch } from "../ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { ValidatedDateField } from "./ValidatedDateField";
 import { Sparkles, Wand2, X } from "lucide-react";
 
 // Function to convert relative paths to raw GitHub URLs
@@ -298,22 +299,27 @@ export function MetadataField({
       const trimmedValue = value.trim();
       
       // Date Check
-      const isDate = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(trimmedValue);
+      // Improved Date Check
+      const lowKey = key.toLowerCase();
+      const isDateKey = ['date', 'pubdate', 'publishdate', 'publish_date', 'createdat', 'created_at', 'updatedat', 'updated_at', 'released_at', 'timestamp'].includes(lowKey);
+      const isSuggestedDate = suggestedFields[key]?.type === 'date';
+      const isStrictIsoDate = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(trimmedValue);
+      const startsWithDate = /^\d{4}-\d{2}-\d{2}/.test(trimmedValue) && trimmedValue.length >= 10;
+      
+      const isDate = isSuggestedDate || isDateKey || isStrictIsoDate || startsWithDate;
+
       if (isDate) {
-         try {
-            return (
-                <div key={key}>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-foreground capitalize">{key} <span className="text-muted-foreground text-xs font-normal">(Date)</span></label>
-                    <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                  </div>
-                  <DateTimePicker
-                    value={trimmedValue}
-                    onChange={(newIso) => onUpdate(key, newIso)}
-                  />
-                </div>
-            );
-         } catch (e) {}
+          // Check if valid date
+          if (!isNaN(Date.parse(trimmedValue))) {
+               return (
+                   <ValidatedDateField 
+                      fieldKey={key}
+                      value={trimmedValue}
+                      onUpdate={onUpdate}
+                      onDelete={onDelete}
+                   />
+               );
+          }
       }
 
       const isImage = trimmedValue.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif|tiff|tif)(\?.*)?$/i) || ((trimmedValue.startsWith("http") || trimmedValue.startsWith("/")) && (key.toLowerCase().includes("image") || key.toLowerCase().includes("img") || key.toLowerCase().includes("cover") || key.toLowerCase().includes("avatar") || key.toLowerCase().includes("thumbnail") || key.toLowerCase().includes("banner") || key.toLowerCase().includes("poster") || key.toLowerCase().includes("logo") || key.toLowerCase().includes("icon") || key.toLowerCase().includes("bg")));

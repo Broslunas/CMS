@@ -408,7 +408,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     if (newFieldType === "number") initialValue = 0;
     if (newFieldType === "boolean") initialValue = false;
     if (newFieldType === "array") initialValue = [];
-    if (newFieldType === "date") initialValue = new Date().toISOString().split('T')[0];
+    if (newFieldType === "date") initialValue = new Date().toISOString();
     if (newFieldType === "transcription") initialValue = [];
     if (newFieldType === "sections") initialValue = [];
     if (newFieldType === "clips") initialValue = [];
