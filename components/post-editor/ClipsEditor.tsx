@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Play, Type, Video, Plus, X, GripVertical, ExternalLink } from "lucide-react";
+import { Play, Type, Video, Plus, X, GripVertical, ExternalLink, Loader2, Youtube, Check } from "lucide-react";
+import { getYouTubeVideos } from "@/app/actions/youtube";
+import { signIn } from "next-auth/react";
 import {
     DndContext,
     closestCenter,
@@ -185,7 +187,67 @@ export function ClipsEditor({ fieldKey, value, onChange, onDelete }: ClipsEditor
     const [isJsonMode, setIsJsonMode] = useState(false);
     const [jsonText, setJsonText] = useState("");
     const [jsonError, setJsonError] = useState("");
+
+
     const [activeId, setActiveId] = useState<string | null>(null);
+
+    // YouTube State
+    const [isYouTubeModalOpen, setIsYouTubeModalOpen] = useState(false);
+    const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
+    const [isLoadingYouTube, setIsLoadingYouTube] = useState(false);
+    const [youtubeError, setYoutubeError] = useState("");
+    const [youtubePageToken, setYoutubePageToken] = useState<string | undefined>(undefined);
+    const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(new Set());
+
+    const fetchYouTubeVideos = async (pageToken?: string) => {
+        setIsLoadingYouTube(true);
+        setYoutubeError("");
+        try {
+            const result = await getYouTubeVideos(pageToken);
+            if (result.error) {
+                setYoutubeError(result.error);
+            } else if (result.videos) {
+                setYoutubeVideos(prev => pageToken ? [...prev, ...result.videos!] : result.videos!);
+                setYoutubePageToken(result.nextPageToken);
+            }
+        } catch (err) {
+            setYoutubeError("Failed to fetch videos");
+        } finally {
+            setIsLoadingYouTube(false);
+        }
+    };
+
+    const openYouTubeModal = () => {
+        setIsYouTubeModalOpen(true);
+        setSelectedVideoIds(new Set());
+        if (youtubeVideos.length === 0) {
+            fetchYouTubeVideos();
+        }
+    };
+
+    const toggleVideoSelection = (videoId: string) => {
+        const newSelected = new Set(selectedVideoIds);
+        if (newSelected.has(videoId)) {
+            newSelected.delete(videoId);
+        } else {
+            newSelected.add(videoId);
+        }
+        setSelectedVideoIds(newSelected);
+    };
+
+    const handleAddSelectedVideos = () => {
+        const videosToAdd = youtubeVideos.filter(v => selectedVideoIds.has(v.id));
+        const newClips = videosToAdd.map(v => ({
+            title: v.title,
+            url: `https://youtu.be/${v.id}`
+        }));
+        onChange([...value, ...newClips]);
+        setIsYouTubeModalOpen(false);
+        setSelectedVideoIds(new Set());
+    };
+
+    // Filter out videos that are already in the clips list
+    const availableVideos = youtubeVideos.filter(video => !value.some(clip => getYouTubeVideoId(clip.url) === video.id));
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -342,11 +404,152 @@ export function ClipsEditor({ fieldKey, value, onChange, onDelete }: ClipsEditor
                                     <Plus className="w-3 h-3" />
                                     Add New Clip
                                 </button>
+                                
+                                <button
+                                    onClick={openYouTubeModal}
+                                    className="mt-2 w-full py-2 border border-dashed border-red-200 bg-red-50/50 hover:bg-red-50 text-xs text-red-600 hover:text-red-700 hover:border-red-300 rounded-md transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Youtube className="w-3 h-3" />
+                                    Add from YouTube
+                                </button>
                             </>
                         )}
                     </div>
                 )}
             </div>
+
+            {/* YouTube Modal */}
+            {isYouTubeModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-card w-full max-w-2xl max-h-[80vh] rounded-xl shadow-2xl border border-border flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-border">
+                            <h3 className="font-medium flex items-center gap-2">
+                                <Youtube className="w-5 h-5 text-red-600" />
+                                Select YouTube Video
+                            </h3>
+                            <button 
+                                onClick={() => setIsYouTubeModalOpen(false)}
+                                className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-4 min-h-[300px]">
+                            {isLoadingYouTube && youtubeVideos.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground">
+                                    <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                                    <p>Loading your videos...</p>
+                                </div>
+                            ) : youtubeError ? (
+                                <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                                    <div className="bg-destructive/10 text-destructive p-3 rounded-full mb-3">
+                                        <Youtube className="w-6 h-6" />
+                                    </div>
+                                    <p className="font-medium mb-1">Could not load videos</p>
+                                    <p className="text-sm text-muted-foreground mb-4 max-w-xs">{youtubeError}</p>
+                                    {youtubeError.includes("connect") || youtubeError.includes("expired") ? (
+                                        <button
+                                            onClick={() => signIn("google")}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 flex items-center gap-2"
+                                        >
+                                            <Youtube className="w-4 h-4" />
+                                            Connect YouTube Channel
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => fetchYouTubeVideos()}
+                                            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm hover:bg-secondary/80"
+                                        >
+                                            Try Again
+                                        </button>
+                                    )}
+                                </div>
+                            ) : availableVideos.length === 0 ? (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <p>No available videos found on your channel.</p>
+                                    {youtubeVideos.length > 0 && <p className="text-xs mt-1">(All fetched videos are already added)</p>}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {availableVideos.map((video) => {
+                                        const isSelected = selectedVideoIds.has(video.id);
+                                        return (
+                                            <button
+                                                key={video.id}
+                                                onClick={() => toggleVideoSelection(video.id)}
+                                                className={`text-left group border rounded-lg overflow-hidden transition-all bg-card relative ${isSelected ? 'border-primary ring-2 ring-primary' : 'border-border hover:border-red-200 hover:ring-1 hover:ring-red-200 hover:bg-muted/30'}`}
+                                            >
+                                                <div className="aspect-video bg-muted relative overflow-hidden">
+                                                    <img 
+                                                        src={video.thumbnail} 
+                                                        alt={video.title} 
+                                                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                                    />
+                                                    <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isSelected ? 'opacity-100 bg-primary/20' : 'opacity-0 group-hover:opacity-100 bg-black/20'}`}>
+                                                        {isSelected ? (
+                                                            <div className="bg-primary text-primary-foreground rounded-full p-2">
+                                                                <Check className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <Plus className="w-8 h-8 text-white drop-shadow-md" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="p-3">
+                                                    <h4 className={`font-medium text-sm line-clamp-2 mb-1 transition-colors ${isSelected ? 'text-primary' : 'group-hover:text-red-600'}`}>
+                                                        {video.title}
+                                                    </h4>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {new Date(video.publishedAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            
+                            {/* Load More */}
+                            {!isLoadingYouTube && youtubePageToken && (
+                                <div className="mt-6 flex justify-center">
+                                    <button
+                                        onClick={() => fetchYouTubeVideos(youtubePageToken)}
+                                        className="px-4 py-2 border border-border rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                    >
+                                        Load More Videos
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {isLoadingYouTube && youtubeVideos.length > 0 && (
+                                <div className="py-4 flex justify-center">
+                                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Footer */}
+                        <div className="p-4 border-t border-border bg-muted/20 flex justify-end gap-2">
+                            <button
+                                onClick={() => setIsYouTubeModalOpen(false)}
+                                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddSelectedVideos}
+                                disabled={selectedVideoIds.size === 0}
+                                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add {selectedVideoIds.size} Video{selectedVideoIds.size !== 1 ? 's' : ''}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
