@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   try {
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: (type === 'seo' || type === 'tags' || type === 'sections') ? "application/json" : "text/plain",
       }

@@ -19,12 +19,12 @@ export async function POST(req: Request) {
   try {
     // Usamos gemini-2.0-flash que es muy rápido y capaz
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
       }
     });
-
+    // Pasamos los datos a la IA para que comprenda el contexto
     const schemaStr = schema 
       ? JSON.stringify(schema, null, 2) 
       : JSON.stringify({
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
           "date": "string (YYYY-MM-DD)",
           "description": "string"
         }, null, 2);
-
+    // System PROMPT
     const systemPrompt = `
       Eres un experto redactor de contenido y especialista en SEO.
       Tu tarea es generar un post completo (metadatos y contenido Markdown) basado en las instrucciones del usuario.
