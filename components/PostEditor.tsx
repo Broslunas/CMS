@@ -463,30 +463,18 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     toast.success("Metadata and path imported. Check the title.");
   };
 
-  const handleRssImport = (item: any) => {
-    const newMetadata = { ...metadata };
-    if (item.title) newMetadata.title = item.title;
-    if (item.contentSnippet || item.itunesSummary) newMetadata.description = item.itunesSummary || item.contentSnippet;
-    if (item.pubDate) {
-        try {
-            newMetadata.date = new Date(item.pubDate).toISOString();
-        } catch(e) {}
-    }
-    if (item.enclosure?.url) newMetadata.episodeUrl = item.enclosure.url;
-    if (item.itunesImage?.href) newMetadata.image = item.itunesImage.href;
-    
-    setMetadata(newMetadata);
-    
-    let contentToImport = "";
-    // Prefer contentEncoded over simple content for markdown
-    if (item.contentEncoded) {
-        contentToImport = item.contentEncoded;
-    } else if (item.content) {
-        contentToImport = item.content;
+  const handleRssImport = (result: { metadata: any, content: string }) => {
+    if (result.metadata && Object.keys(result.metadata).length > 0) {
+        setMetadata(prev => ({ ...prev, ...result.metadata }));
     }
     
-    if (contentToImport) {
-        setContent(contentToImport); // Just sets raw HTML/text into the markdown editor for now
+    if (result.content) {
+        // If content already exists, verify if we want to append or just set.
+        // We will append because they might have other stuff.
+        setContent(prev => {
+            const separator = prev.trim() ? "\n\n" : "";
+            return [prev, result.content].filter(Boolean).join(separator);
+        });
     }
 
     setShowRssModal(false);
