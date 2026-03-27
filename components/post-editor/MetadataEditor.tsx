@@ -11,6 +11,7 @@ interface MetadataEditorProps {
     onShowAiModal: () => void;
     onShowAddField: () => void;
     onShowDeleteConfirm: () => void;
+    onShowRssModal?: () => void;
     isNew: boolean;
     triggerUpload: (target: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string }) => void;
     isUploading: boolean;
@@ -28,6 +29,7 @@ export function MetadataEditor({
     onShowAiModal,
     onShowAddField,
     onShowDeleteConfirm,
+    onShowRssModal,
     isNew,
     triggerUpload,
     isUploading,
@@ -49,6 +51,17 @@ export function MetadataEditor({
                 </svg>
                 Import
               </button>
+              {onShowRssModal && (
+                <button
+                  onClick={onShowRssModal}
+                  className="px-3 py-1.5 text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 rounded transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16H4V4z" />
+                  </svg>
+                  RSS
+                </button>
+              )}
               <button
                 onClick={onShowAiModal}
                 className="px-3 py-1.5 text-xs font-medium bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 rounded transition-colors flex items-center gap-2"

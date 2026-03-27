@@ -20,6 +20,8 @@ interface RepoSettingsFormProps {
   useGlobalToken: boolean;
   setUseGlobalToken: (use: boolean) => void;
   globalTokenDisplay: string | null;
+  rssUrl: string;
+  setRssUrl: (url: string) => void;
   handleDetectProject: () => void;
   isDetecting: boolean;
   s3Endpoint: string;
@@ -55,6 +57,8 @@ export function RepoSettingsForm({
   useGlobalToken,
   setUseGlobalToken,
   globalTokenDisplay,
+  rssUrl,
+  setRssUrl,
   handleDetectProject,
   isDetecting,
   s3Endpoint,
@@ -107,6 +111,22 @@ export function RepoSettingsForm({
         </Card>
 
         <div className="space-y-4">
+          <h3 className="font-medium flex items-center gap-2 pt-4 border-t">
+            <Globe className="h-4 w-4" />
+            RSS Integration
+          </h3>
+          <div className="space-y-2">
+            <Label>RSS Feed URL (Optional)</Label>
+            <Input
+              placeholder="https://example.com/rss.xml"
+              value={rssUrl}
+              onChange={(e) => setRssUrl(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Used to import content from an RSS feed.
+            </p>
+          </div>
+
           <h3 className="font-medium flex items-center gap-2 pt-4 border-t">
             <Rocket className="h-4 w-4" />
             Vercel Deployment

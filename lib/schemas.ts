@@ -38,6 +38,7 @@ export const ProjectSchema = z.object({
   repoId: z.string(), // "owner/repo"
   name: z.string(),
   description: z.string().optional(),
+  rssUrl: z.string().url().optional(),
   postsCount: z.number().default(0),
   lastSync: z.date(),
   createdAt: z.date(),

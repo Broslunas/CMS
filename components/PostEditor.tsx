@@ -15,6 +15,7 @@ import { EditorHeader } from "./post-editor/EditorHeader";
 import { MetadataEditor } from "./post-editor/MetadataEditor";
 import { ContentEditor } from "./post-editor/ContentEditor";
 import ImageEditorModal from "./post-editor/ImageEditorModal";
+import { RssImportModal } from "./post-editor/RssImportModal";
 import { Wand2, AlertTriangle, Lock, Sparkles, BookOpen } from "lucide-react";
 
 
@@ -105,6 +106,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("string");
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showRssModal, setShowRssModal] = useState(false);
   const [importablePosts, setImportablePosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -459,6 +461,36 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
 
     setShowImportModal(false);
     toast.success("Metadata and path imported. Check the title.");
+  };
+
+  const handleRssImport = (item: any) => {
+    const newMetadata = { ...metadata };
+    if (item.title) newMetadata.title = item.title;
+    if (item.contentSnippet || item.itunesSummary) newMetadata.description = item.itunesSummary || item.contentSnippet;
+    if (item.pubDate) {
+        try {
+            newMetadata.date = new Date(item.pubDate).toISOString();
+        } catch(e) {}
+    }
+    if (item.enclosure?.url) newMetadata.episodeUrl = item.enclosure.url;
+    if (item.itunesImage?.href) newMetadata.image = item.itunesImage.href;
+    
+    setMetadata(newMetadata);
+    
+    let contentToImport = "";
+    // Prefer contentEncoded over simple content for markdown
+    if (item.contentEncoded) {
+        contentToImport = item.contentEncoded;
+    } else if (item.content) {
+        contentToImport = item.content;
+    }
+    
+    if (contentToImport) {
+        setContent(contentToImport); // Just sets raw HTML/text into the markdown editor for now
+    }
+
+    setShowRssModal(false);
+    toast.success("Successfully imported from RSS.");
   };
 
   const handleDeleteField = (key: string) => {
@@ -847,6 +879,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
             onUpdate={updateMetadata}
             onDeleteField={handleDeleteField}
             onShowImportModal={() => { setShowImportModal(true); loadImportablePosts(); }}
+            onShowRssModal={() => setShowRssModal(true)}
             onShowAiModal={() => setShowAiModal(true)}
             onShowAddField={() => setShowAddField(true)}
             onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
@@ -1240,6 +1273,14 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
            </div>
         </div>
       </Modal>
+
+      {showRssModal && (
+        <RssImportModal
+          repoId={post.repoId}
+          onClose={() => setShowRssModal(false)}
+          onImport={handleRssImport}
+        />
+      )}
 
       <Modal
         isOpen={showImportModal}

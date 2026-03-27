@@ -49,6 +49,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ 
         uniqueId: project._id,
+        rssUrl: project.rssUrl || "",
         vercelConfig: project.vercelConfig || {},
         s3Config: project.s3Config || {},
         collaborators: project.collaborators || [], 
@@ -71,6 +72,7 @@ export async function PATCH(req: Request) {
 
     const { 
         repoId, 
+        rssUrl,
         vercelProjectId, 
         vercelToken, 
         useGlobalToken,
@@ -107,6 +109,7 @@ export async function PATCH(req: Request) {
 
     // Construct the $set object
     const finalUpdate: any = {};
+    if (rssUrl !== undefined) finalUpdate["rssUrl"] = rssUrl;
     if (vercelProjectId !== undefined) finalUpdate["vercelConfig.projectId"] = vercelProjectId;
     if (vercelToken !== undefined) finalUpdate["vercelConfig.token"] = vercelToken;
     if (useGlobalToken !== undefined) finalUpdate["vercelConfig.useGlobalToken"] = useGlobalToken;

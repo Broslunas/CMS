@@ -43,6 +43,7 @@ export function ProjectSettings({ repoId }: ProjectSettingsProps) {
   const [isSharedRepo, setIsSharedRepo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [rssUrl, setRssUrl] = useState("");
 
   // S3 Form State
   const [s3Endpoint, setS3Endpoint] = useState("");
@@ -77,6 +78,7 @@ export function ProjectSettings({ repoId }: ProjectSettingsProps) {
               setProjectId(data.vercelConfig?.projectId || "");
               setToken(data.vercelConfig?.token || "");
               setUseGlobalToken(!!data.vercelConfig?.useGlobalToken);
+              setRssUrl(data.rssUrl || "");
               
               setS3Endpoint(data.s3Config?.endpoint || "");
               setS3Region(data.s3Config?.region || "");
@@ -150,6 +152,7 @@ export function ProjectSettings({ repoId }: ProjectSettingsProps) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                   repoId,
+                  rssUrl,
                   vercelProjectId: projectId,
                   vercelToken: useGlobalToken ? undefined : token, 
                   useGlobalToken,
@@ -217,6 +220,8 @@ export function ProjectSettings({ repoId }: ProjectSettingsProps) {
                     useGlobalToken={useGlobalToken}
                     setUseGlobalToken={setUseGlobalToken}
                     globalTokenDisplay={globalTokenDisplay}
+                    rssUrl={rssUrl}
+                    setRssUrl={setRssUrl}
                     handleDetectProject={handleDetectProject}
                     isDetecting={isDetecting}
                     s3Endpoint={s3Endpoint}
