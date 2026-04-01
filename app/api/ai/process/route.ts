@@ -120,8 +120,15 @@ export async function POST(req: Request) {
             break;
 
         case 'quiz':
-            userPrompt = `Analiza el siguiente contenido y genera un cuestionario o quiz de 7-10 preguntas.
-            Cada pregunta debe tener un enunciado descriptivo, un array de 4 opciones y el índice de la respuesta correcta (0-indexed).
+            userPrompt = `Eres un experto creador de contenido educativo. Tu tarea es generar un cuestionario (quiz) de alta calidad basado en el contenido proporcionado.
+            
+            REGLAS CRÍTICAS:
+            1. Genera estrictamente entre 7 y 10 preguntas.
+            2. Cada pregunta debe tener 4 opciones plausibles, pero solo una correcta.
+            3. FOCO EN EL CONTENIDO: Las preguntas deben centrarse únicamente en los temas, conceptos, anécdotas o datos explicados en el texto.
+            4. EXCLUSIONES: NO menciones nombres de secciones del programa ("La Entrevista", "El Debate", etc.), NO menciones el nombre del podcast/programa, y NO menciones el nombre de los invitados o presentadores. La pregunta debe sostenerse por sí sola sin mencionar el contexto del programa.
+            5. CALIDAD: Evita preguntas sobre el formato del audio o la estructura del post. Ve directamente a las ideas centrales.
+            6. IDIOMA: Responde en el mismo idioma que el contenido (probablemente Español).
             
             CONTENIDO:
             ${context || text}
@@ -129,17 +136,14 @@ export async function POST(req: Request) {
             Genera un JSON que sea estrictamente un array de objetos con este formato:
             [
               { 
-                "question": "¿Cuál es la capital de Francia?", 
-                "options": ["Londres", "París", "Madrid", "Berlín"],
-                "correctAnswer": 1
+                "question": "¿Cuál es la idea principal sobre [Concepto Central]?", 
+                "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
+                "correctAnswer": 0
               },
               ...
             ]
             
-            IMPORTANTE:
-            1. Las preguntas deben estar basadas en el contenido proporcionado.
-            2. Las opciones deben ser plausibles pero solo una correcta.
-            3. Devuelve UNICAMENTE el JSON del array.`;
+            IMPORTANTE: Devuelve UNICAMENTE el JSON del array sin texto adicional.`;
             break;
 
         default:
