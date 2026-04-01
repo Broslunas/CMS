@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       generationConfig: {
-        responseMimeType: (type === 'seo' || type === 'tags' || type === 'sections') ? "application/json" : "text/plain",
+        responseMimeType: (type === 'seo' || type === 'tags' || type === 'sections' || type === 'quiz') ? "application/json" : "text/plain",
       }
     });
 
@@ -119,6 +119,29 @@ export async function POST(req: Request) {
             3. Devuelve UNICAMENTE el JSON del array.`;
             break;
 
+        case 'quiz':
+            userPrompt = `Analiza el siguiente contenido y genera un cuestionario o quiz de 7-10 preguntas.
+            Cada pregunta debe tener un enunciado descriptivo, un array de 4 opciones y el índice de la respuesta correcta (0-indexed).
+            
+            CONTENIDO:
+            ${context || text}
+            
+            Genera un JSON que sea estrictamente un array de objetos con este formato:
+            [
+              { 
+                "question": "¿Cuál es la capital de Francia?", 
+                "options": ["Londres", "París", "Madrid", "Berlín"],
+                "correctAnswer": 1
+              },
+              ...
+            ]
+            
+            IMPORTANTE:
+            1. Las preguntas deben estar basadas en el contenido proporcionado.
+            2. Las opciones deben ser plausibles pero solo una correcta.
+            3. Devuelve UNICAMENTE el JSON del array.`;
+            break;
+
         default:
             return NextResponse.json({ error: "Tipo de operación no válido" }, { status: 400 });
     }
@@ -130,7 +153,7 @@ export async function POST(req: Request) {
     const response = await result.response;
     const outputText = response.text();
 
-    if (type === 'seo' || type === 'tags' || type === 'sections') {
+    if (type === 'seo' || type === 'tags' || type === 'sections' || type === 'quiz') {
         try {
             const json = JSON.parse(outputText);
             return NextResponse.json(json);

@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         language: "es",
         punctuation: true,
         paragraphs: true,
-        diarize: true, // Ayuda a separar mejor las intervenciones
+        diarize: true,
       }
     );
 
@@ -33,7 +33,6 @@ export async function POST(req: Request) {
       throw error;
     }
 
-    // Usar párrafos y frases en lugar de "utterances" para obtener bloques con más sentido
     const channel = result.results?.channels[0];
     const alternative = channel?.alternatives[0];
     const paragraphs = alternative?.paragraphs?.paragraphs;

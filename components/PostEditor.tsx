@@ -414,6 +414,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     if (newFieldType === "transcription") initialValue = [];
     if (newFieldType === "sections") initialValue = [];
     if (newFieldType === "clips") initialValue = [];
+    if (newFieldType === "quiz") initialValue = [];
 
     updateMetadata(newFieldName, initialValue);
     setNewFieldName("");
@@ -1039,6 +1040,18 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
                             clips <span className="opacity-50 text-[10px]">(shorts)</span>
                         </button>
                     )}
+                    {!metadata.quiz && (
+                        <button
+                            onClick={() => { setNewFieldName("quiz"); setNewFieldType("quiz"); }}
+                            className={`px-2 py-1 text-xs border rounded transition-colors flex items-center gap-1 ${
+                                newFieldName === "quiz" 
+                                    ? "bg-indigo-500/10 border-indigo-500 text-indigo-500" 
+                                    : "bg-background border-border text-foreground hover:border-indigo-500/50"
+                            }`}
+                        >
+                            quiz <span className="opacity-50 text-[10px]">(cuestionario)</span>
+                        </button>
+                    )}
                 </div>
             </div>
           )}
@@ -1101,6 +1114,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
               <option value="transcription">Transcription (Deepgram)</option>
               <option value="sections">Sections (Chapters)</option>
               <option value="clips">Clips (Shorts/Reels)</option>
+              <option value="quiz">Quiz (Questions)</option>
             </select>
           </div>
         </div>
