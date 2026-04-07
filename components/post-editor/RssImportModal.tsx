@@ -9,8 +9,10 @@ import { Select } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Loader2, Rss, ArrowLeft, ArrowRight,
-  Type, FileText, AlignLeft, Calendar, Headphones, ImageIcon, Plus, Trash
+  Type, FileText, AlignLeft, Calendar, Headphones, ImageIcon, Plus, Trash,
+  CheckCircle2
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface RssImportModalProps {
   repoId: string;
@@ -51,13 +53,11 @@ export function RssImportModal({ repoId, onClose, onImport }: RssImportModalProp
   const [error, setError] = useState<string | null>(null);
 
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [innerStep, setInnerStep] = useState<"list" | "selection" | "mapping">("list");
   const [flatFields, setFlatFields] = useState<Record<string, string>>({});
   
-  // mappings: Target Field Key -> Source RSS Key
-  const [mappings, setMappings] = useState<Record<string, string>>({});
-  
-  // Custom fields added by the user dynamically [ { id: 'field1', key: 'customKey', source: '' } ]
-  const [customTargets, setCustomTargets] = useState<{ id: string, key: string }[]>([]);
+  // mappings: Source RSS Key -> { target: string, customKey: string, enabled: boolean }
+  const [mappings, setMappings] = useState<Record<string, { target: string, customKey: string, enabled: boolean }>>({});
 
   useEffect(() => {
     async function fetchRss() {
@@ -87,90 +87,100 @@ export function RssImportModal({ repoId, onClose, onImport }: RssImportModalProp
       const flattened = flattenObject(item);
       setFlatFields(flattened);
       
-      const initialMappings: Record<string, string> = {
-          title: "", content: "", description: "", date: "", image: "", episodeUrl: ""
-      };
+      const newMappings: Record<string, { target: string, customKey: string, enabled: boolean }> = {};
 
-      // Smart defaults logic looking into flattened keys
+      // Initialize all fields as disabled and mapping to themselves as custom by default
+      for (const key of Object.keys(flattened)) {
+          newMappings[key] = {
+              target: "custom",
+              customKey: key, // Use the exact name from the flattened JSON/RSS item
+              enabled: false
+          };
+      }
+
+      // Pre-calculate smart defaults targets, but DO NOT enable them yet as per user request
       for (const key of Object.keys(flattened)) {
           const lk = key.toLowerCase();
           const val = flattened[key];
           
-          if (lk === 'title' && !initialMappings.title) initialMappings.title = key;
-          else if ((lk === 'pubdate' || lk === 'isodate') && !initialMappings.date) initialMappings.date = key;
-          else if ((lk === 'contentencoded' || lk === 'content') && !initialMappings.content) initialMappings.content = key;
-          else if ((lk === 'itunessummary' || lk === 'contentsnippet' || lk === 'description') && !initialMappings.description) initialMappings.description = key;
-          else if ((lk === 'enclosure.url' || lk === 'url')) {
-              if (val.includes('.mp3') || val.includes('.m4a') || val.includes('.wav')) initialMappings.episodeUrl = key;
-              else if (val.includes('.jpg') || val.includes('.png')) initialMappings.image = key;
+          if (lk === 'title') {
+              newMappings[key].target = "title";
+          }
+          else if ((lk === 'pubdate' || lk === 'isodate')) {
+              newMappings[key].target = "date";
+          }
+          else if ((lk === 'contentencoded' || lk === 'content')) {
+              newMappings[key].target = "content";
+          }
+          else if ((lk === 'itunessummary' || lk === 'contentsnippet' || lk === 'description')) {
+              newMappings[key].target = "description";
+          }
+          else if (lk === 'enclosure.url' || lk === 'url') {
+              if (val.includes('.mp3') || val.includes('.m4a') || val.includes('.wav')) {
+                  newMappings[key].target = "episodeUrl";
+              } else if (val.includes('.jpg') || val.includes('.png')) {
+                  newMappings[key].target = "image";
+              }
           }
           else if ((lk === 'itunesimage.href' || lk === 'href') && (val.includes('.jpg') || val.includes('.png'))) {
-              initialMappings.image = key;
+              newMappings[key].target = "image";
           }
       }
 
-      setMappings(initialMappings);
-      setCustomTargets([]);
+      setMappings(newMappings);
       setSelectedItem(item);
+      setInnerStep("selection");
   };
 
   const handleApplyImport = () => {
     const newMetadata: any = {};
     let newContent = "";
 
-    // Apply standard
-    for (const tgt of STANDARD_TARGETS) {
-        const sourceKey = mappings[tgt.key];
-        if (!sourceKey) continue;
+    for (const [sourceKey, map] of Object.entries(mappings)) {
+        if (!map.enabled) continue;
+        
         let val = flatFields[sourceKey];
         if (!val) continue;
 
-        if (tgt.key === 'date') {
+        if (map.target === 'date') {
              try { val = new Date(val).toISOString(); } catch(e) {}
         }
 
-        if (tgt.key === 'content') {
-            newContent = val;
-        } else {
-            newMetadata[tgt.key] = val;
-        }
-    }
-
-    // Apply custom targets
-    for (const ct of customTargets) {
-        if (!ct.key.trim()) continue;
-        const sourceKey = mappings[ct.id];
-        if (!sourceKey) continue;
-        let val = flatFields[sourceKey];
-        if (typeof val === 'string' && val) {
-            newMetadata[ct.key] = val;
+        if (map.target === 'content') {
+            const separator = newContent.trim() ? "\n\n" : "";
+            newContent += separator + val;
+        } else if (map.target === 'custom') {
+            if (map.customKey.trim()) {
+                newMetadata[map.customKey.trim()] = val;
+            }
+        } else if (map.target !== 'ignore') {
+            newMetadata[map.target] = val;
         }
     }
 
     onImport({ metadata: newMetadata, content: newContent.trim() });
   };
 
-  const addCustomTarget = () => {
-      const id = `custom_${Date.now()}`;
-      setCustomTargets([...customTargets, { id, key: '' }]);
-      setMappings(prev => ({ ...prev, [id]: '' }));
+  const updateMapping = (sourceKey: string, field: string, value: any) => {
+      setMappings(prev => ({
+          ...prev,
+          [sourceKey]: { ...prev[sourceKey], [field]: value }
+      }));
   };
 
-  const updateMapping = (target: string, source: string) => {
-      setMappings(prev => ({ ...prev, [target]: source }));
+  const toggleField = (sourceKey: string) => {
+      setMappings(prev => ({
+          ...prev,
+          [sourceKey]: { ...prev[sourceKey], enabled: !prev[sourceKey].enabled }
+      }));
   };
 
-  const removeCustomTarget = (id: string) => {
-      setCustomTargets(customTargets.filter(c => c.id !== id));
-      const newMap = { ...mappings };
-      delete newMap[id];
-      setMappings(newMap);
-  };
+  const enabledCount = Object.values(mappings).filter(m => m.enabled).length;
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Import from RSS">
-      <div className="flex flex-col h-[75vh]">
-        {!selectedItem ? (
+    <Modal isOpen={true} onClose={onClose} title="Import from RSS" className="max-w-2xl">
+      <div className="flex flex-col h-[85vh]">
+        {innerStep === "list" ? (
             <>
                 {loading ? (
                 <div className="flex-1 flex flex-col items-center justify-center space-y-4">
@@ -224,109 +234,154 @@ export function RssImportModal({ repoId, onClose, onImport }: RssImportModalProp
         ) : (
             <div className="flex flex-col h-full overflow-hidden">
                 <div className="flex items-center gap-3 mb-4 pb-4 border-b">
-                    <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSelectedItem(null)}>
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-8 w-8 shrink-0" 
+                        onClick={() => {
+                            if (innerStep === "selection") {
+                                setInnerStep("list");
+                                setSelectedItem(null);
+                            } else {
+                                setInnerStep("selection");
+                            }
+                        }}
+                    >
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div className="min-w-0">
-                        <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-0.5">Map Data</p>
+                        <p className="text-xs text-primary font-semibold uppercase tracking-wider mb-0.5">
+                            {innerStep === "selection" ? "Step 1: Select Elements" : "Step 2: Map Fields"}
+                        </p>
                         <h3 className="text-sm font-medium truncate" title={selectedItem.title}>{selectedItem.title}</h3>
                     </div>
                 </div>
 
+                <div className="mb-4 px-1">
+                    <p className="text-xs text-muted-foreground">
+                        {innerStep === "selection" 
+                            ? "Toggle the elements you want to include in your import." 
+                            : "Choose where each selected element should be saved in your CMS."}
+                    </p>
+                </div>
+
                 <ScrollArea className="flex-1 overflow-auto pr-3 relative">
-                    <div className="space-y-4 pb-8">
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Standard Targets */}
-                            {STANDARD_TARGETS.map(tgt => {
-                                const selectedSource = mappings[tgt.key] || "";
-                                const valPreview = selectedSource ? flatFields[selectedSource] : null;
-                                const Icon = tgt.icon;
-                                
-                                return (
-                                    <div key={tgt.key} className={`border rounded-xl p-4 transition-all duration-200 ${selectedSource ? 'border-primary/30 bg-primary/[0.02] shadow-sm' : 'border-border bg-card'}`}>
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${selectedSource ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                                <Icon className="w-4 h-4" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-sm leading-none">{tgt.label}</h4>
-                                                <p className="text-[10px] text-muted-foreground mt-1">{tgt.desc}</p>
-                                            </div>
-                                        </div>
-                                        <Select value={selectedSource} onChange={(e) => updateMapping(tgt.key, e.target.value)}>
-                                            <option value="">-- Do not import --</option>
-                                            {Object.keys(flatFields).map(k => (
-                                                <option key={k} value={k}>{k}</option>
-                                            ))}
-                                        </Select>
-                                        
-                                        {valPreview && (
-                                            <div className="mt-3 text-[11px] bg-background/50 border border-border/50 p-2.5 rounded-md line-clamp-2 text-muted-foreground relative overflow-hidden group">
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40 rounded-l-md"></div>
-                                                <span className="font-semibold text-foreground/80 mr-1">{selectedSource}:</span> 
-                                                <span className="italic">{valPreview}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                    <div className="space-y-3 pb-8">
+                        {Object.keys(flatFields).map((sourceKey) => {
+                            const map = mappings[sourceKey];
+                            if (!map) return null;
                             
-                            {/* Custom Targets */}
-                            {customTargets.map((ct) => {
-                                const selectedSource = mappings[ct.id] || "";
-                                const valPreview = selectedSource ? flatFields[selectedSource] : null;
-                                
-                                return (
-                                    <div key={ct.id} className="border rounded-xl p-4 border-dashed bg-card/50">
-                                        <div className="flex items-start justify-between gap-2 mb-3">
-                                            <div className="flex-1">
-                                                <label className="text-[10px] uppercase font-semibold text-muted-foreground mb-1 block">Custom target field</label>
-                                                <Input 
-                                                    placeholder="e.g. author, guest..." 
-                                                    value={ct.key} 
-                                                    onChange={(e) => {
-                                                        const newVal = e.target.value;
-                                                        setCustomTargets(customTargets.map(c => c.id === ct.id ? { ...c, key: newVal } : c));
-                                                    }}
-                                                    className="h-8 text-sm"
+                            // In mapping step, only show enabled fields
+                            if (innerStep === "mapping" && !map.enabled) return null;
+
+                            const valPreview = flatFields[sourceKey];
+
+                            return (
+                                <div 
+                                    key={sourceKey} 
+                                    className={`group border rounded-xl p-3 transition-all duration-200 ${map.enabled ? 'border-primary/40 bg-primary/[0.03] shadow-sm' : 'border-border bg-card/60 opacity-80 hover:opacity-100'}`}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        {innerStep === "selection" && (
+                                            <div className="pt-1.5 shrink-0">
+                                                <Checkbox 
+                                                    checked={map.enabled} 
+                                                    onCheckedChange={() => toggleField(sourceKey)}
                                                 />
                                             </div>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 mt-5" onClick={() => removeCustomTarget(ct.id)}>
-                                                <Trash className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <Select value={selectedSource} onChange={(e) => updateMapping(ct.id, e.target.value)}>
-                                            <option value="">-- Select Source Field --</option>
-                                            {Object.keys(flatFields).map(k => (
-                                                <option key={k} value={k}>{k}</option>
-                                            ))}
-                                        </Select>
-                                        {valPreview && (
-                                            <div className="mt-3 text-[11px] bg-background/50 border border-border/50 p-2.5 rounded-md line-clamp-2 text-muted-foreground relative overflow-hidden">
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40 rounded-l-md"></div>
-                                                <span className="font-semibold text-foreground/80 mr-1">{selectedSource}:</span> 
-                                                <span className="italic">{valPreview}</span>
-                                            </div>
                                         )}
+                                        
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-col gap-3 mb-3">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-xs font-bold font-mono px-2 py-1 rounded-md border ${map.enabled ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                                                        {sourceKey}
+                                                    </span>
+                                                    
+                                                    {innerStep === "selection" && map.enabled && (
+                                                        <span className="text-[10px] bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                                            Selected
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                
+                                                {innerStep === "mapping" && (
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-muted/30 p-2.5 rounded-xl border border-border/50">
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                                                                <ArrowRight className="w-3 h-3 text-primary" />
+                                                            </div>
+                                                            <span className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Import as:</span>
+                                                        </div>
+                                                        <div className="flex-1 flex gap-2 min-w-0">
+                                                            <Select 
+                                                                className="h-9 text-xs flex-1 bg-background" 
+                                                                value={map.target} 
+                                                                onChange={(e) => updateMapping(sourceKey, "target", e.target.value)}
+                                                            >
+                                                                <option value="ignore">-- Skip --</option>
+                                                                {STANDARD_TARGETS.map(t => (
+                                                                    <option key={t.key} value={t.key}>{t.label}</option>
+                                                                ))}
+                                                                <option value="custom">Custom Metadata</option>
+                                                            </Select>
+                                                            
+                                                            {map.target === "custom" && (
+                                                                <Input 
+                                                                    placeholder="e.g. author"
+                                                                    value={map.customKey}
+                                                                    onChange={(e) => updateMapping(sourceKey, "customKey", e.target.value)}
+                                                                    className="h-9 text-xs w-32 bg-background font-mono"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="text-[11px] text-muted-foreground bg-background/50 p-3 rounded-lg border border-border/30 italic leading-relaxed group-hover:border-border/60 transition-colors">
+                                                {valPreview ? (
+                                                    <span className="line-clamp-4">{valPreview}</span>
+                                                ) : (
+                                                    <span className="opacity-40 select-none">No value available for this element</span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                        
-                        <div className="pt-2 flex justify-center">
-                            <Button variant="outline" size="sm" onClick={addCustomTarget} className="gap-2 border-dashed bg-card hover:bg-accent">
-                                <Plus className="h-4 w-4" /> Add Custom Field
-                            </Button>
-                        </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </ScrollArea>
 
                 <div className="pt-4 mt-2 border-t flex justify-end items-center bg-background z-10 gap-3">
-                    <Button variant="ghost" onClick={() => setSelectedItem(null)}>Back to List</Button>
-                    <Button onClick={handleApplyImport} className="gap-2">
-                        <ArrowRight className="h-4 w-4" /> Import Mapped Data
+                    <Button 
+                        variant="ghost" 
+                        onClick={() => {
+                            if (innerStep === "selection") {
+                                setInnerStep("list");
+                                setSelectedItem(null);
+                            } else {
+                                setInnerStep("selection");
+                            }
+                        }}
+                    >
+                        Back
                     </Button>
+                    
+                    {innerStep === "selection" ? (
+                        <Button 
+                            onClick={() => setInnerStep("mapping")} 
+                            className="gap-2" 
+                            disabled={enabledCount === 0}
+                        >
+                            Next: Map Fields ({enabledCount}) <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <Button onClick={handleApplyImport} className="gap-2">
+                            <ArrowRight className="h-4 w-4" /> Finalize Import
+                        </Button>
+                    )}
                 </div>
             </div>
         )}

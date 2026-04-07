@@ -76,7 +76,7 @@ export async function POST(req: Request) {
         case 'tags':
             userPrompt = `Analiza el siguiente contenido y sugiere etiquetas (tags) relevantes.
             Genera un JSON con:
-            - "tags": Array de strings con 5-8 etiquetas relevantes en minúsculas.
+            - "tags": Array de strings con 5-8 etiquetas relevantes, la primera letra en mayúscula y el resto en minúsculas.
             
             Contenido del post:
             ${context || text}`;
