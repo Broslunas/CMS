@@ -7,6 +7,7 @@ import { ClipsEditor } from "./ClipsEditor";
 import { QuizEditor } from "./QuizEditor";
 import { ArrayEditor } from "./ArrayEditor";
 import { SocialLinksEditor } from "../SocialLinksEditor";
+import { GuestsEditor } from "./GuestsEditor";
 import { DateTimePicker } from "./DateTimePicker";
 import { Switch } from "../ui/switch";
 import { useState, useEffect } from "react";
@@ -280,6 +281,24 @@ export function MetadataField({
           </div>
         );
       }
+    }
+
+    // --- Participants / Guests (special rich editor) ---
+    const isParticipantsKey = [
+      'participants', 'invitados', 'guests', 'panelists', 'panelistas',
+    ].includes(key.toLowerCase()) || key.toLowerCase().includes('participant') || key.toLowerCase().includes('guest');
+
+    if (Array.isArray(value) && isParticipantsKey && value.every((v) => typeof v === 'string')) {
+      return (
+        <div key={key}>
+          <GuestsEditor
+            value={value as string[]}
+            onChange={(val) => onUpdate(key, val)}
+            onDelete={() => onDelete(key)}
+            repoId={repoId}
+          />
+        </div>
+      );
     }
 
     // --- Simple Arrays (Tags) ---
