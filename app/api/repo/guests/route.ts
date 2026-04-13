@@ -221,3 +221,164 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to create guest" }, { status: 500 });
   }
 }
+
+/**
+ * PUT /api/repo/guests
+ *
+ * Updates an existing guest profile. Handles renaming if the name (and thus slug) changes.
+ * Body: { repo, slug, name, role?, description?, image?, social?, branch? }
+ */
+export async function PUT(req: Request) {
+  const session = await auth();
+  if (!session?.user || !session.access_token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const { repo, slug, name, role, description, image, social, branch } = body;
+
+  if (!repo || !slug || !name?.trim()) {
+    return NextResponse.json({ error: "Missing required fields: repo, slug, name" }, { status: 400 });
+  }
+
+  const [owner, repoName] = repo.split("/");
+  if (!owner || !repoName) {
+    return NextResponse.json({ error: "Invalid repo format" }, { status: 400 });
+  }
+
+  const octokit = new Octokit({ auth: session.access_token });
+
+  // 1. Find the current file (it could be in content/guests or src/content/guests)
+  let currentFilePath: string | null = null;
+  let currentSha: string | null = null;
+  let guestsFolder = "content/guests";
+  let extension = ".md";
+
+  for (const candidate of ["content/guests", "src/content/guests"]) {
+    // Try both .md and .mdx
+    for (const ext of [".md", ".mdx"]) {
+      try {
+        const path = `${candidate}/${slug}${ext}`;
+        const { data } = await octokit.repos.getContent({
+          owner,
+          repo: repoName,
+          path,
+          ...(branch ? { ref: branch } : {}),
+        });
+        if (!Array.isArray(data) && data.type === "file") {
+          currentFilePath = path;
+          currentSha = data.sha;
+          guestsFolder = candidate;
+          extension = ext;
+          break;
+        }
+      } catch {
+        // Not found, try next extension/candidate
+      }
+    }
+    if (currentFilePath) break;
+  }
+
+  if (!currentFilePath || !currentSha) {
+    return NextResponse.json({ error: "Guest profile not found" }, { status: 404 });
+  }
+
+  // 2. Determine new slug
+  const newSlug = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  const newFilePath = `${guestsFolder}/${newSlug}${extension}`;
+
+  // 3. Build frontmatter
+  const frontmatter: Record<string, any> = { name: name.trim() };
+  if (role?.trim()) frontmatter.role = role.trim();
+  if (description?.trim()) frontmatter.description = description.trim();
+  if (image?.trim()) frontmatter.image = image.trim();
+  if (social && Object.keys(social).length > 0) {
+    frontmatter.social = typeof social === "string" ? social : JSON.stringify(social);
+  }
+
+  const markdownContent = matter.stringify("", frontmatter);
+
+  try {
+    if (newSlug !== slug) {
+      // Rename: Create new and Delete old
+      // First, check if the new slug already exists (to avoid overwriting someone else)
+      try {
+        await octokit.repos.getContent({
+          owner,
+          repo: repoName,
+          path: newFilePath,
+          ...(branch ? { ref: branch } : {}),
+        });
+        return NextResponse.json({ error: "A guest with the new name already exists" }, { status: 409 });
+      } catch {
+        // Path does not exist, safe to create
+      }
+
+      const createResult = await updateFile(
+        session.access_token as string,
+        owner,
+        repoName,
+        newFilePath,
+        markdownContent,
+        `feat: rename guest ${slug} to ${newSlug}`,
+        undefined,
+        { authorStrategy: "bot" }
+      );
+
+      // Delete old file
+      const { deleteFile } = await import("@/lib/octokit");
+      await deleteFile(
+        session.access_token as string,
+        owner,
+        repoName,
+        currentFilePath,
+        currentSha,
+        `feat: remove old guest profile ${slug} after rename`,
+        { authorStrategy: "bot" }
+      );
+
+      return NextResponse.json({
+        success: true,
+        slug: newSlug,
+        filePath: newFilePath,
+        sha: createResult.sha,
+        commitSha: createResult.commit,
+      });
+    } else {
+      // Update existing
+      const updateResult = await updateFile(
+        session.access_token as string,
+        owner,
+        repoName,
+        currentFilePath,
+        markdownContent,
+        `feat: update guest profile ${name}`,
+        currentSha,
+        { authorStrategy: "bot" }
+      );
+
+      return NextResponse.json({
+        success: true,
+        slug,
+        filePath: currentFilePath,
+        sha: updateResult.sha,
+        commitSha: updateResult.commit,
+      });
+    }
+  } catch (error: any) {
+    console.error("Error updating guest:", error);
+    return NextResponse.json({ error: "Failed to update guest" }, { status: 500 });
+  }
+}
