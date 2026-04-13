@@ -158,7 +158,7 @@ export async function POST(req: Request) {
   if (description?.trim()) frontmatter.description = description.trim();
   if (image?.trim()) frontmatter.image = image.trim();
   if (social && Object.keys(social).length > 0) {
-    frontmatter.social = JSON.stringify(social);
+    frontmatter.social = social;
   }
 
   // Serialize to markdown (frontmatter only, no body content)
@@ -305,7 +305,7 @@ export async function PUT(req: Request) {
   if (description?.trim()) frontmatter.description = description.trim();
   if (image?.trim()) frontmatter.image = image.trim();
   if (social && Object.keys(social).length > 0) {
-    frontmatter.social = typeof social === "string" ? social : JSON.stringify(social);
+    frontmatter.social = social;
   }
 
   const markdownContent = matter.stringify("", frontmatter);
