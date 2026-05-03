@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { Loader2, Check, HardDrive } from "lucide-react"
+import { Loader2, Check, HardDrive, Youtube } from "lucide-react"
+import { checkYouTubeConnection, unlinkYouTubeAccount } from "@/app/actions/youtube"
+import { signIn } from "next-auth/react"
 
 export function IntegrationsForm() {
   const [loading, setLoading] = useState(false)
@@ -27,10 +29,46 @@ export function IntegrationsForm() {
   const [commitStrategy, setCommitStrategy] = useState("bot")
   const [commitLoading, setCommitLoading] = useState(false)
 
+  // YouTube State
+  const [youtubeConnected, setYoutubeConnected] = useState<boolean | null>(null)
+  const [youtubeLoading, setYoutubeLoading] = useState(false)
+
   useEffect(() => {
     fetchSettings()
     checkGithubInstallation()
+    checkYoutube()
   }, [])
+
+  const checkYoutube = async () => {
+    try {
+      const res = await checkYouTubeConnection()
+      setYoutubeConnected(res.connected)
+    } catch (error) {
+      console.error("Failed to check YouTube connection", error)
+    }
+  }
+
+  const handleYoutubeLink = () => {
+    setYoutubeLoading(true)
+    signIn("google")
+  }
+
+  const handleYoutubeUnlink = async () => {
+    setYoutubeLoading(true)
+    try {
+      const res = await unlinkYouTubeAccount()
+      if (res.success) {
+        toast.success("YouTube account unlinked")
+        setYoutubeConnected(false)
+      } else {
+        toast.error(res.error || "Failed to unlink account")
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    } finally {
+      setYoutubeLoading(false)
+    }
+  }
 
   const fetchSettings = async () => {
     try {
@@ -285,6 +323,60 @@ export function IntegrationsForm() {
                         {commitLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Save Strategy"}
                     </Button>
                 </div>
+            </div>
+        </div>
+
+        {/* YouTube Integration */}
+        <div className="rounded-lg border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                     <div className="h-8 w-8 rounded-full bg-red-600 text-white flex items-center justify-center">
+                        <Youtube className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h4 className="font-medium">YouTube</h4>
+                        <p className="text-sm text-muted-foreground">Upload and manage video clips.</p>
+                    </div>
+                </div>
+                 <div className="flex items-center gap-2">
+                    {youtubeConnected === true ? (
+                         <span className="flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                            <Check className="w-3 h-3 mr-1"/> Connected
+                        </span>
+                    ) : youtubeConnected === false ? (
+                         <span className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                            Not Connected
+                        </span>
+                    ) : (
+                        <span className="flex items-center text-xs text-muted-foreground">
+                            Checking...
+                        </span>
+                    )}
+                </div>
+            </div>
+            
+             <div className="flex justify-end gap-2">
+                {youtubeConnected === false && (
+                    <Button 
+                        onClick={handleYoutubeLink} 
+                        disabled={youtubeLoading}
+                        variant="outline"
+                    >
+                        {youtubeLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+                        Connect Account
+                    </Button>
+                )}
+                 {youtubeConnected === true && (
+                    <Button 
+                        onClick={handleYoutubeUnlink} 
+                        disabled={youtubeLoading}
+                        variant="destructive"
+                        className="bg-destructive/10 text-destructive hover:bg-destructive hover:text-white"
+                    >
+                        {youtubeLoading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+                        Unlink Account
+                    </Button>
+                )}
             </div>
         </div>
 

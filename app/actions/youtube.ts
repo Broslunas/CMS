@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import clientPromise, { DB_NAME } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { headers } from "next/headers";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -158,3 +159,262 @@ async function refreshGoogleToken(refreshToken: string) {
         return null;
     }
 }
+
+export async function createYouTubeUploadSession(metadata: {
+    title: string;
+    description: string;
+    privacyStatus: "public" | "private" | "unlisted";
+    publishAt?: string;
+    tags?: string[];
+    categoryId?: string;
+    madeForKids?: boolean;
+    embeddable?: boolean;
+    license?: "youtube" | "creativeCommon";
+    notifySubscribers?: boolean;
+}) {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return { error: "User not authenticated" };
+        }
+
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+
+        let account = await db.collection("accounts").findOne({
+            userId: new ObjectId(session.user.id),
+            provider: "google"
+        });
+
+        if (!account) {
+            account = await db.collection("accounts").findOne({
+                userId: session.user.id,
+                provider: "google"
+            });
+        }
+
+        if (!account) {
+            return { error: "No YouTube account connected. Please connect your YouTube account first." };
+        }
+
+        let accessToken = account.access_token;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const expiresAt = account.expires_at as number;
+
+        if (!accessToken || (expiresAt && nowSeconds >= expiresAt - 300)) {
+            console.log("Refreshing YouTube access token...");
+            const newTokens = await refreshGoogleToken(account.refresh_token);
+
+            if (!newTokens) {
+                return { error: "Failed to refresh YouTube session. Please reconnect your account." };
+            }
+
+            accessToken = newTokens.access_token;
+
+            await db.collection("accounts").updateOne(
+                { _id: account._id },
+                {
+                    $set: {
+                        access_token: newTokens.access_token,
+                        expires_at: Math.floor(Date.now() / 1000 + newTokens.expires_in),
+                        ...(newTokens.refresh_token ? { refresh_token: newTokens.refresh_token } : {})
+                    }
+                }
+            );
+        }
+
+        const body: any = {
+            snippet: {
+                title: metadata.title,
+                description: metadata.description,
+                categoryId: metadata.categoryId || "22",
+            },
+            status: {
+                privacyStatus: metadata.privacyStatus,
+                selfDeclaredMadeForKids: metadata.madeForKids || false,
+                embeddable: metadata.embeddable !== false,
+                license: metadata.license || "youtube",
+            }
+        };
+
+        if (metadata.tags && metadata.tags.length > 0) {
+            body.snippet.tags = metadata.tags;
+        }
+
+        if (metadata.publishAt && metadata.privacyStatus === "private") {
+            body.status.publishAt = metadata.publishAt; // ISO 8601 string
+        }
+        
+        const notifyQuery = metadata.notifySubscribers === false ? "&notifySubscribers=false" : "&notifySubscribers=true";
+
+        const headersList = await headers();
+        const origin = headersList.get("origin") || (headersList.get("host") ? `http${headersList.get("host")?.includes('localhost') ? '' : 's'}://${headersList.get("host")}` : "http://localhost:3000");
+
+        const response = await fetch(`https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status${notifyQuery}`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+                "X-Upload-Content-Type": "video/*",
+                "Origin": origin,
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("YouTube Upload Init Error:", errorData);
+            if (response.status === 401 || response.status === 403) {
+                 return { error: "YouTube session expired or missing permissions. Please reconnect." };
+            }
+            return { error: `YouTube API Error: ${errorData.error?.message || response.statusText}` };
+        }
+
+        const uploadUrl = response.headers.get("Location");
+        if (!uploadUrl) {
+            return { error: "Failed to get resumable upload URL from YouTube" };
+        }
+
+        return { uploadUrl };
+
+    } catch (error) {
+        console.error("Error creating YouTube upload session:", error);
+        return { error: "Internal Server Error" };
+    }
+}
+
+export async function uploadYouTubeThumbnail(videoId: string, formData: FormData): Promise<{ success?: boolean; error?: string }> {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return { error: "User not authenticated" };
+        }
+
+        const imageFile = formData.get("image") as File;
+        if (!imageFile) return { error: "No image file provided" };
+
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+
+        let account = await db.collection("accounts").findOne({
+            userId: new ObjectId(session.user.id),
+            provider: "google"
+        });
+
+        if (!account) {
+            account = await db.collection("accounts").findOne({
+                userId: session.user.id,
+                provider: "google"
+            });
+        }
+
+        if (!account || !account.access_token) {
+            return { error: "No YouTube account connected." };
+        }
+
+        let accessToken = account.access_token;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const expiresAt = account.expires_at as number;
+
+        if (expiresAt && nowSeconds >= expiresAt - 300) {
+            const newTokens = await refreshGoogleToken(account.refresh_token);
+            if (newTokens) {
+                accessToken = newTokens.access_token;
+                await db.collection("accounts").updateOne(
+                    { _id: account._id },
+                    {
+                        $set: {
+                            access_token: newTokens.access_token,
+                            expires_at: Math.floor(Date.now() / 1000 + newTokens.expires_in),
+                            ...(newTokens.refresh_token ? { refresh_token: newTokens.refresh_token } : {})
+                        }
+                    }
+                );
+            }
+        }
+
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const response = await fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": imageFile.type || "image/jpeg",
+            },
+            body: buffer
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("YouTube Thumbnail Upload Error:", errorData);
+            return { error: `Failed to upload thumbnail: ${errorData.error?.message || response.statusText}` };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error uploading YouTube thumbnail:", error);
+        return { error: "Internal Server Error" };
+    }
+}
+
+export async function checkYouTubeConnection(): Promise<{ connected: boolean; error?: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { connected: false, error: "User not authenticated" };
+    }
+
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+
+    let account = await db.collection("accounts").findOne({
+      userId: new ObjectId(session.user.id),
+      provider: "google"
+    });
+
+    if (!account) {
+      account = await db.collection("accounts").findOne({
+        userId: session.user.id,
+        provider: "google"
+      });
+    }
+
+    return { connected: !!account };
+  } catch (error) {
+    console.error("Error checking YouTube connection:", error);
+    return { connected: false, error: "Internal Server Error" };
+  }
+}
+
+export async function unlinkYouTubeAccount(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+
+    const result1 = await db.collection("accounts").deleteOne({
+      userId: new ObjectId(session.user.id),
+      provider: "google"
+    });
+
+    const result2 = await db.collection("accounts").deleteOne({
+      userId: session.user.id,
+      provider: "google"
+    });
+
+    if (result1.deletedCount > 0 || result2.deletedCount > 0) {
+      return { success: true };
+    } else {
+      return { success: false, error: "No YouTube account found to unlink" };
+    }
+  } catch (error) {
+    console.error("Error unlinking YouTube account:", error);
+    return { success: false, error: "Internal Server Error" };
+  }
+}
+

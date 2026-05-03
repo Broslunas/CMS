@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ValidatedDateField } from "./ValidatedDateField";
 import { Sparkles, Wand2, X } from "lucide-react";
+import { YouTubeUploader } from "./YouTubeUploader";
 
 // Function to convert relative paths to raw GitHub URLs
 const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
@@ -362,6 +363,7 @@ export function MetadataField({
 
       const isImage = trimmedValue.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif|tiff|tif)(\?.*)?$/i) || ((trimmedValue.startsWith("http") || trimmedValue.startsWith("/")) && (key.toLowerCase().includes("image") || key.toLowerCase().includes("img") || key.toLowerCase().includes("cover") || key.toLowerCase().includes("avatar") || key.toLowerCase().includes("thumbnail") || key.toLowerCase().includes("banner") || key.toLowerCase().includes("poster") || key.toLowerCase().includes("logo") || key.toLowerCase().includes("icon") || key.toLowerCase().includes("bg")));
       const isSuggested = suggestedFields[fieldKey] !== undefined; // Check if field is suggested
+      const isVideoUrl = key === 'videoUrl' || key === 'youtubeUrl';
 
       return (
         <div key={key}>
@@ -399,6 +401,9 @@ export function MetadataField({
                 <button type="button" onClick={() => triggerUpload({ type: 'metadata', key })} className="px-3 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-border" title="Upload image">
                   {isUploading && uploadTarget.key === key ? <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>} <span className="hidden sm:inline">Upload</span>
                 </button>
+              )}
+              {isVideoUrl && (
+                  <YouTubeUploader onSuccess={(url) => onUpdate(key, url)} metadata={metadata} repoId={repoId} />
               )}
             </div>
             {isImage && trimmedValue.length > 0 && (

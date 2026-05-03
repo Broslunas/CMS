@@ -32,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.readonly",
+          scope: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.upload",
           access_type: "offline",
           prompt: "consent",
         },
@@ -43,39 +43,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, account, user }) {
       // Persist the OAuth access_token and other details to the token
       if (account) {
-        let isInstalled = false;
-        try {
-            const { checkAppInstalled } = await import("@/lib/github-app");
-            isInstalled = await checkAppInstalled(account.access_token || "");
-            
-            // Sync with DB if installed
-            if (isInstalled && user?.id) {
-                const { ObjectId } = await import("mongodb");
-                const client = await clientPromise;
-                const db = client.db(DB_NAME);
-                await db.collection("users").updateOne(
-                    { _id: new ObjectId(user.id) },
-                    { 
-                        $set: { 
-                            appInstalled: true,
-                            lastAppCheck: new Date()
-                        } 
-                    }
-                );
-            }
-        } catch (error) {
-            console.error("Error checking app installation on login:", error);
-        }
+        if (account.provider === "github") {
+          let isInstalled = false;
+          try {
+              const { checkAppInstalled } = await import("@/lib/github-app");
+              isInstalled = await checkAppInstalled(account.access_token || "");
+              
+              // Sync with DB if installed
+              if (isInstalled && user?.id) {
+                  const { ObjectId } = await import("mongodb");
+                  const client = await clientPromise;
+                  const db = client.db(DB_NAME);
+                  await db.collection("users").updateOne(
+                      { _id: new ObjectId(user.id) },
+                      { 
+                          $set: { 
+                              appInstalled: true,
+                              lastAppCheck: new Date()
+                          } 
+                      }
+                  );
+              }
+          } catch (error) {
+              console.error("Error checking app installation on login:", error);
+          }
 
-        return {
-          ...token,
-          accessToken: account.access_token,
-          expiresAt: account.expires_at,
-          refreshToken: account.refresh_token,
-          user: token.user,
-          appInstalled: isInstalled,
-          lastAppCheck: Date.now(),
-        };
+          return {
+            ...token,
+            accessToken: account.access_token,
+            expiresAt: account.expires_at,
+            refreshToken: account.refresh_token,
+            user: token.user,
+            appInstalled: isInstalled,
+            lastAppCheck: Date.now(),
+          };
+        } else {
+          // For other providers like Google, we do not override the GitHub access token in the JWT.
+          // NextAuth adapter will already have saved the account in the DB.
+          return token;
+        }
       }
 
       // If the token has not expired yet, return it
