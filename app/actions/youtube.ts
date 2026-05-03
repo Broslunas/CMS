@@ -131,6 +131,151 @@ export async function getYouTubeVideos(pageToken?: string): Promise<{ videos?: Y
   }
 }
 
+export async function getYouTubePlaylists(): Promise<{ playlists?: { id: string, title: string, thumbnail: string }[], error?: string }> {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) {
+            return { error: "User not authenticated" };
+        }
+
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+        
+        let account = await db.collection("accounts").findOne({
+            userId: new ObjectId(session.user.id),
+            provider: "google"
+        });
+
+        if (!account) {
+            account = await db.collection("accounts").findOne({
+                userId: session.user.id,
+                provider: "google"
+            });
+        }
+
+        if (!account) {
+            return { error: "No YouTube account connected." };
+        }
+
+        let accessToken = account.access_token;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const expiresAt = account.expires_at as number;
+        
+        if (!accessToken || (expiresAt && nowSeconds >= expiresAt - 300)) {
+            const newTokens = await refreshGoogleToken(account.refresh_token);
+            if (!newTokens) return { error: "Session expired." };
+            accessToken = newTokens.access_token;
+            await db.collection("accounts").updateOne(
+                { _id: account._id },
+                { 
+                    $set: {
+                        access_token: newTokens.access_token,
+                        expires_at: Math.floor(Date.now() / 1000 + newTokens.expires_in),
+                        ...(newTokens.refresh_token ? { refresh_token: newTokens.refresh_token } : {})
+                    }
+                }
+            );
+        }
+
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            return { error: errorData.error?.message || "Failed to fetch playlists" };
+        }
+
+        const data = await response.json();
+        const playlists = data.items.map((item: any) => ({
+            id: item.id,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails?.default?.url
+        }));
+
+        return { playlists };
+
+    } catch (error) {
+        console.error("Error fetching playlists:", error);
+        return { error: "Internal Server Error" };
+    }
+}
+
+export async function addVideoToPlaylist(videoId: string, playlistId: string): Promise<{ success: boolean, error?: string }> {
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+        const client = await clientPromise;
+        const db = client.db(DB_NAME);
+        
+        let account = await db.collection("accounts").findOne({
+            userId: new ObjectId(session.user.id),
+            provider: "google"
+        });
+
+        if (!account) {
+            account = await db.collection("accounts").findOne({
+                userId: session.user.id,
+                provider: "google"
+            });
+        }
+
+        if (!account) return { success: false, error: "No account connected" };
+
+        let accessToken = account.access_token;
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const expiresAt = account.expires_at as number;
+        
+        if (!accessToken || (expiresAt && nowSeconds >= expiresAt - 300)) {
+            const newTokens = await refreshGoogleToken(account.refresh_token);
+            if (!newTokens) return { success: false, error: "Session expired" };
+            accessToken = newTokens.access_token;
+            await db.collection("accounts").updateOne(
+                { _id: account._id },
+                { 
+                    $set: {
+                        access_token: newTokens.access_token,
+                        expires_at: Math.floor(Date.now() / 1000 + newTokens.expires_in),
+                        ...(newTokens.refresh_token ? { refresh_token: newTokens.refresh_token } : {})
+                    }
+                }
+            );
+        }
+
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                snippet: {
+                    playlistId: playlistId,
+                    resourceId: {
+                        kind: "youtube#video",
+                        videoId: videoId
+                    }
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            return { success: false, error: errorData.error?.message || "Failed to add to playlist" };
+        }
+
+        return { success: true };
+
+    } catch (error) {
+        console.error("Error adding to playlist:", error);
+        return { success: false, error: "Internal error" };
+    }
+}
+
 async function refreshGoogleToken(refreshToken: string) {
     if (!refreshToken) return null;
     
