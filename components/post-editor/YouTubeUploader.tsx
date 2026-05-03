@@ -70,8 +70,8 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   
-  const initialTags = Array.isArray(metadata?.tags) ? metadata.tags.join(", ") : (metadata?.tags || "");
-  const [tags, setTags] = useState(initialTags);
+  const initialTags: string = Array.isArray(metadata?.tags) ? metadata.tags.join(", ") : (metadata?.tags || "");
+  const [tags, setTags] = useState<string>(initialTags);
   const [categoryId, setCategoryId] = useState("22");
   const [license, setLicense] = useState<"youtube" | "creativeCommon">("youtube");
 
@@ -151,7 +151,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
         description,
         privacyStatus: privacy,
         publishAt,
-        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        tags: tags.split(',').map((t: string) => t.trim()).filter(Boolean),
         categoryId,
         madeForKids,
         license,
