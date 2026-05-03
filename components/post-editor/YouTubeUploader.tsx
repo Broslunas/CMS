@@ -42,7 +42,7 @@ const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
   return src;
 };
 
-type Step = 'video' | 'visibility' | 'extras' | 'thumbnail' | 'metadata' | 'uploading';
+type Step = 'video' | 'visibility' | 'extras' | 'thumbnail' | 'metadata' | 'uploading' | 'success';
 
 export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploaderProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -80,6 +80,8 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
   const [progress, setProgress] = useState(0);
   const [authError, setAuthError] = useState(false);
   const [loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [uploadedVideoId, setUploadedVideoId] = useState("");
 
   // Clean up previews
   useEffect(() => {
@@ -133,12 +135,25 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
     else if (step === 'metadata') setStep('thumbnail');
   };
 
+  const openStudioPopup = (videoId: string) => {
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    window.open(
+      `https://studio.youtube.com/video/${videoId}/edit`,
+      'YouTubeStudio',
+      `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,status=yes`
+    );
+  };
+
   const startUpload = async () => {
     if (!title) return toast.error("Title is required");
     setStep('uploading');
     setIsUploading(true);
     setProgress(0);
     setAuthError(false);
+    setStatusMessage("Initializing upload session...");
 
     try {
       let publishAt;
@@ -173,17 +188,22 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
       xhr.setRequestHeader("Content-Type", file!.type || "video/mp4");
 
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) setProgress((e.loaded / e.total) * 100);
+        if (e.lengthComputable) {
+            const pct = (e.loaded / e.total) * 100;
+            setProgress(pct);
+            setStatusMessage(pct < 100 ? "Uploading video data..." : "Finalizing video upload...");
+        }
       };
 
       xhr.onload = async () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           const response = JSON.parse(xhr.responseText);
           const videoId = response.id;
+          setUploadedVideoId(videoId);
 
           // Thumbnail Upload
           if (thumbnailFile || (useAutoThumbnail && defaultImage)) {
-            toast.info("Uploading thumbnail...");
+            setStatusMessage("Processing thumbnail...");
             const formData = new FormData();
             
             if (thumbnailFile) {
@@ -197,45 +217,35 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
                 formData.append("image", blob, "thumb.jpg");
               } catch (e) {
                 console.error("Failed to fetch auto thumbnail", e);
-                toast.error("Could not fetch the post image for the thumbnail.");
               }
             }
 
             if (formData.has("image")) {
               const thumbRes = await uploadYouTubeThumbnail(videoId, formData);
               if (thumbRes.error) {
-                toast.error("Thumbnail error: " + thumbRes.error);
-              } else {
-                toast.success("Thumbnail uploaded!");
+                console.error("Thumbnail error: " + thumbRes.error);
               }
             }
           }
 
           // Playlist Assignment
           if (selectedPlaylistId) {
+            setStatusMessage("Adding to playlist...");
             const playlistRes = await addVideoToPlaylist(videoId, selectedPlaylistId);
             if (playlistRes.error) {
-              toast.error("Playlist error: " + playlistRes.error);
-            } else {
-              toast.success("Added to playlist!");
+                console.error("Playlist error: " + playlistRes.error);
             }
           }
 
-          toast.success("Success! Video uploaded.", {
-            description: "Go to YouTube Studio to set as Premiere.",
-            action: {
-              label: "Open Studio",
-              onClick: () => window.open(`https://studio.youtube.com/video/${videoId}/edit`, '_blank')
-            },
-            duration: 10000,
-          });
+          setStatusMessage("Success! Video uploaded.");
+          setIsUploading(false);
+          setStep('success');
           onSuccess(`https://youtu.be/${videoId}`);
-          resetAndClose();
         } else {
           toast.error("Upload failed: " + xhr.responseText);
           setStep('metadata');
+          setIsUploading(false);
         }
-        setIsUploading(false);
       };
 
       xhr.onerror = () => {
@@ -261,6 +271,8 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
     setThumbnailPreview("");
     setProgress(0);
     setIsUploading(false);
+    setStatusMessage("");
+    setUploadedVideoId("");
   };
 
   const renderStep = () => {
@@ -501,13 +513,44 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
                <h4 className="font-bold text-xl">{title}</h4>
                <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
                  <Loader2 className="w-4 h-4 animate-spin" />
-                 Processing high-quality blocks...
+                 {statusMessage || "Processing high-quality blocks..."}
                </p>
             </div>
             
             <p className="text-[10px] text-muted-foreground max-w-[200px] text-center leading-relaxed">
               Don't close this tab while we're securely transmitting your episode to YouTube's infrastructure.
             </p>
+          </div>
+        );
+
+      case 'success':
+        return (
+          <div className="flex flex-col items-center justify-center py-12 space-y-8 animate-in zoom-in duration-500 text-center">
+            <div className="h-24 w-24 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+               <Check className="w-12 h-12" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black">Video Uploaded!</h3>
+              <p className="text-sm text-muted-foreground px-8">
+                Your video is now processing on YouTube. You can now set it as a Premiere manually.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <button
+                onClick={() => openStudioPopup(uploadedVideoId)}
+                className="w-full py-3 bg-red-600 text-white hover:bg-red-700 rounded-xl text-sm font-black shadow-lg shadow-red-500/20 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                <Youtube className="w-4 h-4" />
+                OPEN YOUTUBE STUDIO
+              </button>
+              <button
+                onClick={resetAndClose}
+                className="w-full py-3 bg-muted text-muted-foreground hover:text-foreground rounded-xl text-sm font-bold transition-all"
+              >
+                CLOSE WIZARD
+              </button>
+            </div>
           </div>
         );
     }
@@ -520,6 +563,8 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
     { id: 'thumbnail', label: 'Cover' },
     { id: 'metadata', label: 'Details' }
   ];
+
+  const showSteps = step !== 'uploading' && step !== 'success';
 
   return (
     <>
@@ -535,11 +580,11 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
       <Modal 
         isOpen={isOpen} 
         onClose={() => !isUploading && resetAndClose()} 
-        title={step === 'uploading' ? "Uploading to YouTube" : "YouTube Studio Wizard"}
+        title={step === 'uploading' ? "Uploading to YouTube" : step === 'success' ? "Success!" : "YouTube Studio Wizard"}
       >
         <div className="flex flex-col h-full min-h-[450px]">
           {/* Steps Indicator */}
-          {step !== 'uploading' && (
+          {showSteps && (
             <div className="flex items-center justify-between mb-8 px-2 overflow-x-auto no-scrollbar">
                {stepsList.map((s, idx) => {
                  const isCompleted = stepsList.findIndex(x => x.id === step) > idx;
@@ -565,7 +610,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
              {renderStep()}
           </div>
 
-          {step !== 'uploading' && (
+          {showSteps && (
             <div className="flex justify-between items-center mt-8 pt-4 border-t border-border">
               <button
                 onClick={prevStep}
