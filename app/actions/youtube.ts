@@ -310,6 +310,7 @@ export async function createYouTubeUploadSession(metadata: {
     description: string;
     privacyStatus: "public" | "private" | "unlisted";
     publishAt?: string;
+    isPremiere?: boolean;
     tags?: string[];
     categoryId?: string;
     madeForKids?: boolean;
@@ -388,6 +389,8 @@ export async function createYouTubeUploadSession(metadata: {
 
         if (metadata.publishAt && metadata.privacyStatus === "private") {
             body.status.publishAt = metadata.publishAt; // ISO 8601 string
+            // Note: YouTube API v3 doesn't officially support setting 'isPremiere' via API.
+            // Scheduling a private video with publishAt is the closest programmatic way.
         }
         
         const notifyQuery = metadata.notifySubscribers === false ? "&notifySubscribers=false" : "&notifySubscribers=true";

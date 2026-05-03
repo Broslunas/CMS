@@ -151,6 +151,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
         description,
         privacyStatus: privacy,
         publishAt,
+        isPremiere,
         tags: tags.split(',').map((t: string) => t.trim()).filter(Boolean),
         categoryId,
         madeForKids,
@@ -220,7 +221,14 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
             }
           }
 
-          toast.success("Success! Video uploaded.");
+          toast.success("Success! Video uploaded.", {
+            description: "Go to YouTube Studio to set as Premiere.",
+            action: {
+              label: "Open Studio",
+              onClick: () => window.open(`https://studio.youtube.com/video/${videoId}/edit`, '_blank')
+            },
+            duration: 10000,
+          });
           onSuccess(`https://youtu.be/${videoId}`);
           resetAndClose();
         } else {
