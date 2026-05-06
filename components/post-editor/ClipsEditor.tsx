@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Play, Type, Video, Plus, X, GripVertical, ExternalLink, Loader2, Youtube, Check } from "lucide-react";
 import { getYouTubeVideos } from "@/app/actions/youtube";
 import { signIn } from "next-auth/react";
+import { BulkClipsUploader } from "./BulkClipsUploader";
 import {
     DndContext,
     closestCenter,
@@ -412,6 +413,7 @@ export function ClipsEditor({ fieldKey, value, onChange, onDelete }: ClipsEditor
                                     <Youtube className="w-3 h-3" />
                                     Add from YouTube
                                 </button>
+                                <BulkClipsUploader onSuccess={(newClips) => onChange([...value, ...newClips])} />
                             </>
                         )}
                     </div>
