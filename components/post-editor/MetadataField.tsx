@@ -183,8 +183,10 @@ export function MetadataField({
                     </button>
                 </div>
                 <ValidatedDateField
+                    fieldKey={key}
                     value={value}
-                    onChange={(newValue) => onUpdate(key, newValue)}
+                    onUpdate={onUpdate}
+                    onDelete={onDelete}
                 />
             </div>
         );
