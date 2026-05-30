@@ -363,9 +363,10 @@ export function MetadataField({
                     </div>
                 </div>
                 <JsonFieldEditor
+                    fieldKey={key}
                     value={value}
                     onChange={(val) => onUpdate(key, val)}
-                    onSave={() => {}}
+                    onDelete={() => onDelete(key)}
                 />
             </div>
         );
@@ -382,9 +383,10 @@ export function MetadataField({
                     </button>
                 </div>
                 <JsonFieldEditor
+                    fieldKey={key}
                     value={value}
                     onChange={(val) => onUpdate(key, val)}
-                    onSave={() => {}}
+                    onDelete={() => onDelete(key)}
                 />
             </div>
         );
