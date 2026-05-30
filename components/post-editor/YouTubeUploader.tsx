@@ -2,15 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import Modal from "@/components/Modal";
-import { 
-  Youtube, 
-  Upload, 
-  Loader2, 
-  Settings, 
-  Image as ImageIcon, 
-  ChevronRight, 
-  ChevronLeft, 
-  Play, 
+import {
+  Youtube,
+  Upload,
+  Loader2,
+  Settings,
+  Image as ImageIcon,
+  ChevronRight,
+  ChevronLeft,
+  Play,
   Check,
   PlusCircle,
   Video,
@@ -18,9 +18,9 @@ import {
   Lock,
   EyeOff
 } from "lucide-react";
-import { 
-  createYouTubeUploadSession, 
-  uploadYouTubeThumbnail, 
+import {
+  createYouTubeUploadSession,
+  uploadYouTubeThumbnail,
   getYouTubePlaylists,
   addVideoToPlaylist
 } from "@/app/actions/youtube";
@@ -31,6 +31,8 @@ interface YouTubeUploaderProps {
   onSuccess: (url: string) => void;
   metadata: any;
   repoId?: string;
+  postId?: string;
+  onSaveBeforeAuth?: () => Promise<void>;
 }
 
 const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
@@ -44,32 +46,32 @@ const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
 
 type Step = 'video' | 'visibility' | 'extras' | 'thumbnail' | 'metadata' | 'uploading' | 'success';
 
-export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploaderProps) {
+export function YouTubeUploader({ onSuccess, metadata, repoId, postId, onSaveBeforeAuth }: YouTubeUploaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<Step>('video');
-  
+
   // Data State
   const [file, setFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>("");
-  
+
   const [title, setTitle] = useState(metadata?.title || "");
   const [description, setDescription] = useState(metadata?.description || "");
   const [privacy, setPrivacy] = useState<"public" | "private" | "unlisted">("public");
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [isPremiere, setIsPremiere] = useState(false);
-  
+
   const [madeForKids, setMadeForKids] = useState(false);
   const [playlists, setPlaylists] = useState<{id: string, title: string}[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState("");
   const [notifySubscribers, setNotifySubscribers] = useState(true);
   const [embeddable, setEmbeddable] = useState(true);
-  
+
   const defaultImage = metadata?.image || metadata?.thumbnail || metadata?.cover || metadata?.ogImage;
   const [useAutoThumbnail, setUseAutoThumbnail] = useState(!!defaultImage);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
-  
+
   const initialTags: string = Array.isArray(metadata?.tags) ? metadata.tags.join(", ") : (metadata?.tags || "");
   const [tags, setTags] = useState<string>(initialTags);
   const [categoryId, setCategoryId] = useState("22");
@@ -147,6 +149,17 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
     );
   };
 
+  const handleReconnect = async () => {
+    if (onSaveBeforeAuth && postId) {
+      try {
+        await onSaveBeforeAuth();
+      } catch (e) {
+        console.error("Failed to save before auth:", e);
+      }
+    }
+    signIn("google", { callbackUrl: window.location.pathname });
+  };
+
   const startUpload = async () => {
     if (!title) return toast.error("Title is required");
     setStep('uploading');
@@ -205,7 +218,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
           if (thumbnailFile || (useAutoThumbnail && defaultImage)) {
             setStatusMessage("Processing thumbnail...");
             const formData = new FormData();
-            
+
             if (thumbnailFile) {
               formData.append("image", thumbnailFile);
             } else {
@@ -360,8 +373,8 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2"><Youtube className="w-4 h-4" /> Add to Playlist</label>
-              <select 
-                value={selectedPlaylistId} 
+              <select
+                value={selectedPlaylistId}
                 onChange={(e) => setSelectedPlaylistId(e.target.value)}
                 className="w-full bg-background border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 disabled={loadingPlaylists}
@@ -418,7 +431,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button 
+              <button
                 onClick={() => setUseAutoThumbnail(true)}
                 disabled={!defaultImage}
                 className={`p-4 rounded-xl border text-left transition-all ${useAutoThumbnail ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-muted/20 hover:border-primary/50 opacity-50 disabled:hidden'}`}
@@ -427,7 +440,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
                 <p className="text-xs font-semibold">Auto from Image</p>
                 <p className="text-[10px] text-muted-foreground mt-1 truncate">{defaultImage}</p>
               </button>
-              
+
               <div className="relative p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/50 transition-all flex flex-col justify-center overflow-hidden">
                 <div className="h-6 w-6 rounded bg-muted flex items-center justify-center mb-2"><PlusCircle className="w-3 h-3" /></div>
                 <p className="text-xs font-semibold">Custom File</p>
@@ -445,12 +458,12 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Video Title</label>
               <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-background border-b rounded-none px-0 py-2 text-lg font-medium outline-none focus:border-primary transition-colors" placeholder="Enter a catchy title..." />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-1">
                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Category</label>
                  <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full bg-muted/30 border rounded px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary/20">
-                    <option value="1">Film & Animation</option>
+                    <option value="1">Film& Animation</option>
                     <option value="10">Music</option>
                     <option value="22">People & Blogs</option>
                     <option value="24">Entertainment</option>
@@ -479,7 +492,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
             {authError && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex flex-col items-center gap-3 text-center animate-bounce">
                 <p className="text-xs text-red-500">Authorization expired. Link your account again.</p>
-                <button onClick={() => signIn("google")} className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold shadow-lg">Reconnect YouTube</button>
+                <button onClick={handleReconnect} className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold shadow-lg">Reconnect YouTube</button>
               </div>
             )}
           </div>
@@ -508,7 +521,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Uploading</span>
               </div>
             </div>
-            
+
             <div className="text-center space-y-2">
                <h4 className="font-bold text-xl">{title}</h4>
                <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
@@ -516,7 +529,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
                  {statusMessage || "Processing high-quality blocks..."}
                </p>
             </div>
-            
+
             <p className="text-[10px] text-muted-foreground max-w-[200px] text-center leading-relaxed">
               Don't close this tab while we're securely transmitting your episode to YouTube's infrastructure.
             </p>
@@ -577,9 +590,9 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
         <span className="hidden sm:inline">Upload to YouTube</span>
       </button>
 
-      <Modal 
-        isOpen={isOpen} 
-        onClose={() => !isUploading && resetAndClose()} 
+      <Modal
+        isOpen={isOpen}
+        onClose={() => !isUploading && resetAndClose()}
         title={step === 'uploading' ? "Uploading to YouTube" : step === 'success' ? "Success!" : "YouTube Studio Wizard"}
       >
         <div className="flex flex-col h-full min-h-[450px]">
@@ -620,7 +633,7 @@ export function YouTubeUploader({ onSuccess, metadata, repoId }: YouTubeUploader
                 <ChevronLeft className="w-4 h-4" />
                 Back
               </button>
-              
+
               <div className="flex gap-3">
                  <button
                     onClick={resetAndClose}

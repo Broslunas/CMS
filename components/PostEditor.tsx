@@ -722,6 +722,29 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
     }
   };
 
+
+ const handleSaveBeforeAuth = async () => {
+    if (!post._id) return;
+
+    try {
+      const res = await fetch('/api/posts/autosave', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: post._id,
+          metadata,
+          content
+        })
+      });
+
+      if (!res.ok) {
+        console.error('Failed to autosave before auth');
+      }
+    } catch (e) {
+      console.error('Autosave error:', e);
+    }
+  };
+
   const loadBlame = async () => {
       setLoadingBlame(true);
       try {
@@ -863,7 +886,7 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
         </div>
 
         {/* Metadata Fields */}
-        <MetadataEditor 
+        <MetadataEditor
             metadata={metadata}
             onUpdate={updateMetadata}
             onDeleteField={handleDeleteField}
@@ -879,6 +902,8 @@ export default function PostEditor({ post, schema, isNew = false, templatePosts 
             suggestedFields={suggestedFields}
             content={content}
             repoId={post.repoId}
+            postId={post._id}
+            onSaveBeforeAuth={handleSaveBeforeAuth}
         />
 
         {/* Content Editor */}

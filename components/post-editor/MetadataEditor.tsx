@@ -18,6 +18,8 @@ interface MetadataEditorProps {
     uploadTarget: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string };
     suggestedFields: Record<string, any>;
     repoId: string;
+    postId?: string;
+    onSaveBeforeAuth?: () => Promise<void>;
 }
 
 export function MetadataEditor({
@@ -35,7 +37,9 @@ export function MetadataEditor({
     isUploading,
     uploadTarget,
     suggestedFields,
-    repoId
+    repoId,
+    postId,
+    onSaveBeforeAuth
 }: MetadataEditorProps) {
   return (
         <div className="bg-card rounded-lg p-6 border border-border space-y-5">
@@ -95,7 +99,7 @@ export function MetadataEditor({
           </div>
           <div className="space-y-4">
             {Object.entries(metadata).map(([key, value]) => (
-                <MetadataField 
+                <MetadataField
                     key={key}
                     fieldKey={key}
                     value={value}
@@ -108,6 +112,8 @@ export function MetadataEditor({
                     uploadTarget={uploadTarget}
                     suggestedFields={suggestedFields}
                     repoId={repoId}
+                    postId={postId}
+                    onSaveBeforeAuth={onSaveBeforeAuth}
                 />
             ))}
           </div>

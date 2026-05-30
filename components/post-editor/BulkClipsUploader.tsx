@@ -193,7 +193,7 @@ export function BulkClipsUploader({ onSuccess }: BulkClipsUploaderProps) {
           {authError && (
             <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex flex-col items-center gap-3 text-center">
               <p className="text-xs text-red-500">YouTube authorization expired.</p>
-              <button onClick={() => signIn("google")} className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold shadow-lg">Reconnect YouTube</button>
+              <button onClick={() => signIn("google", { callbackUrl: window.location.pathname })} className="px-4 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold shadow-lg">Reconnect YouTube</button>
             </div>
           )}
 

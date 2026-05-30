@@ -50,7 +50,7 @@ export function IntegrationsForm() {
 
   const handleYoutubeLink = () => {
     setYoutubeLoading(true)
-    signIn("google")
+    signIn("google", { callbackUrl: "/dashboard/settings/integrations" })
   }
 
   const handleYoutubeUnlink = async () => {

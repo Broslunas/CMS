@@ -22,24 +22,24 @@ const convertToGitHubRawUrl = (src: string, repoId?: string): string => {
   if (src.startsWith('http://') || src.startsWith('https://')) {
     return src;
   }
-  
+
   // Build the base URL dynamically from repoId
   let baseUrl = 'https://raw.githubusercontent.com/Broslunas/portfolio-old/refs/heads/main';
   if (repoId) {
     // repoId comes in "owner/repo" format
     baseUrl = `https://raw.githubusercontent.com/${repoId}/refs/heads/main`;
   }
-  
+
   // If it's a relative path starting with /
   if (src.startsWith('/')) {
     return `${baseUrl}${src}`;
   }
-  
+
   // If it's a relative path without a leading /
   if (!src.startsWith('./') && !src.startsWith('../')) {
     return `${baseUrl}/${src}`;
   }
-  
+
   return src;
 };
 
@@ -55,6 +55,8 @@ interface MetadataFieldProps {
     uploadTarget: { type: 'content' | 'metadata', key?: string, index?: number, subKey?: string };
     suggestedFields: Record<string, any>;
     repoId: string;
+    postId?: string;
+    onSaveBeforeAuth?: () => Promise<void>;
 }
 
 export function MetadataField({
@@ -68,7 +70,9 @@ export function MetadataField({
     isUploading,
     uploadTarget,
     suggestedFields,
-    repoId
+    repoId,
+    postId,
+    onSaveBeforeAuth
 }: MetadataFieldProps) {
     const key = fieldKey;
     const [isGenerating, setIsGenerating] = useState(false);
@@ -92,14 +96,14 @@ export function MetadataField({
                 });
                 if (!res.ok) throw new Error("Error generating SEO");
                 const data = await res.json();
-                
+
                 if (fieldKey === 'title') {
                      const apiTitle = data.title || data.Title || data.TITLE;
                      if (apiTitle && typeof apiTitle === 'string') {
                         onUpdate('title', apiTitle);
                         toast.success("Title generated!", { id: loadingId });
                      } else {
-                        throw new Error(`Invalid title generated. Received: ${JSON.stringify(data)}`);
+                        toast.warning("Could not generate title", { id: loadingId });
                      }
                 } else if (fieldKey === 'description') {
                      const apiDesc = data.description || data.Description || data.DESCRIPTION;
@@ -107,106 +111,124 @@ export function MetadataField({
                         onUpdate('description', apiDesc);
                         toast.success("Description generated!", { id: loadingId });
                      } else {
-                        throw new Error(`Invalid description generated. Received: ${JSON.stringify(data)}`);
+                        toast.warning("Could not generate description", { id: loadingId });
                      }
-                } else {
-                     let updated = false;
-                     const apiTitle = data.title || data.Title || data.TITLE;
-                     if (apiTitle && typeof apiTitle === 'string') {
-                        onUpdate('title', apiTitle);
-                        updated = true;
-                     }
-                     const apiDesc = data.description || data.Description || data.DESCRIPTION;
-                     if (apiDesc && typeof apiDesc === 'string') {
-                        onUpdate('description', apiDesc);
-                        updated = true;
-                     }
-                     
-                     if (updated) {
-                        toast.success("SEO generated!", { id: loadingId });
-                     } else {
-                        throw new Error(`No valid SEO data generated. Received: ${JSON.stringify(data)}`);
-                     }
-                }
-            } catch (error: any) {
-                console.error(error);
-                toast.error(error.message || "Error generating SEO", { id: loadingId });
-            }
-        } else if (fieldKey === 'tags') {
-            const loadingId = toast.loading("Generating tags...");
-            try {
-                const res = await fetch("/api/ai/process", { // Changed to /api/ai/process as per original structure
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "tags", context: content }),
-                });
-                if (!res.ok) throw new Error("Error generating tags");
-                const data = await res.json();
-                
-                if (data.tags && Array.isArray(data.tags)) {
-                    onUpdate('tags', data.tags);
-                    toast.success("Tags generated!", { id: loadingId });
-                } else {
-                    throw new Error("Invalid format");
+                } else if (fieldKey === 'seo') {
+                    // Handle SEO object
+                    if (data.meta || data.metaTitle || data.metaDescription) {
+                        const updates: any = {};
+                        if (data.metaTitle) updates.title = data.metaTitle;
+                        if (data.metaDescription) updates.description = data.metaDescription;
+                        if (data.keywords) updates.keywords = data.keywords;
+                        if (Object.keys(updates).length > 0) {
+                            onUpdate('seo', { ...(value || {}), ...updates });
+                            toast.success("SEO generated!", { id: loadingId });
+                        } else {
+                            toast.warning("Could not generate SEO", { id: loadingId });
+                        }
+                    } else {
+                        toast.warning("Could not generate SEO", { id: loadingId });
+                    }
                 }
             } catch (error) {
-                console.error(error);
-                toast.error("Error generating tags", { id: loadingId });
+                console.error("Error generating AI:", error);
+                toast.error("Failed to generate AI suggestions", { id: loadingId });
+            } finally {
+                setIsGenerating(false);
             }
+        } else {
+            setIsGenerating(false);
         }
-        setIsGenerating(false);
     };
 
-    // --- Special Components ---
-    if (key === 'social' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    // Check if this is a string field that could have a YouTube URL
+    const isVideoUrl = typeof value === 'string' && (
+        value.includes('youtube.com') ||
+        value.includes('youtu.be') ||
+        value.includes('youtube.googleapis.com')
+    );
+
+    // --- Boolean fields ---
+    if (typeof value === 'boolean') {
         return (
-            <div key={key}>
-                <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-foreground capitalize">
-                    {key} <span className="text-xs text-muted-foreground font-normal">(Social Networks)</span>
+            <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border group hover:border-primary/20 transition-all">
+                <div className="flex items-center gap-3">
+                    <Switch
+                        checked={value}
+                        onCheckedChange={(checked) => onUpdate(key, checked)}
+                    />
+                    <label className="text-sm font-medium text-foreground capitalize cursor-pointer select-none" onClick={() => onUpdate(key, !value)}>
+                        {key}
                     </label>
-                    <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
                 </div>
-                <SocialLinksEditor 
-                    value={value}
-                    onChange={(val) => onUpdate(key, val)}
-                    allowedNetworks={
-                         Object.keys(suggestedFields).length > 0 
-                            ? (suggestedFields['social']?.nestedFields ? Object.keys(suggestedFields['social'].nestedFields) : [])
-                            : undefined
-                    }
-                />
+                <button
+                    onClick={() => onDelete(key)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-2 hover:bg-destructive/10 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    title={`Delete field ${key}`}
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
             </div>
         );
     }
 
-    if (Array.isArray(value)) {
-      const isTranscription = (value.length > 0 && typeof value[0] === "object" && value[0] !== null && 'time' in value[0] && 'text' in value[0]) || 
-                              (['transcription', 'transcript', 'transcripcion'].includes(key.toLowerCase()));
-      
-      if (isTranscription) {
-          return (
-             <div key={key}>
-                <div className="flex items-center justify-between mb-2">
+    // --- Date fields ---
+    if (fieldKey.toLowerCase().includes('date') || fieldKey.toLowerCase().includes('published') || fieldKey.toLowerCase().includes('publish')) {
+        return (
+            <div key={key} className="space-y-2">
+                <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-foreground capitalize">{key}</label>
                     <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
-                <TranscriptionEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} metadata={metadata} />
-             </div>
-          )
-      }
+                <ValidatedDateField
+                    value={value}
+                    onChange={(newValue) => onUpdate(key, newValue)}
+                />
+            </div>
+        );
+    }
 
-      const isSections = (value.length > 0 && 
+    // --- Social Links (object with platform keys) ---
+    if (typeof value === 'object' && value !== null && !Array.isArray(value) &&
+        (fieldKey.toLowerCase().includes('social') || fieldKey.toLowerCase().includes('links'))) {
+        return (
+            <div key={key} className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+                    <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+                <SocialLinksEditor
+                    value={value}
+                    onChange={(val) => onUpdate(key, val)}
+                />
+            </div>
+        );
+    }
+
+    // --- Transcription (special rich editor) ---
+    if (fieldKey.toLowerCase().includes('transcription') || fieldKey.toLowerCase().includes('transcrip')) {
+        return (
+           <div key={key}>
+              <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+                  <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+              </div>
+              <TranscriptionEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} metadata={metadata} />
+           </div>
+        );
+    }
+
+    const isSections = (Array.isArray(value) && value.length > 0 &&
                          value.every(item => typeof item === 'object' && item !== null && 'time' in item && 'title' in item)) ||
                          (['sections', 'capitulos', 'chapters', 'secciones'].includes(key.toLowerCase()));
-      
-      if (isSections) {
+
+    if (isSections) {
         return (
            <div key={key}>
               <div className="flex items-center justify-between mb-2">
@@ -217,15 +239,15 @@ export function MetadataField({
               </div>
               <SectionsEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} metadata={metadata} />
            </div>
-        )
-      }
+        );
+    }
 
-      const isClips = (value.length > 0 &&
+    const isClips = (Array.isArray(value) && value.length > 0 &&
                        value.every(item => typeof item === 'object' && item !== null && 'title' in item && 'url' in item) &&
                        value.some(item => typeof item.url === 'string' && (item.url.includes('youtube.com') || item.url.includes('youtu.be')))) ||
                       (['clips', 'shorts', 'reels', 'highlights'].includes(key.toLowerCase()));
 
-      if (isClips) {
+    if (isClips) {
         return (
            <div key={key}>
               <div className="flex items-center justify-between mb-2">
@@ -236,14 +258,14 @@ export function MetadataField({
               </div>
               <ClipsEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} />
            </div>
-        )
-      }
+        );
+    }
 
-      const isQuiz = (value.length > 0 &&
+    const isQuiz = (Array.isArray(value) && value.length > 0 &&
                         value.every(item => typeof item === 'object' && item !== null && 'question' in item)) ||
                        (['quiz', 'quizzes', 'cuestionario', 'test', 'questions', 'preguntas'].includes(key.toLowerCase()));
 
-      if (isQuiz) {
+    if (isQuiz) {
         return (
            <div key={key}>
               <div className="flex items-center justify-between mb-2">
@@ -254,13 +276,13 @@ export function MetadataField({
               </div>
               <QuizEditor fieldKey={key} value={value} onChange={(val) => onUpdate(key, val)} onDelete={() => onDelete(key)} content={content} />
            </div>
-        )
-      }
+        );
+    }
 
-      const isComplexArray = (value.length > 0 && typeof value[0] === 'object' && value[0] !== null) || 
+    const isComplexArray = (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null) ||
                              (['images', 'galeria', 'items', 'list', 'links'].includes(key.toLowerCase()));
 
-      if (isComplexArray) {
+    if (isComplexArray) {
         return (
           <div key={key}>
             <div className="flex items-center justify-between mb-2">
@@ -269,10 +291,10 @@ export function MetadataField({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
             </div>
-            <ArrayEditor 
-                fieldKey={key} 
-                value={value} 
-                onChange={(val: any) => onUpdate(key, val)} 
+            <ArrayEditor
+                fieldKey={key}
+                value={value}
+                onChange={(val: any) => onUpdate(key, val)}
                 onDelete={() => onDelete(key)}
                 triggerUpload={triggerUpload}
                 isUploading={isUploading}
@@ -281,7 +303,6 @@ export function MetadataField({
             />
           </div>
         );
-      }
     }
 
     // --- Participants / Guests (special rich editor) ---
@@ -292,6 +313,12 @@ export function MetadataField({
     if (Array.isArray(value) && isParticipantsKey && value.every((v) => typeof v === 'string')) {
       return (
         <div key={key}>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+            <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </div>
           <GuestsEditor
             value={value as string[]}
             onChange={(val) => onUpdate(key, val)}
@@ -302,154 +329,144 @@ export function MetadataField({
       );
     }
 
-    // --- Simple Arrays (Tags) ---
-    if (Array.isArray(value)) {
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize flex items-center gap-2">
-              {key} <span className="text-muted-foreground text-xs font-normal">(comma separated)</span>
-              {(key === 'tags' || key === 'categories') && (
-                  <button 
-                    onClick={handleAiGenerate} 
-                    disabled={isGenerating}
-                    className="text-xs flex items-center gap-1 bg-indigo-500/10 text-indigo-500 hover:text-indigo-600 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
-                  >
-                    {isGenerating ? <div className="animate-spin w-3 h-3 border border-current rounded-full border-t-transparent" /> : <><Sparkles className="w-3 h-3" /> Generate</>}
-                  </button>
-              )}
-            </label>
-            <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
-          </div>
-          <input
-            type="text"
-            value={value.join(", ")}
-            onChange={(e) => onUpdate(key, e.target.value.split(",").map((t: string) => t.trim()))}
-            className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
-          />
-        </div>
-      );
-    }
+    // --- Standard Array (strings, numbers, or simple objects) ---
+    if (Array.isArray(value) && value.length > 0) {
+        // Suggest AI generation for relevant fields
+        const canGenerate = ['title', 'description', 'seo', 'tags', 'keywords'].includes(key.toLowerCase());
+        const showAiButton = canGenerate && suggestedFields && Object.keys(suggestedFields).length > 0;
 
-    // --- Strings (Title, Desc, etc) ---
-    if (typeof value === "string") {
-      const trimmedValue = value.trim();
-      
-      // Date Check
-      // Improved Date Check
-      const lowKey = key.toLowerCase();
-      const isDateKey = ['date', 'pubdate', 'publishdate', 'publish_date', 'createdat', 'created_at', 'updatedat', 'updated_at', 'released_at', 'timestamp'].includes(lowKey);
-      const isSuggestedDate = suggestedFields[key]?.type === 'date';
-      const isStrictIsoDate = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(trimmedValue);
-      const startsWithDate = /^\d{4}-\d{2}-\d{2}/.test(trimmedValue) && trimmedValue.length >= 10;
-      
-      const isDate = isSuggestedDate || isDateKey || isStrictIsoDate || startsWithDate;
-
-      if (isDate) {
-          // Check if valid date
-          if (!isNaN(Date.parse(trimmedValue))) {
-               return (
-                   <ValidatedDateField 
-                      fieldKey={key}
-                      value={trimmedValue}
-                      onUpdate={onUpdate}
-                      onDelete={onDelete}
-                   />
-               );
-          }
-      }
-
-      const isImage = trimmedValue.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|avif|tiff|tif)(\?.*)?$/i) || ((trimmedValue.startsWith("http") || trimmedValue.startsWith("/")) && (key.toLowerCase().includes("image") || key.toLowerCase().includes("img") || key.toLowerCase().includes("cover") || key.toLowerCase().includes("avatar") || key.toLowerCase().includes("thumbnail") || key.toLowerCase().includes("banner") || key.toLowerCase().includes("poster") || key.toLowerCase().includes("logo") || key.toLowerCase().includes("icon") || key.toLowerCase().includes("bg")));
-      const isSuggested = suggestedFields[fieldKey] !== undefined; // Check if field is suggested
-      const isVideoUrl = key === 'videoUrl' || key === 'youtubeUrl';
-
-      return (
-        <div key={key}>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-foreground capitalize flex items-center gap-2">
-                {fieldKey === 'seo' ? 'SEO Settings' : 
-                 fieldKey === 'ogImage' ? 'Social Share Image' :
-                 fieldKey.replace(/([A-Z])/g, ' $1').trim()}
-                 
-                 {(fieldKey === 'title' || fieldKey === 'description') && (
-                    <button 
-                        onClick={handleAiGenerate} 
-                        disabled={isGenerating}
-                        className="text-xs flex items-center gap-1 bg-indigo-500/10 text-indigo-500 hover:text-indigo-600 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
-                    >
-                        {isGenerating ? <div className="animate-spin w-3 h-3 border border-current rounded-full border-t-transparent" /> : <><Wand2 className="w-3 h-3" /> Generate</>}
-                    </button>
-                )}
-
-            </label>
-            <div className="flex items-center gap-2">
-                <button 
-                onClick={() => onDelete(fieldKey)}
-                className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                title="Delete field"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <input type="text" value={value} onChange={(e) => onUpdate(key, e.target.value)} className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm" />
-              {isImage && (
-                <button type="button" onClick={() => triggerUpload({ type: 'metadata', key })} className="px-3 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-border" title="Upload image">
-                  {isUploading && uploadTarget.key === key ? <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>} <span className="hidden sm:inline">Upload</span>
-                </button>
-              )}
-              {isVideoUrl && (
-                  <YouTubeUploader onSuccess={(url) => onUpdate(key, url)} metadata={metadata} repoId={repoId} />
-              )}
-            </div>
-            {isImage && trimmedValue.length > 0 && (
-              <div className="relative group w-fit">
-                <div className="rounded-lg overflow-hidden border border-border bg-muted/50 max-w-xs">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img key={trimmedValue} src={convertToGitHubRawUrl(trimmedValue, repoId)} alt={`Preview of ${key}`} className="max-h-48 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} onLoad={(e) => { (e.target as HTMLImageElement).style.display = 'block'; }} />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none"><span className="text-xs text-white bg-black/70 px-2 py-1 rounded">Preview</span></div>
+        return (
+            <div key={key} className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+                    <div className="flex items-center gap-2">
+                        {showAiButton && (
+                            <button
+                                onClick={handleAiGenerate}
+                                disabled={isGenerating}
+                                className="text-xs flex items-center gap-1 px-2 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 rounded transition-colors"
+                                title="Generate with AI"
+                            >
+                                {isGenerating ? (
+                                    <div className="w-3 h-3 border border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <Sparkles className="w-3 h-3" />
+                                )}
+                                AI
+                            </button>
+                        )}
+                        <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Numbers & Booleans & Objects (kept standard)
-    if (typeof value === "number") {
-        return ( <div key={key}><div className="flex items-center justify-between mb-2"><label className="text-sm font-medium text-foreground capitalize">{key}</label><button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div><input type="number" value={value} onChange={(e) => onUpdate(key, parseFloat(e.target.value))} className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm" /></div> );
-    }
-    if (typeof value === "boolean") {
-        return ( 
-            <div key={key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border group hover:border-primary/20 transition-all">
-                <div className="flex items-center gap-3">
-                    <Switch 
-                        checked={value} 
-                        onCheckedChange={(checked) => onUpdate(key, checked)} 
-                    />
-                    <label className="text-sm font-medium text-foreground capitalize cursor-pointer select-none" onClick={() => onUpdate(key, !value)}>
-                        {key}
-                    </label>
-                </div>
-                <button 
-                    onClick={() => onDelete(key)} 
-                    className="text-muted-foreground hover:text-destructive transition-colors p-2 hover:bg-destructive/10 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100"
-                    title={`Delete field ${key}`}
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div> 
+                <JsonFieldEditor
+                    value={value}
+                    onChange={(val) => onUpdate(key, val)}
+                    onSave={() => {}}
+                />
+            </div>
         );
     }
-    if (typeof value === "object" && value !== null) {
-        return ( <div key={key}><div className="flex items-center justify-between mb-2"><label className="text-sm font-medium text-foreground capitalize">{key}</label><button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div><JsonFieldEditor fieldKey={key} value={value} onChange={(val: any) => onUpdate(key, val)} onDelete={() => onDelete(key)} /></div> );
+
+    // --- Objects (excluding special types handled above) ---
+    if (typeof value === 'object' && value !== null) {
+        return (
+            <div key={key} className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+                    <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+                <JsonFieldEditor
+                    value={value}
+                    onChange={(val) => onUpdate(key, val)}
+                    onSave={() => {}}
+                />
+            </div>
+        );
     }
-    return null;
+
+    // --- Standard string field ---
+    if (typeof value === 'string') {
+        // Check if it looks like an image URL
+        const isImage = /https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg|avif|apng)/i.test(value);
+        const trimmedValue = value.trim();
+
+        // Determine if we should show AI button
+        const canGenerate = ['title', 'description', 'seo', 'tags', 'keywords'].includes(key.toLowerCase());
+        const showAiButton = canGenerate && suggestedFields && Object.keys(suggestedFields).length > 0;
+
+        return (
+            <div key={key} className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+                    <div className="flex items-center gap-2">
+                        {showAiButton && (
+                            <button
+                                onClick={handleAiGenerate}
+                                disabled={isGenerating}
+                                className="text-xs flex items-center gap-1 px-2 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 rounded transition-colors"
+                                title="Generate with AI"
+                            >
+                                {isGenerating ? (
+                                    <div className="w-3 h-3 border border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <Sparkles className="w-3 h-3" />
+                                )}
+                                AI
+                            </button>
+                        )}
+                        <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                </div>
+                <div className="space-y-3">
+                    <div className="flex gap-2">
+                        <input type="text" value={value} onChange={(e) => onUpdate(key, e.target.value)} className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm" />
+                        {isImage && (
+                            <button type="button" onClick={() => triggerUpload({ type: 'metadata', key })} className="px-3 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-border" title="Upload image">
+                                {isUploading && uploadTarget.key === key ? <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>} <span className="hidden sm:inline">Upload</span>
+                            </button>
+                        )}
+                        {isVideoUrl && (
+                            <YouTubeUploader onSuccess={(url) => onUpdate(key, url)} metadata={metadata} repoId={repoId} postId={postId} onSaveBeforeAuth={onSaveBeforeAuth} />
+                        )}
+                    </div>
+                    {isImage && trimmedValue.length > 0 && (
+                        <div className="relative group w-fit">
+                            <div className="rounded-lg overflow-hidden border border-border bg-muted/50 max-w-xs">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img key={trimmedValue} src={convertToGitHubRawUrl(trimmedValue, repoId)} alt={`Preview of ${key}`} className="max-h-48 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} onLoad={(e) => { (e.target as HTMLImageElement).style.display = 'block'; }} />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none"><span className="text-xs text-white bg-black/70 px-2 py-1 rounded">Preview</span></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // --- Standard non-string field ---
+    return (
+        <div key={key} className="space-y-2">
+            <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground capitalize">{key}</label>
+                <button onClick={() => onDelete(key)} className="text-muted-foreground hover:text-destructive transition-colors p-1" title={`Delete field ${key}`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            </div>
+            <input
+                type="text"
+                value={value}
+                onChange={(e) => {
+                    const newVal = typeof value === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
+                    onUpdate(key, newVal);
+                }}
+                className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+            />
+        </div>
+    );
 }

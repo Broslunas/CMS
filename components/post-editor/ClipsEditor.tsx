@@ -452,7 +452,7 @@ export function ClipsEditor({ fieldKey, value, onChange, onDelete }: ClipsEditor
                                     <p className="text-sm text-muted-foreground mb-4 max-w-xs">{youtubeError}</p>
                                     {youtubeError.includes("connect") || youtubeError.includes("expired") ? (
                                         <button
-                                            onClick={() => signIn("google")}
+                                            onClick={() => signIn("google", { callbackUrl: window.location.pathname })}
                                             className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 flex items-center gap-2"
                                         >
                                             <Youtube className="w-4 h-4" />
